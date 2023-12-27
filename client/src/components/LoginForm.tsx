@@ -38,7 +38,7 @@ const LoginForm = () => {
     <form
       method="POST"
       autoComplete="on"
-      className="mt-10"
+      className="mt-10 flex flex-col gap-5"
       onSubmit={handleSubmit(onSubmit)}
     >
       <InputWithIcon
@@ -54,7 +54,6 @@ const LoginForm = () => {
         pattern={EMAIL_PATTERN}
         autoComplete="on"
         icon={<FaEnvelope />}
-        containerClassName="mt-5"
       />
       <InputWithIcon
         name="password"
@@ -67,12 +66,17 @@ const LoginForm = () => {
         minLength={6}
         maxLength={30}
         icon={<FaLock />}
-        containerClassName="mt-5"
       />
-      <Button type="submit" disabled={loading} className="mt-8">
+      <Link
+        to="/request-password-reset"
+        className="self-start text-primary hover:underline"
+      >
+        Forgot password?
+      </Link>
+      <Button type="submit" disabled={loading} className="mt-3">
         LOG IN
       </Button>
-      <div className="mt-6 text-sm text-lightgrey sm:text-base">
+      <div className="text-sm text-lightgrey sm:text-base">
         Not a member?{" "}
         <Link to="/signup" className="text-primary hover:underline">
           Sign Up

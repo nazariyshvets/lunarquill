@@ -6,7 +6,7 @@ interface LoginData {
   password: string;
 }
 
-function validateLoginInput(data: LoginData) {
+const validateLoginInput = (data: LoginData) => {
   const errors: Record<string, string> = {};
 
   // Email checks
@@ -29,6 +29,6 @@ function validateLoginInput(data: LoginData) {
     errors,
     isValid: isEmpty(errors),
   };
-}
+};
 
 export default validateLoginInput;

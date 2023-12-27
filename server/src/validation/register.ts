@@ -8,7 +8,7 @@ interface RegistrationData {
   password2: string;
 }
 
-function validateRegisterInput(data: RegistrationData) {
+const validateRegisterInput = (data: RegistrationData) => {
   const errors: Record<string, string> = {};
 
   // Username checks
@@ -50,6 +50,6 @@ function validateRegisterInput(data: RegistrationData) {
     errors,
     isValid: isEmpty(errors),
   };
-}
+};
 
 export default validateRegisterInput;

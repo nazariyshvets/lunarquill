@@ -1,11 +1,10 @@
 import { Strategy, ExtractJwt, StrategyOptions } from "passport-jwt";
 import { PassportStatic } from "passport";
 import User from "../models/User";
-import keys from "../config/keys";
 
 const opts: StrategyOptions = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: keys.secretOrKey,
+  secretOrKey: process.env.JWT_SECRET!,
 };
 
 export default (passport: PassportStatic) => {
@@ -19,7 +18,7 @@ export default (passport: PassportStatic) => {
           return done(null, false);
         })
         .catch((err) => {
-          console.error(err);
+          console.log(err);
           return done(err, false);
         });
     })

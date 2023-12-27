@@ -62,7 +62,7 @@ const SignupForm = () => {
     <form
       method="POST"
       autoComplete="off"
-      className="mt-10"
+      className="mt-10 flex flex-col gap-5"
       onSubmit={handleSubmit(onSubmit)}
     >
       <InputWithIcon
@@ -78,7 +78,6 @@ const SignupForm = () => {
         validate={usernameValidation}
         autoComplete="off"
         icon={<FaUser />}
-        containerClassName="mt-5"
       />
       <InputWithIcon
         name="email"
@@ -93,7 +92,6 @@ const SignupForm = () => {
         pattern={EMAIL_PATTERN}
         autoComplete="off"
         icon={<FaEnvelope />}
-        containerClassName="mt-5"
       />
       <InputWithIcon
         name="password"
@@ -106,7 +104,6 @@ const SignupForm = () => {
         minLength={6}
         maxLength={30}
         icon={<FaLock />}
-        containerClassName="mt-5"
       />
       <InputWithIcon
         name="password2"
@@ -119,12 +116,11 @@ const SignupForm = () => {
         minLength={6}
         maxLength={30}
         icon={<FaLock />}
-        containerClassName="mt-5"
       />
-      <Button type="submit" disabled={loading} className="mt-8">
+      <Button type="submit" disabled={loading} className="mt-3">
         SIGN UP
       </Button>
-      <div className="mt-6 text-sm text-lightgrey sm:text-base">
+      <div className="text-sm text-lightgrey sm:text-base">
         Is a member?{" "}
         <Link to="/login" className="text-primary hover:underline">
           Log In
