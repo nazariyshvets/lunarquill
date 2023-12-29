@@ -10,7 +10,7 @@ const opts: StrategyOptions = {
 export default (passport: PassportStatic) => {
   passport.use(
     new Strategy(opts, (jwt_payload, done) => {
-      User.findOne({ username: jwt_payload.username })
+      User.findOne({ email: jwt_payload.email })
         .then((user) => {
           if (user) {
             return done(null, user);

@@ -10,7 +10,6 @@ interface IUser {
 const UserSchema = new Schema<IUser>({
   username: {
     type: String,
-    required: true,
     unique: true,
   },
   email: {
@@ -20,7 +19,6 @@ const UserSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    required: true,
   },
   date: {
     type: Date,

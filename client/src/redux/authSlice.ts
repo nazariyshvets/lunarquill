@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { registerUser, loginUser } from "./authActions";
+import { registerUser, loginUser, loginUserWithGoogle } from "./authActions";
 import type CustomError from "../types/CustomError";
 
 export interface AuthState {
@@ -62,6 +62,26 @@ const authSlice = createSlice({
       if (payload) state.error = payload;
       else state.error = error.message;
     });
+
+    // login with google
+    builder.addCase(loginUserWithGoogle.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(loginUserWithGoogle.fulfilled, (state, { payload }) => {
+      state.loading = false;
+      state.success = true;
+      state.userToken = payload;
+    });
+    builder.addCase(
+      loginUserWithGoogle.rejected,
+      (state, { payload, error }) => {
+        state.loading = false;
+
+        if (payload) state.error = payload;
+        else state.error = error.message;
+      },
+    );
   },
 });
 

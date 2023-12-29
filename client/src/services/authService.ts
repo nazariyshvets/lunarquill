@@ -13,7 +13,7 @@ export const mainApi = createApi({
 
       if (token) {
         // include token in req header
-        headers.set("authorization", `Bearer ${token}`);
+        headers.set("Authorization", `Bearer ${token}`);
       }
 
       return headers;
@@ -22,14 +22,14 @@ export const mainApi = createApi({
   endpoints: (builder) => ({
     requestPasswordReset: builder.mutation({
       query: (data) => ({
-        url: "/users/request-password-reset",
+        url: "/auth/request-password-reset",
         method: "POST",
         body: data,
       }),
     }),
     resetPassword: builder.mutation({
       query: (data) => ({
-        url: "/users/password-reset",
+        url: "/auth/password-reset",
         method: "POST",
         body: data,
       }),
@@ -37,6 +37,7 @@ export const mainApi = createApi({
     getUserDetails: builder.query({
       query: () => "/profile",
       transformResponse: (response: { user: string }) => response.user,
+      keepUnusedDataFor: 0,
     }),
   }),
 });

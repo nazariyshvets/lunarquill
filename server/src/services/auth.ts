@@ -1,9 +1,11 @@
 import crypto from "crypto";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
+import { GaxiosResponse } from "gaxios";
 import User, { IUser } from "../models/User";
 import Token from "../models/Token";
 import sendEmail from "../utils/email/sendEmail";
+import generateJwtToken from "../utils/generateJwtToken";
 import validateRegisterInput from "../validation/register";
 import validateLoginInput from "../validation/login";
 import validateRequestPasswordResetInput from "../validation/requestPasswordReset";
@@ -11,7 +13,11 @@ import validatePasswordResetInput from "../validation/passwordReset";
 
 const bcryptSalt = process.env.BCRYPT_SALT;
 const clientURL = process.env.CLIENT_URL;
-const jwtSecret = process.env.JWT_SECRET;
+const oAuth2Client = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+  `${clientURL}/login`
+);
 
 const registerUser = async (
   username: string,
@@ -69,9 +75,7 @@ const registerUser = async (
     "./template/welcome.handlebars"
   );
 
-  return jwt.sign({ username }, jwtSecret!, {
-    expiresIn: 31556926, // 1 year in seconds
-  });
+  return generateJwtToken(email);
 };
 
 const loginUser = async (email: string, password: string) => {
@@ -94,12 +98,38 @@ const loginUser = async (email: string, password: string) => {
 
   if (isMatch) {
     // Sign token
-    return jwt.sign({ username: user.username }, jwtSecret!, {
-      expiresIn: 31556926, // 1 year in seconds
-    });
+    return generateJwtToken(email);
   } else {
     throw new Error("Password incorrect");
   }
+};
+
+const loginUserWithGoogle = async (code: string) => {
+  const { tokens } = await oAuth2Client.getToken(code); // exchange code for tokens
+  oAuth2Client.setCredentials(tokens);
+  const userInfoResponse: GaxiosResponse<{ email: string }> =
+    await oAuth2Client.request({
+      url: "https://www.googleapis.com/oauth2/v1/userinfo",
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${tokens.access_token}`,
+      },
+    });
+  const { email } = userInfoResponse.data;
+  const user = await User.findOne({ email });
+  // Create user if does not exist
+  if (!user) {
+    await User.create({ email });
+
+    sendEmail(
+      email,
+      "Welcome to LunarQuill",
+      { username: email.split("@")[0] || "user" },
+      "./template/welcome.handlebars"
+    );
+  }
+
+  return generateJwtToken(email);
 };
 
 const requestPasswordReset = async (email: string) => {
@@ -212,4 +242,10 @@ const resetPassword = async (
   return { message: "Password reset was successful" };
 };
 
-export { registerUser, loginUser, requestPasswordReset, resetPassword };
+export {
+  registerUser,
+  loginUser,
+  loginUserWithGoogle,
+  requestPasswordReset,
+  resetPassword,
+};

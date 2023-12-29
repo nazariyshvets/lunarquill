@@ -69,7 +69,7 @@ const LoginForm = () => {
       />
       <Link
         to="/request-password-reset"
-        className="self-start text-primary hover:underline"
+        className="self-start text-sm text-primary hover:underline sm:text-base"
       >
         Forgot password?
       </Link>

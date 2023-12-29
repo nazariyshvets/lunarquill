@@ -19,7 +19,7 @@ export const registerUser = createAsyncThunk<
         },
       };
       const { data } = await axios.post(
-        `${BASE_SERVER_URL}/api/users/register`,
+        `${BASE_SERVER_URL}/api/auth/register`,
         { username, email, password, password2 },
         config,
       );
@@ -47,8 +47,35 @@ export const loginUser = createAsyncThunk<
       },
     };
     const { data } = await axios.post(
-      `${BASE_SERVER_URL}/api/users/login`,
+      `${BASE_SERVER_URL}/api/auth/login`,
       { email, password },
+      config,
+    );
+
+    return data;
+  } catch (err) {
+    const error = err as AxiosError<CustomError>;
+    if (!error.response) {
+      throw err;
+    }
+    return rejectWithValue(error.response.data);
+  }
+});
+
+export const loginUserWithGoogle = createAsyncThunk<
+  string,
+  string,
+  { rejectValue: CustomError }
+>("auth/login-with-google", async (code, { rejectWithValue }) => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    const { data } = await axios.post(
+      `${BASE_SERVER_URL}/api/auth/login-with-google`,
+      { code },
       config,
     );
 

@@ -1,14 +1,18 @@
+import { PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
-import LoginForm from "../components/LoginForm";
-import SignupForm from "../components/SignupForm";
+import LoginForm from "./LoginForm";
+import SignupForm from "./SignupForm";
 import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 
-interface LoginSignupPageProps {
+interface LoginSignupProps {
   isLogin: boolean;
 }
 
-const LoginSignupPage = ({ isLogin }: LoginSignupPageProps) => {
+const LoginSignup = ({
+  isLogin,
+  children,
+}: PropsWithChildren<LoginSignupProps>) => {
   const { userToken } = useAuth();
   useDocumentTitle(`LunarQuill | ${isLogin ? "Login" : "Signup"}`);
 
@@ -22,10 +26,12 @@ const LoginSignupPage = ({ isLogin }: LoginSignupPageProps) => {
             {isLogin ? "LOGIN" : "SIGNUP"}
           </div>
           {isLogin ? <LoginForm /> : <SignupForm />}
+
+          {children}
         </div>
       </div>
     </>
   );
 };
 
-export default LoginSignupPage;
+export default LoginSignup;

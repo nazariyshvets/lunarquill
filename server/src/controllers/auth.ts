@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   registerUser,
   loginUser,
+  loginUserWithGoogle,
   requestPasswordReset,
   resetPassword,
 } from "../services/auth";
@@ -19,6 +20,11 @@ const registerUserController = async (req: Request, res: Response) => {
 const loginUserController = async (req: Request, res: Response) => {
   const loginUserService = await loginUser(req.body.email, req.body.password);
   return res.json(loginUserService);
+};
+
+const loginUserWithGoogleController = async (req: Request, res: Response) => {
+  const loginUserWithGoogleService = await loginUserWithGoogle(req.body.code);
+  return res.json(loginUserWithGoogleService);
 };
 
 const resetPasswordRequestController = async (req: Request, res: Response) => {
@@ -41,6 +47,7 @@ const resetPasswordController = async (req: Request, res: Response) => {
 export {
   registerUserController,
   loginUserController,
+  loginUserWithGoogleController,
   resetPasswordRequestController,
   resetPasswordController,
 };

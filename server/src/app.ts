@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config({ path: "../.env" });
+dotenv.config();
 import express, { Request, Response, NextFunction } from "express";
 import "express-async-errors";
 import cors from "cors";
@@ -7,7 +7,7 @@ import passport from "passport";
 import bodyParser from "body-parser";
 import connection from "./db";
 import passportConfig from "./config/passport";
-import users from "./routes/users";
+import auth from "./routes/auth";
 import isJSONString from "./utils/isJSONString";
 
 const app = express();
@@ -31,7 +31,7 @@ app.use(passport.initialize());
 // Passport config
 passportConfig(passport);
 // Routes
-app.use("/api/users", users);
+app.use("/api/auth", auth);
 
 // ===== PROTECTED ROUTE EXAMPLE START =====
 const authenticateJWT = passport.authenticate("jwt", { session: false });
