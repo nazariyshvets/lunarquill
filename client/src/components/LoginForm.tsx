@@ -1,26 +1,26 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { FaEnvelope, FaLock } from "react-icons/fa6";
 import InputWithIcon from "./InputWithIcon";
 import Button from "./Button";
 import { loginUser } from "../redux/authActions";
 import useAuth from "../hooks/useAuth";
-import useError from "../hooks/useError";
+import useAuthSuccess from "../hooks/useAuthSuccess";
+import useAuthError from "../hooks/useAuthError";
 import useAppDispatch from "../hooks/useAppDispatch";
 import { EMAIL_PATTERN } from "../constants/constants";
 import type LoginFormValues from "../types/LoginFormValues";
 
 const LoginForm = () => {
-  const { loading, error, success } = useAuth();
+  const { loading } = useAuth();
   const dispatch = useAppDispatch();
   const {
     register,
     formState: { errors },
     handleSubmit,
   } = useForm<LoginFormValues>();
-  const navigate = useNavigate();
-  useError(error || null);
+  useAuthSuccess();
+  useAuthError();
 
   const onSubmit: SubmitHandler<LoginFormValues> = (data) => {
     if (loading) return;
@@ -29,10 +29,6 @@ const LoginForm = () => {
     data.email = data.email.toLowerCase();
     dispatch(loginUser(data));
   };
-
-  useEffect(() => {
-    if (success) navigate("/profile");
-  }, [navigate, success]);
 
   return (
     <form

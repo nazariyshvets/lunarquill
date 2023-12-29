@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa6";
@@ -7,8 +6,9 @@ import InputWithIcon from "./InputWithIcon";
 import Button from "./Button";
 import { registerUser } from "../redux/authActions";
 import useAuth from "../hooks/useAuth";
+import useAuthSuccess from "../hooks/useAuthSuccess";
+import useAuthError from "../hooks/useAuthError";
 import useAppDispatch from "../hooks/useAppDispatch";
-import useError from "../hooks/useError";
 import {
   USERNAME_PATTERN,
   ALPHANUMERIC_START_END_PATTERN,
@@ -18,16 +18,16 @@ import {
 import type SignupFormValues from "../types/SignupFormValues";
 
 const SignupForm = () => {
-  const { loading, error, success } = useAuth();
+  const { loading } = useAuth();
   const dispatch = useAppDispatch();
   const {
     register,
     formState: { errors },
     handleSubmit,
   } = useForm<SignupFormValues>();
-  const navigate = useNavigate();
   const alert = useAlert();
-  useError(error || null);
+  useAuthSuccess();
+  useAuthError();
 
   const onSubmit: SubmitHandler<SignupFormValues> = async (data) => {
     if (loading) return;
@@ -41,10 +41,6 @@ const SignupForm = () => {
       dispatch(registerUser(data));
     }
   };
-
-  useEffect(() => {
-    if (success) navigate("/profile");
-  }, [navigate, success]);
 
   const usernameValidation = {
     username: (value: string) =>
