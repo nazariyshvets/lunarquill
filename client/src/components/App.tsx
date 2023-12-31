@@ -4,6 +4,7 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
+import WelcomePage from "../pages/WelcomePage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
 import RequestPasswordResetPage from "../pages/RequestPasswordResetPage";
@@ -14,7 +15,7 @@ import ProtectedRoute from "./ProtectedRoute";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      <Route path="/" element={<div>App</div>} />
+      <Route path="/" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route
