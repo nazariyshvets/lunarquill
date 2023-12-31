@@ -5,6 +5,7 @@ interface IUser {
   email: string;
   password: string;
   date: Date;
+  active: boolean;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -23,6 +24,10 @@ const UserSchema = new Schema<IUser>({
   date: {
     type: Date,
     default: Date.now,
+  },
+  active: {
+    type: Boolean,
+    default: false,
   },
 });
 

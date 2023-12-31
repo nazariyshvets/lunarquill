@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
@@ -6,7 +7,6 @@ import InputWithIcon from "./InputWithIcon";
 import Button from "./Button";
 import { registerUser } from "../redux/authActions";
 import useAuth from "../hooks/useAuth";
-import useAuthSuccess from "../hooks/useAuthSuccess";
 import useAuthError from "../hooks/useAuthError";
 import useAppDispatch from "../hooks/useAppDispatch";
 import {
@@ -18,7 +18,7 @@ import {
 import type SignupFormValues from "../types/SignupFormValues";
 
 const SignupForm = () => {
-  const { loading } = useAuth();
+  const { loading, success } = useAuth();
   const dispatch = useAppDispatch();
   const {
     register,
@@ -26,7 +26,6 @@ const SignupForm = () => {
     handleSubmit,
   } = useForm<SignupFormValues>();
   const alert = useAlert();
-  useAuthSuccess();
   useAuthError();
 
   const onSubmit: SubmitHandler<SignupFormValues> = async (data) => {
@@ -41,6 +40,10 @@ const SignupForm = () => {
       dispatch(registerUser(data));
     }
   };
+
+  useEffect(() => {
+    if (success) alert.info("Verification email is sent");
+  }, [alert, success]);
 
   const usernameValidation = {
     username: (value: string) =>

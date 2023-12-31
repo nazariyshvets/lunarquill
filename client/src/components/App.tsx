@@ -7,6 +7,7 @@ import {
 import WelcomePage from "../pages/WelcomePage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
+import AccountVerificationPage from "../pages/AccountVerificationPage";
 import RequestPasswordResetPage from "../pages/RequestPasswordResetPage";
 import PasswordResetPage from "../pages/PasswordResetPage";
 import ProfilePage from "../pages/ProfilePage";
@@ -18,6 +19,10 @@ const router = createBrowserRouter(
       <Route path="/" element={<WelcomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route
+        path="/account-verification"
+        element={<AccountVerificationPage />}
+      />
       <Route
         path="/request-password-reset"
         element={<RequestPasswordResetPage />}

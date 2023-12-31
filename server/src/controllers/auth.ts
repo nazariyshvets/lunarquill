@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   registerUser,
+  verifyAccount,
   loginUser,
   loginUserWithGoogle,
   requestPasswordReset,
@@ -15,6 +16,14 @@ const registerUserController = async (req: Request, res: Response) => {
     req.body.password2
   );
   return res.json(registerUserService);
+};
+
+const verifyAccountController = async (req: Request, res: Response) => {
+  const verifyAccountService = await verifyAccount(
+    req.body.userId,
+    req.body.token
+  );
+  return res.json(verifyAccountService);
 };
 
 const loginUserController = async (req: Request, res: Response) => {
@@ -46,6 +55,7 @@ const resetPasswordController = async (req: Request, res: Response) => {
 
 export {
   registerUserController,
+  verifyAccountController,
   loginUserController,
   loginUserWithGoogleController,
   resetPasswordRequestController,

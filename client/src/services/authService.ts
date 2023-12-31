@@ -20,6 +20,13 @@ export const mainApi = createApi({
     },
   }),
   endpoints: (builder) => ({
+    verifyAccount: builder.mutation({
+      query: (data) => ({
+        url: "/auth/account-verification",
+        method: "POST",
+        body: data,
+      }),
+    }),
     requestPasswordReset: builder.mutation({
       query: (data) => ({
         url: "/auth/request-password-reset",
@@ -45,6 +52,7 @@ export const mainApi = createApi({
 // export hooks for usage in functional components, which are
 // auto-generated based on the defined endpoints
 export const {
+  useVerifyAccountMutation,
   useRequestPasswordResetMutation,
   useResetPasswordMutation,
   useGetUserDetailsQuery,

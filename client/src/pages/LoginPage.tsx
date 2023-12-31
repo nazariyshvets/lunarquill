@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import { FaGoogle } from "react-icons/fa6";
-import LoginSignup from "../components/LoginSignup";
+import GuestPage from "./GuestPage";
+import LoginForm from "../components/LoginForm";
 import Button from "../components/Button";
 import { loginUserWithGoogle } from "../redux/authActions";
 import useAppDispatch from "../hooks/useAppDispatch";
@@ -27,7 +28,9 @@ const LoginPage = () => {
   }, [dispatch, location.search]);
 
   return (
-    <LoginSignup isLogin={true}>
+    <GuestPage title="login">
+      <LoginForm />
+
       <div className="mt-4 flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <span className="w-full border border-grey"></span>
@@ -41,7 +44,7 @@ const LoginPage = () => {
           <FaGoogle /> Log in with Google
         </Button>
       </div>
-    </LoginSignup>
+    </GuestPage>
   );
 };
 

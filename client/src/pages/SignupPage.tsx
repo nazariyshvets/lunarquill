@@ -1,7 +1,12 @@
-import LoginSignup from "../components/LoginSignup";
+import GuestPage from "./GuestPage";
+import SignupForm from "../components/SignupForm";
 
 const SignupPage = () => {
-  return <LoginSignup isLogin={false} />;
+  return (
+    <GuestPage title="signup">
+      <SignupForm />
+    </GuestPage>
+  );
 };
 
 export default SignupPage;

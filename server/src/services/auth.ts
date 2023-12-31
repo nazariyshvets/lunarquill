@@ -1,17 +1,17 @@
-import crypto from "crypto";
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import { GaxiosResponse } from "gaxios";
-import User, { IUser } from "../models/User";
+import User from "../models/User";
 import Token from "../models/Token";
-import sendEmail from "../utils/email/sendEmail";
-import generateJwtToken from "../utils/generateJwtToken";
 import validateRegisterInput from "../validation/register";
 import validateLoginInput from "../validation/login";
 import validateRequestPasswordResetInput from "../validation/requestPasswordReset";
 import validatePasswordResetInput from "../validation/passwordReset";
+import sendEmail from "../utils/email/sendEmail";
+import generateJwtToken from "../utils/generateJwtToken";
+import createToken from "../utils/createToken";
+import hashString from "../utils/hashString";
 
-const bcryptSalt = process.env.BCRYPT_SALT;
 const clientURL = process.env.CLIENT_URL;
 const oAuth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -52,30 +52,88 @@ const registerUser = async (
     }
   }
 
+  // Hash password before saving in the database
+  const hashedPassword = await hashString(password);
+
   // Create a new user
   const newUser = new User({
     username,
     email,
-    password,
+    password: hashedPassword,
   });
 
-  // Hash password before saving in the database
-  const hash = await bcrypt.hash(newUser.password, Number(bcryptSalt));
-  newUser.password = hash;
-
-  // Save the new user to the database
+  // Save the new user to DB
   await newUser.save();
 
+  // Send a greeting email
   sendEmail(
-    newUser.email,
+    email,
     "Welcome to LunarQuill",
-    {
-      username: newUser.username,
-    },
-    "./template/welcome.handlebars"
+    { username },
+    "./templates/welcome.handlebars"
   );
 
-  return generateJwtToken(email);
+  // Account verification
+  const verificationToken = createToken();
+  const hashedVerificationToken = await hashString(verificationToken);
+
+  await new Token({
+    userId: newUser._id,
+    token: hashedVerificationToken,
+    createdAt: Date.now(),
+  }).save();
+
+  sendEmail(
+    email,
+    "Account verification",
+    {
+      username,
+      message:
+        "To activate your LunarQuill account, please follow the link below.",
+      link: `${clientURL}/account-verification?token=${verificationToken}&id=${newUser._id}`,
+      linkText: "Activate",
+    },
+    "./templates/template.handlebars"
+  );
+
+  return { success: true };
+};
+
+const verifyAccount = async (userId: string, token: string) => {
+  const verificationToken = await Token.findOne({ userId });
+
+  if (!verificationToken) {
+    throw new Error("Invalid or expired verification token");
+  }
+
+  const isTokenValid = await bcrypt.compare(token, verificationToken.token);
+
+  if (!isTokenValid) {
+    throw new Error("Invalid or expired verification token");
+  }
+
+  const user = await User.findById(userId);
+
+  if (user) {
+    user.active = true;
+    await user.save();
+
+    sendEmail(
+      user.email,
+      "Account Is Verified Successfully",
+      {
+        username: user.username,
+        message: "Your account is verified successfully.",
+        link: `${clientURL}/login`,
+        linkText: "Log In",
+      },
+      "./templates/template.handlebars"
+    );
+  }
+
+  await verificationToken.deleteOne();
+
+  return { message: "Account verification was successful" };
 };
 
 const loginUser = async (email: string, password: string) => {
@@ -87,17 +145,21 @@ const loginUser = async (email: string, password: string) => {
   }
 
   // Find user by email
-  const user: IUser | null = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
   if (!user) {
     throw new Error("Email not found");
   }
 
+  // Check if the email is verified
+  if (!user.active) {
+    throw new Error("You need to verify your email");
+  }
+
   // Check password
-  const isMatch: boolean = await bcrypt.compare(password, user.password);
+  const isMatch = await bcrypt.compare(password, user.password);
 
   if (isMatch) {
-    // Sign token
     return generateJwtToken(email);
   } else {
     throw new Error("Password incorrect");
@@ -119,13 +181,13 @@ const loginUserWithGoogle = async (code: string) => {
   const user = await User.findOne({ email });
   // Create user if does not exist
   if (!user) {
-    await User.create({ email });
+    await User.create({ email, active: true });
 
     sendEmail(
       email,
       "Welcome to LunarQuill",
       { username: email.split("@")[0] || "user" },
-      "./template/welcome.handlebars"
+      "./templates/welcome.handlebars"
     );
   }
 
@@ -144,6 +206,7 @@ const requestPasswordReset = async (email: string) => {
   }
 
   const user = await User.findOne({ email });
+
   if (!user) throw new Error("Email does not exist");
 
   // Check if there's an existing token within the last minute
@@ -161,11 +224,11 @@ const requestPasswordReset = async (email: string) => {
     );
   }
 
-  let token = await Token.findOne({ userId: user._id });
+  const token = await Token.findOne({ userId: user._id });
   if (token) await token.deleteOne();
 
-  let resetToken = crypto.randomBytes(32).toString("hex");
-  const hash = await bcrypt.hash(resetToken, Number(bcryptSalt));
+  const resetToken = createToken();
+  const hash = await hashString(resetToken);
 
   await new Token({
     userId: user._id,
@@ -180,9 +243,9 @@ const requestPasswordReset = async (email: string) => {
     "Password Reset Request",
     {
       username: user.username,
-      link: link,
+      link,
     },
-    "./template/requestPasswordReset.handlebars"
+    "./templates/requestPasswordReset.handlebars"
   );
   return { link };
 };
@@ -204,7 +267,7 @@ const resetPassword = async (
     throw new Error(error);
   }
 
-  let passwordResetToken = await Token.findOne({ userId });
+  const passwordResetToken = await Token.findOne({ userId });
 
   if (!passwordResetToken) {
     throw new Error("Invalid or expired password reset token");
@@ -216,24 +279,23 @@ const resetPassword = async (
     throw new Error("Invalid or expired password reset token");
   }
 
-  const hash = await bcrypt.hash(password, Number(bcryptSalt));
-
-  await User.updateOne(
-    { _id: userId },
-    { $set: { password: hash } },
-    { new: true }
-  );
-
-  const user = await User.findById({ _id: userId });
+  const user = await User.findById(userId);
 
   if (user) {
+    user.password = await hashString(password);
+    user.active = true;
+    await user.save();
+
     sendEmail(
       user.email,
       "Password Reset Successfully",
       {
         username: user.username,
+        message: "Your password has been changed successfully on LunarQuill.",
+        link: `${clientURL}/login`,
+        linkText: "Log In",
       },
-      "./template/resetPassword.handlebars"
+      "./templates/template.handlebars"
     );
   }
 
@@ -244,6 +306,7 @@ const resetPassword = async (
 
 export {
   registerUser,
+  verifyAccount,
   loginUser,
   loginUserWithGoogle,
   requestPasswordReset,
