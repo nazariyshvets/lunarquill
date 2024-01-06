@@ -7,7 +7,9 @@ import passport from "passport";
 import bodyParser from "body-parser";
 import connection from "./db";
 import passportConfig from "./config/passport";
+import authenticateJWT from "./middleware/authenticateJWT";
 import auth from "./routes/auth";
+import rtc from "./routes/rtc";
 import isJSONString from "./utils/isJSONString";
 
 const app = express();
@@ -32,9 +34,9 @@ app.use(passport.initialize());
 passportConfig(passport);
 // Routes
 app.use("/api/auth", auth);
+app.use("/api/rtc", authenticateJWT, rtc);
 
 // ===== PROTECTED ROUTE EXAMPLE START =====
-const authenticateJWT = passport.authenticate("jwt", { session: false });
 app.get("/api/profile", authenticateJWT, (req, res) => {
   // This route will only be accessible for authenticated users
   res.json({ user: req.user });
