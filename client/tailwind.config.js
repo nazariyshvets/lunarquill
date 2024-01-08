@@ -1,10 +1,14 @@
 import plugin from "tailwindcss/plugin";
+import scrollbarHide from "tailwind-scrollbar-hide";
 
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      gridTemplateColumns: {
+        "auto-fit": "repeat(auto-fit,minmax(300px,1fr))",
+      },
       backgroundImage: {
         stars:
           "url('https://s3-us-west-2.amazonaws.com/s.cdpn.io/1231630/stars.png')",
@@ -99,5 +103,6 @@ export default {
         { values: theme("textShadow") },
       );
     }),
+    scrollbarHide,
   ],
 };

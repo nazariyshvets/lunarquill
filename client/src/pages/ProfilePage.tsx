@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { logout } from "../redux/authSlice";
 import { useGetUserDetailsQuery } from "../services/authService";
 import useAppDispatch from "../hooks/useAppDispatch";
@@ -11,10 +12,18 @@ const ProfilePage = () => {
   console.log(data);
 
   return (
-    <>
+    <div className="flex flex-col items-center justify-center gap-4">
       <h1>You are logged in</h1>
-      <button onClick={() => dispatch(logout())}>Log Out</button>
-    </>
+      <Link to="/channel" className="border border-deep-black px-8 py-2">
+        Join Channel
+      </Link>
+      <button
+        onClick={() => dispatch(logout())}
+        className="border border-deep-black px-8 py-2"
+      >
+        Log Out
+      </button>
+    </div>
   );
 };
 
