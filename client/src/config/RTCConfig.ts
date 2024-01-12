@@ -1,11 +1,11 @@
 import { EncryptionMode, UID, SDK_MODE } from "agora-rtc-react";
 
 const RTCConfig: RTCConfigType = {
-  uid: 0,
+  uid: Math.floor(Math.random() * 1000000000),
   appId: import.meta.env.VITE_AGORA_APP_ID,
   channelName: "test",
   rtcToken:
-    "007eJxTYLjNVrepVLs31O/z0ezlud2n3sRvc/uaoHToElv7t9Tljf8UGMySUkwSUxJNTdLSTE2ATEtTI9MUUyMzA0tLS0MTo+SLO2enNgQyMnhU9zAxMkAgiM/CUJJaXMLAAAADriHt",
+    "007eJxTYLiT6jLxxGaWZ11To4Pcq2skjP4/rCpoyfC6+/6ITZyqU4kCg1lSikliSqKpSVqaqQmQaWlqZJpiamRmYGlpaWhilLyEfWFqQyAjQ3IDPwMjFIL4LAwlqcUlDAwAVOMevA==",
   serverUrl: "",
   proxyUrl: "http://localhost:8000/",
   tokenExpiryTime: 3600,
