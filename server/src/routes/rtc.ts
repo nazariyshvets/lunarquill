@@ -1,8 +1,8 @@
-import express from "express";
+import { Router } from "express";
 import nocache from "../middleware/nocache";
 import { generateRTCTokenController } from "../controllers/rtc";
 
-const router = express.Router();
+const router = Router();
 
 router.get(
   "/:channel/:role/:tokentype/:uid",

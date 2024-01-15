@@ -1,13 +1,14 @@
 import { EncryptionMode, UID, SDK_MODE } from "agora-rtc-react";
 
 const RTCConfig: RTCConfigType = {
-  uid: Math.floor(Math.random() * 1000000000),
+  uid: Math.floor(Math.random() * 1000000000).toString(),
+  uidScreen: Math.floor(Math.random() * 1000000000).toString(),
   appId: import.meta.env.VITE_AGORA_APP_ID,
   channelName: "test",
-  rtcToken:
-    "007eJxTYLiT6jLxxGaWZ11To4Pcq2skjP4/rCpoyfC6+/6ITZyqU4kCg1lSikliSqKpSVqaqQmQaWlqZJpiamRmYGlpaWhilLyEfWFqQyAjQ3IDPwMjFIL4LAwlqcUlDAwAVOMevA==",
-  serverUrl: "",
-  proxyUrl: "http://localhost:8000/",
+  rtcToken: "",
+  rtcTokenScreen: "",
+  serverUrl: "http://localhost:8000",
+  proxyUrl: "",
   tokenExpiryTime: 3600,
   token: "",
   encryptionMode: "aes-128-gcm2",
@@ -20,13 +21,16 @@ const RTCConfig: RTCConfigType = {
   secondChannelToken: "",
   secondChannelUID: 2,
   selectedProduct: "rtc",
+  isInitialized: false,
 };
 
 export type RTCConfigType = {
   uid: UID;
+  uidScreen: UID;
   appId: string;
   channelName: string;
   rtcToken: string | null;
+  rtcTokenScreen: string | null;
   serverUrl: string;
   proxyUrl: string;
   tokenExpiryTime: number;
@@ -41,6 +45,7 @@ export type RTCConfigType = {
   secondChannelToken: string;
   secondChannelUID: number;
   selectedProduct: SDK_MODE;
+  isInitialized: boolean;
 };
 
 export default RTCConfig;

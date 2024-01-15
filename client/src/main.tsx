@@ -1,5 +1,4 @@
 import "./index.css";
-// import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
@@ -11,7 +10,6 @@ import store, { persistor } from "./redux/store";
 import { ALERT_OPTIONS } from "./constants/constants";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  // <StrictMode>
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
@@ -21,5 +19,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       </GoogleOAuthProvider>
     </PersistGate>
   </Provider>,
-  // </StrictMode>,
 );

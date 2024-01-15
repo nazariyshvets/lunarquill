@@ -1,27 +1,142 @@
-import { useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import AgoraRTC, {
   AgoraRTCProvider,
   AgoraRTCScreenShareProvider,
   useRTCClient,
 } from "agora-rtc-react";
+import { RtmChannel, RtmClient } from "agora-rtm-react";
+import Loading from "../components/Loading";
 import RTCManager from "../components/RTCManager";
+import useRTMClient from "../hooks/useRTMClient";
+import useRTMChannel from "../hooks/useRTMChannel";
+import useRTCTokenWillExpire from "../hooks/useRTCTokenWillExpire";
+import useRTMTokenExpired from "../hooks/useRTMTokenExpired";
+import useAudioVolumeIndicator from "../hooks/useAudioVolumeIndicator";
+import useAuthRequestConfig from "../hooks/useAuthRequestConfig";
+import fetchRTCToken from "../utils/fetchRTCToken";
+import fetchRTMToken from "../utils/fetchRTMToken";
+import RTCConfig from "../config/RTCConfig";
+import RTMConfig from "../config/RTMConfig";
 
 const ChannelPage = () => {
-  const RTCEngine = useRTCClient(
+  const RTCClient = useRTCClient(
     AgoraRTC.createClient({ codec: "vp8", mode: "rtc" }),
   );
   const RTCScreenSharingClient = useRef(
     AgoraRTC.createClient({ codec: "vp8", mode: "rtc" }),
   );
-  RTCEngine.enableAudioVolumeIndicator();
+  const RTMClient = useRTMClient();
+  const RTMChannel = useRTMChannel(RTMClient);
+  const isRTCInitialized = useInitRTC();
+  const isRTMInitialized = useInitRTM(RTMClient, RTMChannel);
 
-  return (
-    <AgoraRTCProvider client={RTCEngine}>
+  useRTCTokenWillExpire(RTCClient, RTCConfig.uid);
+  useRTCTokenWillExpire(RTCScreenSharingClient.current, RTCConfig.uidScreen);
+  useAudioVolumeIndicator(RTCClient);
+  useRTMTokenExpired(RTMClient);
+
+  return !isRTCInitialized || !isRTMInitialized ? (
+    <Loading />
+  ) : (
+    <AgoraRTCProvider client={RTCClient}>
       <AgoraRTCScreenShareProvider client={RTCScreenSharingClient.current}>
         <RTCManager />
       </AgoraRTCScreenShareProvider>
     </AgoraRTCProvider>
   );
+};
+
+const useInitRTC = () => {
+  // Whether RTC is initialized
+  const [isInitialized, setIsInitialized] = useState(RTCConfig.isInitialized);
+  // Whether the process of initialization is happening
+  const isLoadingRef = useRef(false);
+  const requestConfig = useAuthRequestConfig();
+
+  useEffect(() => {
+    const init = async () => {
+      if (RTCConfig.serverUrl !== "" && RTCConfig.channelName !== "") {
+        isLoadingRef.current = true;
+
+        try {
+          const [rtcToken, rtcTokenScreen] = await Promise.all([
+            fetchRTCToken(RTCConfig.channelName, RTCConfig.uid, requestConfig),
+            fetchRTCToken(
+              RTCConfig.channelName,
+              RTCConfig.uidScreen,
+              requestConfig,
+            ),
+          ]);
+
+          RTCConfig.rtcToken = rtcToken;
+          RTCConfig.rtcTokenScreen = rtcTokenScreen;
+        } catch (err) {
+          setIsInitialized(false);
+          RTCConfig.isInitialized = false;
+          isLoadingRef.current = false;
+          console.log(err);
+        } finally {
+          setIsInitialized(true);
+          RTCConfig.isInitialized = true;
+          isLoadingRef.current = false;
+        }
+      } else {
+        console.log(
+          "Please make sure you specified the RTC token server URL and channel name in the configuration file",
+        );
+      }
+    };
+
+    if (!isInitialized && !isLoadingRef.current) {
+      init();
+    }
+  }, [isInitialized, requestConfig]);
+
+  return isInitialized;
+};
+
+const useInitRTM = (RTMClient: RtmClient, RTMChannel: RtmChannel) => {
+  // Whether RTM is initialized
+  const [isInitialized, setIsInitialized] = useState(RTMConfig.isInitialized);
+  // Whether the process of initialization is happening
+  const isLoadingRef = useRef(false);
+  const requestConfig = useAuthRequestConfig();
+
+  useEffect(() => {
+    const init = async () => {
+      if (RTMConfig.serverUrl !== "") {
+        isLoadingRef.current = true;
+
+        try {
+          const uid = RTMConfig.uid;
+          const token = await fetchRTMToken(uid, requestConfig);
+
+          RTMConfig.rtmToken = token;
+          await RTMClient.login({ uid, token });
+          await RTMChannel.join();
+        } catch (err) {
+          setIsInitialized(false);
+          RTMConfig.isInitialized = false;
+          isLoadingRef.current = false;
+          console.log(err);
+        } finally {
+          setIsInitialized(true);
+          RTMConfig.isInitialized = true;
+          isLoadingRef.current = false;
+        }
+      } else {
+        console.log(
+          "Please make sure you specified the RTM token server URL in the configuration file",
+        );
+      }
+    };
+
+    if (!isInitialized && !isLoadingRef.current) {
+      init();
+    }
+  }, [RTMClient, RTMChannel, requestConfig, isInitialized]);
+
+  return isInitialized;
 };
 
 export default ChannelPage;

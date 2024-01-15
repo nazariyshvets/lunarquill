@@ -6,10 +6,8 @@ import cors from "cors";
 import passport from "passport";
 import bodyParser from "body-parser";
 import connection from "./db";
+import router from "./routes/main";
 import passportConfig from "./config/passport";
-import authenticateJWT from "./middleware/authenticateJWT";
-import auth from "./routes/auth";
-import rtc from "./routes/rtc";
 import isJSONString from "./utils/isJSONString";
 
 const app = express();
@@ -33,15 +31,7 @@ app.use(passport.initialize());
 // Passport config
 passportConfig(passport);
 // Routes
-app.use("/api/auth", auth);
-app.use("/api/rtc", authenticateJWT, rtc);
-
-// ===== PROTECTED ROUTE EXAMPLE START =====
-app.get("/api/profile", authenticateJWT, (req, res) => {
-  // This route will only be accessible for authenticated users
-  res.json({ user: req.user });
-});
-// ===== PROTECTED ROUTE EXAMPLE END =====
+app.use("/api", router);
 
 /// Global error handler using express-async-errors
 app.use((error: Error, _req: Request, res: Response, _next: NextFunction) => {

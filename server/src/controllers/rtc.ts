@@ -20,7 +20,7 @@ const generateRTCTokenController = (req: Request, res: Response) => {
     role,
     tokentype,
     uid,
-    expiry as string
+    expiry?.toString()
   );
   return res.json(generateRTCTokenService);
 };

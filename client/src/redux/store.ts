@@ -4,12 +4,12 @@ import storage from "redux-persist/lib/storage";
 import { createFilter } from "redux-persist-transform-filter";
 import authReducer, { AuthState } from "./authSlice";
 import rtcReducer, { RTCState } from "./rtcSlice";
-import { mainApi } from "../services/authService";
+import { mainApi } from "../services/mainService";
 
 interface RootState {
   auth: AuthState;
-  [mainApi.reducerPath]: ReturnType<typeof mainApi.reducer>;
   rtc: RTCState;
+  [mainApi.reducerPath]: ReturnType<typeof mainApi.reducer>;
 }
 
 const saveAuthSubsetFilter = createFilter("auth", ["userToken"]);
@@ -23,8 +23,8 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   auth: authReducer,
-  [mainApi.reducerPath]: mainApi.reducer,
   rtc: rtcReducer,
+  [mainApi.reducerPath]: mainApi.reducer,
 });
 
 const persistedReducer = persistReducer<RootState>(persistConfig, rootReducer);

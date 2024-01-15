@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { logout } from "../redux/authSlice";
-import { useGetUserDetailsQuery } from "../services/authService";
+import { useGetUserDetailsQuery } from "../services/mainService";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 

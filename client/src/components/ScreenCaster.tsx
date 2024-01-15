@@ -6,24 +6,26 @@ import {
   usePublish,
   useTrackEvent,
 } from "agora-rtc-react";
+import useRTMClient from "../hooks/useRTMClient";
+import useRTMChannel from "../hooks/useRTMChannel";
 import RTCConfig from "../config/RTCConfig";
 
 interface ScreenCasterProps {
   setIsLocalScreenShared: Dispatch<SetStateAction<boolean>>;
 }
 
-const userId = Math.floor(Math.random() * 1000000000);
-
 const ScreenCaster = ({ setIsLocalScreenShared }: ScreenCasterProps) => {
   const screenShareClient = useRTCScreenShareClient();
   const { screenTrack, error } = useLocalScreenTrack(true, {}, "disable");
+  const RTMClient = useRTMClient();
+  const RTMChannel = useRTMChannel(RTMClient);
 
   useJoin(
     {
       appid: RTCConfig.appId,
       channel: RTCConfig.channelName,
-      token: RTCConfig.rtcToken,
-      uid: userId,
+      token: RTCConfig.rtcTokenScreen,
+      uid: RTCConfig.uidScreen,
     },
     true,
     screenShareClient,
@@ -40,6 +42,24 @@ const ScreenCaster = ({ setIsLocalScreenShared }: ScreenCasterProps) => {
       setIsLocalScreenShared(false);
     }
   }, [error, setIsLocalScreenShared]);
+
+  useEffect(() => {
+    RTMClient.addOrUpdateChannelAttributes(
+      RTMChannel.channelId,
+      {
+        screenCasterId: RTCConfig.uidScreen.toString(),
+      },
+      { enableNotificationToChannelMembers: true },
+    ).catch((err) => console.log(err));
+
+    return () => {
+      RTMClient.deleteChannelAttributesByKeys(
+        RTMChannel.channelId,
+        ["screenCasterId"],
+        { enableNotificationToChannelMembers: true },
+      ).catch((err) => console.log(err));
+    };
+  }, [RTMClient, RTMChannel.channelId]);
 
   return <></>;
 };

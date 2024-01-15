@@ -1,4 +1,4 @@
-import express from "express";
+import { Router } from "express";
 import {
   registerUserController,
   verifyAccountController,
@@ -8,7 +8,7 @@ import {
   resetPasswordController,
 } from "../controllers/auth";
 
-const router = express.Router();
+const router = Router();
 
 router.post("/register", registerUserController);
 router.post("/account-verification", verifyAccountController);
