@@ -1,4 +1,4 @@
-import { useEffect, Dispatch, SetStateAction } from "react";
+import { useEffect, useCallback, Dispatch, SetStateAction } from "react";
 import {
   useRTCScreenShareClient,
   useJoin,
@@ -37,8 +37,17 @@ const ScreenCaster = ({ setIsLocalScreenShared }: ScreenCasterProps) => {
     setIsLocalScreenShared(false);
   });
 
+  const deleteChannelAttr = useCallback(() => {
+    RTMClient.deleteChannelAttributesByKeys(
+      RTMChannel.channelId,
+      ["screenCasterId"],
+      { enableNotificationToChannelMembers: true },
+    ).catch((err) => console.log("Error deleting channel attributes:", err));
+  }, [RTMClient, RTMChannel.channelId]);
+
   useEffect(() => {
     if (error) {
+      console.log("Error in ScreenCaster:", error);
       setIsLocalScreenShared(false);
     }
   }, [error, setIsLocalScreenShared]);
@@ -50,16 +59,20 @@ const ScreenCaster = ({ setIsLocalScreenShared }: ScreenCasterProps) => {
         screenCasterId: RTCConfig.uidScreen.toString(),
       },
       { enableNotificationToChannelMembers: true },
-    ).catch((err) => console.log(err));
+    ).catch((err) => console.log("Error adding channel attributes:", err));
 
     return () => {
-      RTMClient.deleteChannelAttributesByKeys(
-        RTMChannel.channelId,
-        ["screenCasterId"],
-        { enableNotificationToChannelMembers: true },
-      ).catch((err) => console.log(err));
+      deleteChannelAttr();
     };
-  }, [RTMClient, RTMChannel.channelId]);
+  }, [RTMClient, RTMChannel.channelId, deleteChannelAttr]);
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", deleteChannelAttr);
+
+    return () => {
+      window.removeEventListener("beforeunload", deleteChannelAttr);
+    };
+  }, [deleteChannelAttr]);
 
   return <></>;
 };
