@@ -113,6 +113,9 @@ const useInitRTM = (RTMClient: RtmClient, RTMChannel: RtmChannel) => {
 
           RTMConfig.rtmToken = token;
           await RTMClient.login({ uid, token });
+          await RTMClient.addOrUpdateLocalUserAttributes({
+            username: RTMConfig.username || "user",
+          });
           await RTMChannel.join();
         } catch (err) {
           setIsInitialized(false);

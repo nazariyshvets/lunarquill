@@ -160,7 +160,7 @@ const loginUser = async (email: string, password: string) => {
   const isMatch = await bcrypt.compare(password, user.password);
 
   if (isMatch) {
-    return generateJwtToken(email);
+    return generateJwtToken(user.id, email, user.username);
   } else {
     throw new Error("Password incorrect");
   }
@@ -178,10 +178,10 @@ const loginUserWithGoogle = async (code: string) => {
       },
     });
   const { email } = userInfoResponse.data;
-  const user = await User.findOne({ email });
+  let user = await User.findOne({ email });
   // Create user if does not exist
   if (!user) {
-    await User.create({ email, active: true });
+    user = await User.create({ email, active: true });
 
     sendEmail(
       email,
@@ -191,7 +191,7 @@ const loginUserWithGoogle = async (code: string) => {
     );
   }
 
-  return generateJwtToken(email);
+  return generateJwtToken(user.id, email, user.username);
 };
 
 const requestPasswordReset = async (email: string) => {

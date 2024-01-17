@@ -1,6 +1,6 @@
 import RTCConfig from "./RTCConfig";
 
-const RTMConfig = {
+const RTMConfig: RTMConfigType = {
   uid: RTCConfig.uid.toString(),
   appId: RTCConfig.appId,
   channelName: RTCConfig.channelName,
@@ -38,6 +38,7 @@ export type RTMConfigType = {
   cloudProxy: boolean;
   useStringUserId: boolean;
   isInitialized: boolean;
+  username?: string;
 };
 
 type EncryptionMode = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;

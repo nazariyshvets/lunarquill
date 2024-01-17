@@ -4,6 +4,7 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 import WelcomePage from "../pages/WelcomePage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
@@ -13,6 +14,10 @@ import PasswordResetPage from "../pages/PasswordResetPage";
 import ProtectedRoute from "./ProtectedRoute";
 import ProfilePage from "../pages/ProfilePage";
 import ChannelPage from "../pages/ChannelPage";
+import useAuth from "../hooks/useAuth";
+import RTCConfig from "../config/RTCConfig";
+import RTMConfig from "../config/RTMConfig";
+import DecodedUserToken from "../types/DecodedUserToken";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -40,6 +45,17 @@ const router = createBrowserRouter(
 );
 
 const App = () => {
+  const { userToken } = useAuth();
+
+  if (userToken) {
+    const decodedUserToken = jwtDecode<DecodedUserToken>(userToken);
+    const userId = decodedUserToken.id;
+
+    RTCConfig.uid = userId;
+    RTMConfig.uid = userId;
+    RTMConfig.username = decodedUserToken.username;
+  }
+
   return <RouterProvider router={router} />;
 };
 

@@ -1,6 +1,4 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ICameraVideoTrack, IMicrophoneAudioTrack } from "agora-rtc-react";
 import {
   BiCamera,
   BiCameraOff,
@@ -13,54 +11,34 @@ import {
 import RTCControlButton from "./RTCControlButton";
 
 interface RTCControlPanelProps {
-  localCameraTrack: ICameraVideoTrack | null;
-  localMicrophoneTrack: IMicrophoneAudioTrack | null;
+  isCameraMuted: boolean;
+  isMicrophoneMuted: boolean;
   isLocalScreenShared: boolean;
+  onToggleCamera: () => void;
+  onToggleMicrophone: () => void;
   onToggleScreen: () => void;
 }
 
 const RTCControlPanel = ({
-  localCameraTrack,
-  localMicrophoneTrack,
+  isCameraMuted,
+  isMicrophoneMuted,
   isLocalScreenShared,
+  onToggleCamera,
+  onToggleMicrophone,
   onToggleScreen,
 }: RTCControlPanelProps) => {
-  const [isCameraMuted, setIsCameraMuted] = useState(
-    localCameraTrack?.muted || false,
-  );
-  const [isMicrophoneMuted, setIsMicrophoneMuted] = useState(
-    localMicrophoneTrack?.muted || false,
-  );
   const navigate = useNavigate();
-
-  const toggleCamera = async () => {
-    try {
-      await localCameraTrack?.setMuted(!isCameraMuted);
-      setIsCameraMuted(!isCameraMuted);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const toggleMicrophone = async () => {
-    try {
-      await localMicrophoneTrack?.setMuted(!isMicrophoneMuted);
-      setIsMicrophoneMuted(!isMicrophoneMuted);
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   return (
     <div className="flex items-center justify-center gap-4 self-center text-white">
-      <RTCControlButton onClick={toggleCamera}>
+      <RTCControlButton onClick={onToggleCamera}>
         {isCameraMuted ? (
           <BiCameraOff className="h-full w-full" />
         ) : (
           <BiCamera className="h-full w-full text-primary" />
         )}
       </RTCControlButton>
-      <RTCControlButton onClick={toggleMicrophone}>
+      <RTCControlButton onClick={onToggleMicrophone}>
         {isMicrophoneMuted ? (
           <BiMicrophoneOff className="h-full w-full" />
         ) : (

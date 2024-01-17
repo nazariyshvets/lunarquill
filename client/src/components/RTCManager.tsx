@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  LocalVideoTrack,
-  RemoteUser,
   useRTCClient,
   useLocalCameraTrack,
   useLocalMicrophoneTrack,
@@ -17,9 +15,12 @@ import { useAlert } from "react-alert";
 import Loading from "./Loading";
 import VideoTracksContainer from "./VideoTracksContainer";
 import VideoTrack from "./VideoTrack";
+import LocalVideoTrack from "./LocalVideoTrack";
+import RemoteUser from "./RemoteUser";
 import ScreenCaster from "./ScreenCaster";
 import FeaturedUser from "./FeaturedUser";
 import RTCControlPanel from "./RTCControlPanel";
+import useRemoteUsersCameraState from "../hooks/useRemoteUsersCameraState";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useScreenCasterId from "../hooks/useScreenCasterId";
 import { setLocalTracks } from "../redux/rtcSlice";
@@ -27,21 +28,27 @@ import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import type UserVolume from "../types/UserVolume";
 
-const localUserId = RTCConfig.uid;
-
 // RTCManager component responsible for handling RTC-related logic and rendering UI
 const RTCManager = () => {
   const RTCClient = useRTCClient();
   const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
   const { isLoading: isLoadingMic, localMicrophoneTrack } =
     useLocalMicrophoneTrack();
-  const remoteUsers = useRemoteUsers();
-  const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
+  const [isCameraMuted, setIsCameraMuted] = useState(
+    localCameraTrack?.muted || false,
+  );
+  const [isMicrophoneMuted, setIsMicrophoneMuted] = useState(
+    localMicrophoneTrack?.muted || false,
+  );
   const [isLocalScreenShared, setIsLocalScreenShared] = useState(false);
+  const remoteUsers = useRemoteUsers();
+  const areRemoteUsersCameraMuted = useRemoteUsersCameraState();
+  const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
   const screenCasterId = useScreenCasterId();
   const windowWidth = useWindowWidth();
   const alert = useAlert();
   const dispatch = useAppDispatch();
+  const localUserId = RTCConfig.uid;
 
   // Join channel
   useJoin(
@@ -71,6 +78,24 @@ const RTCManager = () => {
   useEffect(() => {
     dispatch(setLocalTracks({ localCameraTrack, localMicrophoneTrack }));
   }, [dispatch, localCameraTrack, localMicrophoneTrack]);
+
+  const toggleCamera = async () => {
+    try {
+      await localCameraTrack?.setMuted(!isCameraMuted);
+      setIsCameraMuted(!isCameraMuted);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const toggleMicrophone = async () => {
+    try {
+      await localMicrophoneTrack?.setMuted(!isMicrophoneMuted);
+      setIsMicrophoneMuted(!isMicrophoneMuted);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const toggleScreen = () => {
     if (isLocalScreenShared) {
@@ -127,7 +152,11 @@ const RTCManager = () => {
           <VideoTracksContainer>
             {(screenCasterId || localUserId !== mostActiveUserId) && (
               <VideoTrack isActive={isUserActive(localUserId)}>
-                <LocalVideoTrack track={localCameraTrack} play />
+                <LocalVideoTrack
+                  track={localCameraTrack}
+                  play
+                  isMuted={isCameraMuted}
+                />
               </VideoTrack>
             )}
 
@@ -139,7 +168,12 @@ const RTCManager = () => {
               )
               .map((user) => (
                 <VideoTrack key={user.uid} isActive={isUserActive(user.uid)}>
-                  <RemoteUser user={user} playVideo playAudio />
+                  <RemoteUser
+                    user={user}
+                    isCameraMuted={areRemoteUsersCameraMuted[user.uid]}
+                    playVideo
+                    playAudio
+                  />
                 </VideoTrack>
               ))}
           </VideoTracksContainer>
@@ -148,17 +182,23 @@ const RTCManager = () => {
             {screenCasterId ? (
               <RemoteUser
                 user={getRemoteUser(screenCasterId)}
+                isCameraMuted={areRemoteUsersCameraMuted[screenCasterId]}
                 playVideo
                 playAudio
               />
             ) : mostActiveUserId && isUserRemote(mostActiveUserId) ? (
               <RemoteUser
                 user={getRemoteUser(mostActiveUserId)}
+                isCameraMuted={areRemoteUsersCameraMuted[mostActiveUserId]}
                 playVideo
                 playAudio
               />
             ) : mostActiveUserId && !isUserRemote(mostActiveUserId) ? (
-              <LocalVideoTrack track={localCameraTrack} play />
+              <LocalVideoTrack
+                track={localCameraTrack}
+                play
+                isMuted={isCameraMuted}
+              />
             ) : (
               <></>
             )}
@@ -171,7 +211,11 @@ const RTCManager = () => {
               size={screenCasterId ? "fixed" : "auto"}
               isActive={isUserActive(localUserId)}
             >
-              <LocalVideoTrack track={localCameraTrack} play />
+              <LocalVideoTrack
+                track={localCameraTrack}
+                play
+                isMuted={isCameraMuted}
+              />
             </VideoTrack>
 
             {remoteUsers
@@ -182,7 +226,12 @@ const RTCManager = () => {
                   size={screenCasterId ? "fixed" : "auto"}
                   isActive={isUserActive(user.uid)}
                 >
-                  <RemoteUser user={user} playVideo playAudio />
+                  <RemoteUser
+                    user={user}
+                    isCameraMuted={areRemoteUsersCameraMuted[user.uid]}
+                    playVideo
+                    playAudio
+                  />
                 </VideoTrack>
               ))}
           </VideoTracksContainer>
@@ -191,6 +240,7 @@ const RTCManager = () => {
             <FeaturedUser>
               <RemoteUser
                 user={getRemoteUser(screenCasterId)}
+                isCameraMuted={areRemoteUsersCameraMuted[screenCasterId]}
                 playVideo
                 playAudio
               />
@@ -204,9 +254,11 @@ const RTCManager = () => {
       )}
 
       <RTCControlPanel
-        localCameraTrack={localCameraTrack}
-        localMicrophoneTrack={localMicrophoneTrack}
+        isCameraMuted={isCameraMuted}
+        isMicrophoneMuted={isMicrophoneMuted}
         isLocalScreenShared={isLocalScreenShared}
+        onToggleCamera={toggleCamera}
+        onToggleMicrophone={toggleMicrophone}
         onToggleScreen={toggleScreen}
       />
     </div>
