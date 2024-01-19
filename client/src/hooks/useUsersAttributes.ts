@@ -7,6 +7,7 @@ interface UsersAttributes {
   [uid: string]: {
     username?: string;
     isCameraMuted?: boolean;
+    isMicrophoneMuted?: boolean;
   };
 }
 
@@ -18,9 +19,16 @@ const fetchUsersAttributes = async (
     const members = await RTMChannel.getMembers();
     const attributes = await Promise.all(
       members.map(async (uid) => {
-        const { isCameraMuted, ...rest } =
+        const { isCameraMuted, isMicrophoneMuted, ...rest } =
           await RTMClient.getUserAttributes(uid);
-        return [uid, { isCameraMuted: isCameraMuted === "true", ...rest }];
+        return [
+          uid,
+          {
+            isCameraMuted: isCameraMuted === "true",
+            isMicrophoneMuted: isMicrophoneMuted === "true",
+            ...rest,
+          },
+        ];
       }),
     );
 
