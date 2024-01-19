@@ -115,6 +115,7 @@ const useInitRTM = (RTMClient: RtmClient, RTMChannel: RtmChannel) => {
           await RTMClient.login({ uid, token });
           await RTMClient.addOrUpdateLocalUserAttributes({
             username: RTMConfig.username || "user",
+            isCameraMuted: "false",
           });
           await RTMChannel.join();
         } catch (err) {
@@ -137,6 +138,14 @@ const useInitRTM = (RTMClient: RtmClient, RTMChannel: RtmChannel) => {
     if (!isInitialized && !isLoadingRef.current) {
       init();
     }
+
+    return () => {
+      if (isInitialized) {
+        RTMClient.addOrUpdateLocalUserAttributes({
+          isCameraMuted: "false",
+        }).catch((err) => console.log(err));
+      }
+    };
   }, [RTMClient, RTMChannel, requestConfig, isInitialized]);
 
   return isInitialized;

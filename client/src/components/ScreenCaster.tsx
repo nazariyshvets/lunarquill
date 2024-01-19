@@ -16,7 +16,12 @@ interface ScreenCasterProps {
 
 const ScreenCaster = ({ setIsLocalScreenShared }: ScreenCasterProps) => {
   const screenShareClient = useRTCScreenShareClient();
-  const { screenTrack, error } = useLocalScreenTrack(true, {}, "disable");
+  const { screenTrack, error } = useLocalScreenTrack(
+    true,
+    {},
+    "disable",
+    screenShareClient || undefined,
+  );
   const RTMClient = useRTMClient();
   const RTMChannel = useRTMChannel(RTMClient);
 

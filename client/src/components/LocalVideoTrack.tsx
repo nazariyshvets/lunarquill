@@ -1,24 +1,14 @@
 import {
   LocalVideoTrack as AgoraLocalVideoTrack,
-  ILocalVideoTrack,
+  LocalVideoTrackProps as AgoraLocalVideoTrackProps,
 } from "agora-rtc-react";
 import MutedVideoPlaceholder from "./MutedVideoPlaceholder";
 
-interface LocalVideoTrackProps {
-  track: ILocalVideoTrack | null;
-  isMuted: boolean;
-  play?: boolean;
-}
-
-const LocalVideoTrack = ({
-  track,
-  isMuted,
-  play = false,
-}: LocalVideoTrackProps) => {
-  return isMuted ? (
+const LocalVideoTrack = ({ muted, ...rest }: AgoraLocalVideoTrackProps) => {
+  return muted ? (
     <MutedVideoPlaceholder text="You" />
   ) : (
-    <AgoraLocalVideoTrack track={track} play={play} />
+    <AgoraLocalVideoTrack muted={muted} {...rest} />
   );
 };
 

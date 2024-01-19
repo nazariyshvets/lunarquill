@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useRTCClient, IAgoraRTCRemoteUser } from "agora-rtc-react";
+import useUsersAttributes from "./useUsersAttributes";
+import RTMConfig from "../config/RTMConfig";
 import type RTCMediaType from "../types/RTCMediaType";
 
 const useRemoteUsersCameraState = () => {
-  // Mapping between remote user id and camera state (on/off)
   const [areRemoteUsersCameraMuted, setAreRemoteUsersCameraMuted] = useState<{
-    [key: string]: boolean;
+    [uid: string]: boolean;
   }>({});
   const RTCClient = useRTCClient();
+  const usersAttributes = useUsersAttributes();
 
   useEffect(() => {
     const handleUserPublished = (
@@ -15,9 +17,9 @@ const useRemoteUsersCameraState = () => {
       mediaType: RTCMediaType,
     ) => {
       if (mediaType === "video") {
-        setAreRemoteUsersCameraMuted((prevAreRemoteUsersCameraMuted) => ({
-          ...prevAreRemoteUsersCameraMuted,
-          [user.uid]: false,
+        setAreRemoteUsersCameraMuted((prev) => ({
+          ...prev,
+          [user.uid.toString()]: false,
         }));
       }
     };
@@ -27,8 +29,8 @@ const useRemoteUsersCameraState = () => {
       mediaType: RTCMediaType,
     ) => {
       if (mediaType === "video") {
-        setAreRemoteUsersCameraMuted((prevAreRemoteUsersCameraMuted) => ({
-          ...prevAreRemoteUsersCameraMuted,
+        setAreRemoteUsersCameraMuted((prev) => ({
+          ...prev,
           [user.uid]: true,
         }));
       }
@@ -42,6 +44,20 @@ const useRemoteUsersCameraState = () => {
       RTCClient.off("user-unpublished", handleUserUnpublished);
     };
   }, [RTCClient]);
+
+  useEffect(() => {
+    // remove local user
+    delete usersAttributes[RTMConfig.uid];
+    const camerasState = Object.entries(usersAttributes).reduce(
+      (acc, [uid, attributes]) => {
+        acc[uid] = attributes?.isCameraMuted || false;
+        return acc;
+      },
+      {} as { [uid: string]: boolean },
+    );
+
+    setAreRemoteUsersCameraMuted(camerasState);
+  }, [usersAttributes]);
 
   return areRemoteUsersCameraMuted;
 };

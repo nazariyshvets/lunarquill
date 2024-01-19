@@ -1,26 +1,19 @@
 import {
   RemoteUser as AgoraRemoteUser,
-  IAgoraRTCRemoteUser,
+  RemoteUserProps as AgoraRemoteUserProps,
 } from "agora-rtc-react";
 import MutedVideoPlaceholder from "./MutedVideoPlaceholder";
 
-interface RemoteUserProps {
-  user?: IAgoraRTCRemoteUser;
-  isCameraMuted?: boolean;
-  playVideo?: boolean;
-  playAudio?: boolean;
+interface RemoteUserProps extends AgoraRemoteUserProps {
+  username?: string;
 }
 
-const RemoteUser = ({
-  user,
-  isCameraMuted = false,
-  playVideo = false,
-  playAudio = false,
-}: RemoteUserProps) => {
-  return isCameraMuted ? (
-    <MutedVideoPlaceholder text="Remote User" />
-  ) : (
-    <AgoraRemoteUser user={user} playVideo={playVideo} playAudio={playAudio} />
+const RemoteUser = ({ username = "User", ...rest }: RemoteUserProps) => {
+  return (
+    <AgoraRemoteUser
+      cover={() => <MutedVideoPlaceholder text={username} />}
+      {...rest}
+    />
   );
 };
 
