@@ -25,7 +25,10 @@ import useRemoteUsersTracksState from "../hooks/useRemoteUsersTracksState";
 import useRemoteUsersAttributes from "../hooks/useUsersAttributes";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useScreenCasterId from "../hooks/useScreenCasterId";
-import { setLocalTracks } from "../redux/rtcSlice";
+import {
+  setLocalCameraTrack,
+  setLocalMicrophoneTrack,
+} from "../redux/rtcSlice";
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import type UserVolume from "../types/UserVolume";
@@ -84,8 +87,16 @@ const RTCManager = () => {
 
   // Set local tracks to the redux store
   useEffect(() => {
-    dispatch(setLocalTracks({ localCameraTrack, localMicrophoneTrack }));
-  }, [dispatch, localCameraTrack, localMicrophoneTrack]);
+    if (localCameraTrack) {
+      dispatch(setLocalCameraTrack(localCameraTrack));
+    }
+  }, [dispatch, localCameraTrack]);
+
+  useEffect(() => {
+    if (localMicrophoneTrack) {
+      dispatch(setLocalMicrophoneTrack(localMicrophoneTrack));
+    }
+  }, [dispatch, localMicrophoneTrack]);
 
   const toggleCamera = async () => {
     try {
@@ -151,8 +162,7 @@ const RTCManager = () => {
   };
 
   // Check if devices are still loading
-  const deviceLoading = isLoadingMic || isLoadingCam;
-  if (deviceLoading) {
+  if (isLoadingMic || isLoadingCam) {
     return <Loading />;
   }
 

@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import AgoraRTC, {
   AgoraRTCProvider,
   AgoraRTCScreenShareProvider,
-  useRTCClient,
 } from "agora-rtc-react";
 import { RtmChannel, RtmClient } from "agora-rtm-react";
 import Loading from "../components/Loading";
 import RTCManager from "../components/RTCManager";
+import VirtualBackground from "../components/VirtualBackground";
+import useRTC from "../hooks/useRTC";
 import useRTMClient from "../hooks/useRTMClient";
 import useRTMChannel from "../hooks/useRTMChannel";
 import useRTCTokenWillExpire from "../hooks/useRTCTokenWillExpire";
@@ -19,7 +20,7 @@ import RTCConfig from "../config/RTCConfig";
 import RTMConfig from "../config/RTMConfig";
 
 const ChannelPage = () => {
-  const RTCClient = useRTCClient(
+  const RTCClient = useRef(
     AgoraRTC.createClient({ codec: "vp8", mode: "rtc" }),
   );
   const RTCScreenSharingClient = useRef(
@@ -29,18 +30,20 @@ const ChannelPage = () => {
   const RTMChannel = useRTMChannel(RTMClient);
   const isRTCInitialized = useInitRTC();
   const isRTMInitialized = useInitRTM(RTMClient, RTMChannel);
+  const { isVirtualBgEnabled } = useRTC();
 
-  useRTCTokenWillExpire(RTCClient, RTCConfig.uid);
+  useRTCTokenWillExpire(RTCClient.current, RTCConfig.uid);
   useRTCTokenWillExpire(RTCScreenSharingClient.current, RTCConfig.uidScreen);
-  useAudioVolumeIndicator(RTCClient);
+  useAudioVolumeIndicator(RTCClient.current);
   useRTMTokenExpired(RTMClient);
 
   return !isRTCInitialized || !isRTMInitialized ? (
     <Loading />
   ) : (
-    <AgoraRTCProvider client={RTCClient}>
+    <AgoraRTCProvider client={RTCClient.current}>
       <AgoraRTCScreenShareProvider client={RTCScreenSharingClient.current}>
         <RTCManager />
+        {isVirtualBgEnabled && <VirtualBackground />}
       </AgoraRTCScreenShareProvider>
     </AgoraRTCProvider>
   );

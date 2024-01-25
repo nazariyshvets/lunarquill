@@ -1,0 +1,3 @@
+type VirtualBgBlurDegree = 1 | 2 | 3;
+
+export default VirtualBgBlurDegree;

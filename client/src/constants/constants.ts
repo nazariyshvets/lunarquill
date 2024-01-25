@@ -5,6 +5,8 @@ const ALPHANUMERIC_START_END_PATTERN = /^[a-zA-Z0-9](.*[a-zA-Z0-9])?$/;
 const NO_CONSECUTIVE_HYPHEN_UNDERSCORE_PATTERN =
   /^(?!.*[-_]{2})[a-zA-Z0-9_-]+$/;
 const EMAIL_PATTERN = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+const HEX_COLOR_PATTERN =
+  /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}|[A-Fa-f0-9]{8}|[A-Fa-f0-9]{4})$/;
 
 const ALERT_OPTIONS = {
   offset: "10px",
@@ -23,6 +25,7 @@ export {
   ALPHANUMERIC_START_END_PATTERN,
   NO_CONSECUTIVE_HYPHEN_UNDERSCORE_PATTERN,
   EMAIL_PATTERN,
+  HEX_COLOR_PATTERN,
   ALERT_OPTIONS,
   BASE_SERVER_URL,
   MOBILE_SCREEN_THRESHOLD,

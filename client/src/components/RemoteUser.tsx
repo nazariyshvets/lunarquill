@@ -26,7 +26,7 @@ const RemoteUser = ({
         {...rest}
       />
       {!playAudio && (
-        <BiMicrophoneOff className="absolute bottom-0 right-0 z-10 h-7 w-7 rounded-full bg-charcoal p-1 text-white sm:bottom-2 sm:right-2 sm:h-10 sm:w-10 sm:p-2" />
+        <BiMicrophoneOff className="absolute bottom-0 right-0 z-10 h-7 w-7 rounded-full bg-charcoal bg-opacity-50 p-1 text-white sm:h-9 sm:w-9 sm:p-2" />
       )}
     </div>
   );
