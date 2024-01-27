@@ -13,12 +13,20 @@ interface RootState {
 }
 
 const saveAuthSubsetFilter = createFilter("auth", ["userToken"]);
+const saveRtcSubsetFilter = createFilter("rtc", [
+  "isVirtualBgEnabled",
+  "virtualBgType",
+  "virtualBgBlurDegree",
+  "virtualBgColor",
+  "virtualBgImgId",
+  "virtualBgVideoId",
+]);
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"],
-  transforms: [saveAuthSubsetFilter],
+  whitelist: ["auth", "rtc"],
+  transforms: [saveAuthSubsetFilter, saveRtcSubsetFilter],
 };
 
 const rootReducer = combineReducers({

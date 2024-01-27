@@ -1,8 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { ICameraVideoTrack, IMicrophoneAudioTrack } from "agora-rtc-react";
 import isValidHexColorCode from "../utils/isValidHexColorCode";
-import isImage from "../utils/isImage";
-import isVideo from "../utils/isVideo";
 import type VirtualBgType from "../types/VirtualBgType";
 import type VirtualBgBlurDegree from "../types/VirtualBgBlurDegree";
 
@@ -14,8 +12,8 @@ export interface RTCState {
   virtualBgType: VirtualBgType;
   virtualBgBlurDegree: VirtualBgBlurDegree;
   virtualBgColor: string;
-  virtualBgImgSource: File | null;
-  virtualBgVideoSource: File | null;
+  virtualBgImgId: string | null;
+  virtualBgVideoId: string | null;
 }
 
 const initialState: RTCState = {
@@ -25,8 +23,8 @@ const initialState: RTCState = {
   virtualBgType: "blur",
   virtualBgBlurDegree: 2,
   virtualBgColor: "#00ff00",
-  virtualBgImgSource: null,
-  virtualBgVideoSource: null,
+  virtualBgImgId: null,
+  virtualBgVideoId: null,
 };
 
 const rtcSlice = createSlice({
@@ -62,15 +60,11 @@ const rtcSlice = createSlice({
         state.virtualBgColor = payload;
       }
     },
-    setVirtualBgImgSource: (state, { payload }: PayloadAction<File>) => {
-      if (isImage(payload)) {
-        state.virtualBgImgSource = payload;
-      }
+    setVirtualBgImgId: (state, { payload }: PayloadAction<string | null>) => {
+      state.virtualBgImgId = payload;
     },
-    setVirtualBgVideoSource: (state, { payload }: PayloadAction<File>) => {
-      if (isVideo(payload)) {
-        state.virtualBgVideoSource = payload;
-      }
+    setVirtualBgVideoId: (state, { payload }: PayloadAction<string | null>) => {
+      state.virtualBgVideoId = payload;
     },
   },
 });
@@ -82,7 +76,7 @@ export const {
   setVirtualBgType,
   setVirtualBgBlurDegree,
   setVirtualBgColor,
-  setVirtualBgImgSource,
-  setVirtualBgVideoSource,
+  setVirtualBgImgId,
+  setVirtualBgVideoId,
 } = rtcSlice.actions;
 export default rtcSlice.reducer;

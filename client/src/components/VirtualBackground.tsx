@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import AgoraRTC from "agora-rtc-react";
 import VirtualBackgroundExtension, {
   IVirtualBackgroundProcessor,
 } from "agora-extension-virtual-background";
 import { useAlert } from "react-alert";
+import { useIndexedDB } from "react-indexed-db-hook";
 import useRTC from "../hooks/useRTC";
+import type VirtualBgMediaSource from "../types/VirtualBgMediaSource";
 
 const VirtualBackground = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -13,12 +15,73 @@ const VirtualBackground = () => {
     virtualBgType,
     virtualBgBlurDegree,
     virtualBgColor,
-    virtualBgImgSource,
-    virtualBgVideoSource,
+    virtualBgImgId,
+    virtualBgVideoId,
   } = useRTC();
   const extension = useRef(new VirtualBackgroundExtension());
   const processor = useRef<IVirtualBackgroundProcessor>();
   const alert = useAlert();
+  const { getByID: getImgById } = useIndexedDB("virtualBgImages");
+  const { getByID: getVideoById } = useIndexedDB("virtualBgVideos");
+  const imgSrcUrlsRef = useRef<Record<string, string>>({});
+  const videoSrcUrlsRef = useRef<Record<string, string>>({});
+
+  const handleImageVirtualBg = useCallback(
+    async (imgId: string) => {
+      try {
+        if (!imgSrcUrlsRef.current[imgId]) {
+          const file: VirtualBgMediaSource = await getImgById(imgId);
+          const url = URL.createObjectURL(file.source);
+          imgSrcUrlsRef.current[imgId] = url;
+        }
+
+        const imgSrcUrl = imgSrcUrlsRef.current[imgId];
+
+        if (imgSrcUrl) {
+          const img = new Image();
+          img.src = imgSrcUrl;
+          img.onload = () => {
+            processor.current?.setOptions({ type: "img", source: img });
+          };
+        } else {
+          console.error(`URL for imgId ${imgId} is undefined`);
+        }
+      } catch (err) {
+        alert.error(`Error retrieving an image by id: ${err}`);
+        console.error("Error retrieving an image by id:", err);
+      }
+    },
+    [alert, getImgById],
+  );
+
+  const handleVideoVirtualBg = useCallback(
+    async (videoId: string) => {
+      try {
+        if (!videoSrcUrlsRef.current[videoId]) {
+          const file: VirtualBgMediaSource = await getVideoById(videoId);
+          const url = URL.createObjectURL(file.source);
+          videoSrcUrlsRef.current[videoId] = url;
+        }
+
+        const videoSrcUrl = videoSrcUrlsRef.current[videoId];
+
+        if (videoSrcUrl) {
+          const video = document.createElement("video");
+          video.src = videoSrcUrl;
+          video.setAttribute("loop", "");
+          video.onloadeddata = () => {
+            processor.current?.setOptions({ type: "video", source: video });
+          };
+        } else {
+          console.error(`URL for videoId ${videoId} is undefined`);
+        }
+      } catch (err) {
+        alert.error(`Error retrieving a video by id: ${err}`);
+        console.error("Error retrieving a video by id:", err);
+      }
+    },
+    [alert, getVideoById],
+  );
 
   useEffect(() => {
     const init = async () => {
@@ -82,28 +145,11 @@ const VirtualBackground = () => {
             color: virtualBgColor,
           });
           break;
-        case "img": {
-          const img = new Image();
-
-          if (virtualBgImgSource) {
-            img.src = URL.createObjectURL(virtualBgImgSource);
-            img.onload = () => {
-              processor.current?.setOptions({ type: "img", source: img });
-            };
-          }
+        case "img":
+          virtualBgImgId && handleImageVirtualBg(virtualBgImgId);
           break;
-        }
-        case "video": {
-          const video = document.createElement("video");
-
-          if (virtualBgVideoSource) {
-            video.src = URL.createObjectURL(virtualBgVideoSource);
-            video.setAttribute("loop", "");
-            video.onloadeddata = () => {
-              processor.current?.setOptions({ type: "video", source: video });
-            };
-          }
-        }
+        case "video":
+          virtualBgVideoId && handleVideoVirtualBg(virtualBgVideoId);
       }
     }
   }, [
@@ -111,9 +157,25 @@ const VirtualBackground = () => {
     virtualBgType,
     virtualBgBlurDegree,
     virtualBgColor,
-    virtualBgImgSource,
-    virtualBgVideoSource,
+    virtualBgImgId,
+    virtualBgVideoId,
+    alert,
+    getImgById,
+    getVideoById,
+    handleImageVirtualBg,
+    handleVideoVirtualBg,
   ]);
+
+  useEffect(() => {
+    const imgSrcUrls = imgSrcUrlsRef.current;
+    const videoSrcUrls = videoSrcUrlsRef.current;
+
+    // Clean up previously created urls
+    return () => {
+      Object.values(imgSrcUrls).forEach((url) => URL.revokeObjectURL(url));
+      Object.values(videoSrcUrls).forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
 
   return <></>;
 };
