@@ -162,7 +162,12 @@ const RTCManager = () => {
   };
 
   // Check if devices are still loading
-  if (isLoadingMic || isLoadingCam) {
+  if (
+    isLoadingCam ||
+    isLoadingMic ||
+    !localCameraTrack ||
+    !localMicrophoneTrack
+  ) {
     return <Loading />;
   }
 
