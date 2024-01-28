@@ -32,11 +32,9 @@ import {
 } from "../constants/constants";
 import type VirtualBgType from "../types/VirtualBgType";
 import type VirtualBgBlurDegree from "../types/VirtualBgBlurDegree";
+import type { VirtualBgBlurDegreeString } from "../types/VirtualBgBlurDegree";
 import type VirtualBgMediaSource from "../types/VirtualBgMediaSource";
-
-interface VirtualBackgroundConfiguratorProps {
-  onClose: () => void;
-}
+import type Configurator from "../types/Configurator";
 
 interface MediaSourcePickerProps {
   type: "image" | "video";
@@ -50,22 +48,30 @@ interface SelectableItemProps {
   onRemove: () => void;
 }
 
-const virtualBgTypeOptions = [
+const virtualBgTypeOptions: SelectOption[] = [
   { value: "blur", label: "Blur" },
   { value: "color", label: "Color" },
   { value: "img", label: "Image" },
   { value: "video", label: "Video" },
 ];
 
-const virtualBgBlurDegreeOptions = [
+const virtualBgTypeOptionsMap = virtualBgTypeOptions.reduce(
+  (res, option) => ({ ...res, [option.value]: option }),
+  {} as Record<VirtualBgType, SelectOption>,
+);
+
+const virtualBgBlurDegreeOptions: SelectOption[] = [
   { value: "1", label: "Low" },
   { value: "2", label: "Medium" },
   { value: "3", label: "High" },
 ];
 
-const VirtualBackgroundConfigurator = ({
-  onClose,
-}: VirtualBackgroundConfiguratorProps) => {
+const virtualBgBlurDegreeOptionsMap = virtualBgBlurDegreeOptions.reduce(
+  (res, option) => ({ ...res, [option.value]: option }),
+  {} as Record<VirtualBgBlurDegreeString, SelectOption>,
+);
+
+const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
   const {
     virtualBgType,
     virtualBgBlurDegree,
@@ -74,7 +80,9 @@ const VirtualBackgroundConfigurator = ({
     virtualBgVideoId,
   } = useRTC();
   const [type, setType] = useState(virtualBgType);
-  const [blurDegree, setBlurDegree] = useState(virtualBgBlurDegree);
+  const [blurDegree, setBlurDegree] = useState(
+    virtualBgBlurDegree.toString() as VirtualBgBlurDegreeString,
+  );
   const [color, setColor] = useState(virtualBgColor);
   const [imgId, setImgId] = useState(virtualBgImgId);
   const [videoId, setVideoId] = useState(virtualBgVideoId);
@@ -86,14 +94,12 @@ const VirtualBackgroundConfigurator = ({
       case "blur":
         return (
           <Select
-            value={virtualBgBlurDegreeOptions.find(
-              ({ value }) => value === blurDegree.toString(),
-            )}
+            value={virtualBgBlurDegreeOptionsMap[blurDegree]}
             options={virtualBgBlurDegreeOptions}
             className="w-full"
             onChange={(newValue) =>
               setBlurDegree(
-                Number((newValue as SelectOption).value) as VirtualBgBlurDegree,
+                (newValue as SelectOption).value as VirtualBgBlurDegreeString,
               )
             }
           />
@@ -125,7 +131,9 @@ const VirtualBackgroundConfigurator = ({
     switch (type) {
       case "blur":
         dispatch(setVirtualBgType("blur"));
-        dispatch(setVirtualBgBlurDegree(blurDegree));
+        dispatch(
+          setVirtualBgBlurDegree(Number(blurDegree) as VirtualBgBlurDegree),
+        );
         break;
       case "color":
         dispatch(setVirtualBgType("color"));
@@ -160,7 +168,7 @@ const VirtualBackgroundConfigurator = ({
     >
       <div className="flex min-h-[250px] flex-col items-center gap-2">
         <Select
-          value={virtualBgTypeOptions.find(({ value }) => value === type)}
+          value={virtualBgTypeOptionsMap[type]}
           options={virtualBgTypeOptions}
           className="z-50 w-full"
           onChange={(newValue) =>
