@@ -7,6 +7,7 @@ import { RtmChannel, RtmClient } from "agora-rtm-react";
 import Loading from "../components/Loading";
 import RTCManager from "../components/RTCManager";
 import VirtualBackground from "../components/VirtualBackground";
+import NoiseSuppression from "../components/NoiseSuppression";
 import useRTC from "../hooks/useRTC";
 import useRTMClient from "../hooks/useRTMClient";
 import useRTMChannel from "../hooks/useRTMChannel";
@@ -30,7 +31,7 @@ const ChannelPage = () => {
   const RTMChannel = useRTMChannel(RTMClient);
   const isRTCInitialized = useInitRTC();
   const isRTMInitialized = useInitRTM(RTMClient, RTMChannel);
-  const { isVirtualBgEnabled } = useRTC();
+  const { isVirtualBgEnabled, isNoiseSuppressionEnabled } = useRTC();
 
   useRTCTokenWillExpire(RTCClient.current, RTCConfig.uid);
   useRTCTokenWillExpire(RTCScreenSharingClient.current, RTCConfig.uidScreen);
@@ -44,6 +45,7 @@ const ChannelPage = () => {
       <AgoraRTCScreenShareProvider client={RTCScreenSharingClient.current}>
         <RTCManager />
         {isVirtualBgEnabled && <VirtualBackground />}
+        {isNoiseSuppressionEnabled && <NoiseSuppression />}
       </AgoraRTCScreenShareProvider>
     </AgoraRTCProvider>
   );

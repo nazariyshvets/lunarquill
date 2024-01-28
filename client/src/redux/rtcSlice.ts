@@ -3,6 +3,8 @@ import type { ICameraVideoTrack, IMicrophoneAudioTrack } from "agora-rtc-react";
 import isValidHexColorCode from "../utils/isValidHexColorCode";
 import type VirtualBgType from "../types/VirtualBgType";
 import type VirtualBgBlurDegree from "../types/VirtualBgBlurDegree";
+import type NoiseSuppressionMode from "../types/NoiseSuppressionMode";
+import type NoiseSuppressionLevel from "../types/NoiseSuppressionLevel";
 
 export interface RTCState {
   localCameraTrack: ICameraVideoTrack | null;
@@ -14,6 +16,10 @@ export interface RTCState {
   virtualBgColor: string;
   virtualBgImgId: string | null;
   virtualBgVideoId: string | null;
+  // Noise Suppression
+  isNoiseSuppressionEnabled: boolean;
+  noiseSuppressionMode: NoiseSuppressionMode;
+  noiseSuppressionLevel: NoiseSuppressionLevel;
 }
 
 const initialState: RTCState = {
@@ -25,6 +31,9 @@ const initialState: RTCState = {
   virtualBgColor: "#00ff00",
   virtualBgImgId: null,
   virtualBgVideoId: null,
+  isNoiseSuppressionEnabled: false,
+  noiseSuppressionMode: "NSNG",
+  noiseSuppressionLevel: "SOFT",
 };
 
 const rtcSlice = createSlice({
@@ -66,6 +75,24 @@ const rtcSlice = createSlice({
     setVirtualBgVideoId: (state, { payload }: PayloadAction<string | null>) => {
       state.virtualBgVideoId = payload;
     },
+    setIsNoiseSuppressionEnabled: (
+      state,
+      { payload }: PayloadAction<boolean>,
+    ) => {
+      state.isNoiseSuppressionEnabled = payload;
+    },
+    setNoiseSuppressionMode: (
+      state,
+      { payload }: PayloadAction<NoiseSuppressionMode>,
+    ) => {
+      state.noiseSuppressionMode = payload;
+    },
+    setNoiseSuppressionLevel: (
+      state,
+      { payload }: PayloadAction<NoiseSuppressionLevel>,
+    ) => {
+      state.noiseSuppressionLevel = payload;
+    },
   },
 });
 
@@ -78,5 +105,8 @@ export const {
   setVirtualBgColor,
   setVirtualBgImgId,
   setVirtualBgVideoId,
+  setIsNoiseSuppressionEnabled,
+  setNoiseSuppressionMode,
+  setNoiseSuppressionLevel,
 } = rtcSlice.actions;
 export default rtcSlice.reducer;

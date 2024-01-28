@@ -24,6 +24,7 @@
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "agora-extension-ai-denoiser": "^1.1.0",
     "agora-extension-virtual-background": "^1.2.0",
     "agora-rtc-react": "^2.1.0",
     "agora-rte-extension": "^1.2.4",

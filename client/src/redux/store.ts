@@ -20,6 +20,9 @@ const saveRtcSubsetFilter = createFilter("rtc", [
   "virtualBgColor",
   "virtualBgImgId",
   "virtualBgVideoId",
+  "isNoiseSuppressionEnabled",
+  "noiseSuppressionMode",
+  "noiseSuppressionLevel",
 ]);
 
 const persistConfig = {

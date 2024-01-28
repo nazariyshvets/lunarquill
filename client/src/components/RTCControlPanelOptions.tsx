@@ -3,42 +3,60 @@ import { BiCog } from "react-icons/bi";
 import Switch from "./Switch";
 import RTCControlButton from "./RTCControlButton";
 import VirtualBackgroundConfigurator from "./VirtualBackgroundConfigurator";
+import NoiseSuppressionConfigurator from "./NoiseSuppressionConfigurator";
 import useRTC from "../hooks/useRTC";
 import useAppDispatch from "../hooks/useAppDispatch";
-import { setIsVirtualBgEnabled } from "../redux/rtcSlice";
+import {
+  setIsVirtualBgEnabled,
+  setIsNoiseSuppressionEnabled,
+} from "../redux/rtcSlice";
 
-type ActiveConfigurator = "virtual-background";
+type ActiveConfigurator = "virtual-background" | "noise-suppression";
 
 interface OptionRowProps {
   title: string;
   isEnabled: boolean;
   onSwitchChange: () => void;
-  onConfigure: () => void;
+  onConfigure?: () => void;
 }
 
 const RTCControlPanelOptions = () => {
   const [activeConfigurator, setActiveConfigurator] =
     useState<ActiveConfigurator | null>(null);
-  const { isVirtualBgEnabled } = useRTC();
+  const { isVirtualBgEnabled, isNoiseSuppressionEnabled } = useRTC();
   const dispatch = useAppDispatch();
 
   const resetActiveConfigurator = () => {
     setActiveConfigurator(null);
   };
 
+  const optionConfigs = [
+    {
+      title: "Virtual background",
+      isEnabled: isVirtualBgEnabled,
+      onSwitchChange: () =>
+        dispatch(setIsVirtualBgEnabled(!isVirtualBgEnabled)),
+      onConfigure: () => setActiveConfigurator("virtual-background"),
+    },
+    {
+      title: "Noise suppression",
+      isEnabled: isNoiseSuppressionEnabled,
+      onSwitchChange: () =>
+        dispatch(setIsNoiseSuppressionEnabled(!isNoiseSuppressionEnabled)),
+      onConfigure: () => setActiveConfigurator("noise-suppression"),
+    },
+  ];
+
   return (
     <div className="absolute bottom-[calc(100%+1rem)] left-0 z-50 rounded bg-deep-black p-4 shadow-button">
-      <OptionRow
-        title="Virtual background"
-        isEnabled={isVirtualBgEnabled}
-        onSwitchChange={() =>
-          dispatch(setIsVirtualBgEnabled(!isVirtualBgEnabled))
-        }
-        onConfigure={() => setActiveConfigurator("virtual-background")}
-      />
+      {optionConfigs.map((config, i) => (
+        <OptionRow key={i} {...config} />
+      ))}
 
       {activeConfigurator === "virtual-background" ? (
         <VirtualBackgroundConfigurator onClose={resetActiveConfigurator} />
+      ) : activeConfigurator === "noise-suppression" ? (
+        <NoiseSuppressionConfigurator onClose={resetActiveConfigurator} />
       ) : (
         <></>
       )}
@@ -59,9 +77,12 @@ const OptionRow = ({
       </p>
       <div className="flex items-center gap-4">
         <Switch checked={isEnabled} onChange={onSwitchChange} />
-        <RTCControlButton onClick={onConfigure}>
-          <BiCog className="h-full w-full" />
-        </RTCControlButton>
+
+        {onConfigure && (
+          <RTCControlButton onClick={onConfigure}>
+            <BiCog className="h-full w-full" />
+          </RTCControlButton>
+        )}
       </div>
     </div>
   );
