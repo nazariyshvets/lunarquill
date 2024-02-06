@@ -1,13 +1,17 @@
+import { useMemo } from "react";
 import useAuth from "./useAuth";
 
 const useAuthRequestConfig = () => {
   const { userToken } = useAuth();
 
-  return {
-    headers: {
-      Authorization: `Bearer ${userToken}`,
-    },
-  };
+  return useMemo(
+    () => ({
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    }),
+    [userToken],
+  );
 };
 
 export default useAuthRequestConfig;

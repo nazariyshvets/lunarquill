@@ -4,6 +4,7 @@ import AgoraRTC, {
   AgoraRTCScreenShareProvider,
 } from "agora-rtc-react";
 import { RtmChannel, RtmClient } from "agora-rtm-react";
+import { AgoraChat } from "agora-chat";
 import Loading from "../components/Loading";
 import RTCManager from "../components/RTCManager";
 import VirtualBackground from "../components/VirtualBackground";
@@ -11,14 +12,18 @@ import NoiseSuppression from "../components/NoiseSuppression";
 import useRTC from "../hooks/useRTC";
 import useRTMClient from "../hooks/useRTMClient";
 import useRTMChannel from "../hooks/useRTMChannel";
+import useChatConnection from "../hooks/useChatConnection";
 import useRTCTokenWillExpire from "../hooks/useRTCTokenWillExpire";
 import useRTMTokenExpired from "../hooks/useRTMTokenExpired";
+import useChatTokenWillExpire from "../hooks/useChatTokenWillExpire";
 import useAudioVolumeIndicator from "../hooks/useAudioVolumeIndicator";
 import useAuthRequestConfig from "../hooks/useAuthRequestConfig";
 import fetchRTCToken from "../utils/fetchRTCToken";
 import fetchRTMToken from "../utils/fetchRTMToken";
+import fetchChatToken from "../utils/fetchChatToken";
 import RTCConfig from "../config/RTCConfig";
 import RTMConfig from "../config/RTMConfig";
+import ChatConfig from "../config/ChatConfig";
 
 const ChannelPage = () => {
   const RTCClient = useRef(
@@ -29,16 +34,19 @@ const ChannelPage = () => {
   );
   const RTMClient = useRTMClient();
   const RTMChannel = useRTMChannel(RTMClient);
+  const chatConnection = useChatConnection();
   const isRTCInitialized = useInitRTC();
   const isRTMInitialized = useInitRTM(RTMClient, RTMChannel);
+  const isChatInitialized = useInitChat(chatConnection);
   const { isVirtualBgEnabled, isNoiseSuppressionEnabled } = useRTC();
 
   useRTCTokenWillExpire(RTCClient.current, RTCConfig.uid);
   useRTCTokenWillExpire(RTCScreenSharingClient.current, RTCConfig.uidScreen);
   useAudioVolumeIndicator(RTCClient.current);
   useRTMTokenExpired(RTMClient);
+  useChatTokenWillExpire(chatConnection);
 
-  return !isRTCInitialized || !isRTMInitialized ? (
+  return !isRTCInitialized || !isRTMInitialized || !isChatInitialized ? (
     <Loading />
   ) : (
     <AgoraRTCProvider client={RTCClient.current}>
@@ -154,6 +162,58 @@ const useInitRTM = (RTMClient: RtmClient, RTMChannel: RtmChannel) => {
       }
     };
   }, [RTMClient, RTMChannel, requestConfig, isInitialized]);
+
+  return isInitialized;
+};
+
+const useInitChat = (connection: AgoraChat.Connection) => {
+  // Whether Chat is initialized
+  const [isInitialized, setIsInitialized] = useState(ChatConfig.isInitialized);
+  // Whether the process of initialization is happening
+  const isLoadingRef = useRef(false);
+  const requestConfig = useAuthRequestConfig();
+
+  useEffect(() => {
+    const init = async () => {
+      if (ChatConfig.serverUrl !== "") {
+        isLoadingRef.current = true;
+
+        try {
+          const uid = ChatConfig.uid;
+          const token = await fetchChatToken(uid, requestConfig);
+
+          ChatConfig.token = token;
+          await connection.open({
+            user: uid,
+            agoraToken: token,
+          });
+        } catch (err) {
+          setIsInitialized(false);
+          ChatConfig.isInitialized = false;
+          isLoadingRef.current = false;
+          console.log(err);
+        } finally {
+          setIsInitialized(true);
+          ChatConfig.isInitialized = true;
+          isLoadingRef.current = false;
+        }
+      } else {
+        console.log(
+          "Please make sure you specified the Chat token server URL in the configuration file",
+        );
+      }
+    };
+
+    if (!isInitialized && !isLoadingRef.current) {
+      init();
+    }
+
+    return () => {
+      if (isInitialized) {
+        connection.close();
+      }
+    };
+  }, [connection, isInitialized, requestConfig]);
 
   return isInitialized;
 };

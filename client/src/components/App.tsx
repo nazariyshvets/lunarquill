@@ -18,6 +18,7 @@ import ChannelPage from "../pages/ChannelPage";
 import useAuth from "../hooks/useAuth";
 import RTCConfig from "../config/RTCConfig";
 import RTMConfig from "../config/RTMConfig";
+import ChatConfig from "../config/ChatConfig";
 import DBConfig from "../config/DBConfig";
 import DecodedUserToken from "../types/DecodedUserToken";
 
@@ -54,10 +55,13 @@ const App = () => {
   if (userToken) {
     const decodedUserToken = jwtDecode<DecodedUserToken>(userToken);
     const userId = decodedUserToken.id;
+    const username = decodedUserToken.username;
 
     RTCConfig.uid = userId;
     RTMConfig.uid = userId;
-    RTMConfig.username = decodedUserToken.username;
+    RTMConfig.username = username;
+    ChatConfig.uid = userId;
+    ChatConfig.username = username;
   }
 
   return <RouterProvider router={router} />;

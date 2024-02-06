@@ -20,6 +20,8 @@ export interface RTCState {
   isNoiseSuppressionEnabled: boolean;
   noiseSuppressionMode: NoiseSuppressionMode;
   noiseSuppressionLevel: NoiseSuppressionLevel;
+  // Chat
+  isChatDisplayed: boolean;
 }
 
 const initialState: RTCState = {
@@ -34,6 +36,7 @@ const initialState: RTCState = {
   isNoiseSuppressionEnabled: false,
   noiseSuppressionMode: "NSNG",
   noiseSuppressionLevel: "SOFT",
+  isChatDisplayed: false,
 };
 
 const rtcSlice = createSlice({
@@ -93,6 +96,9 @@ const rtcSlice = createSlice({
     ) => {
       state.noiseSuppressionLevel = payload;
     },
+    setIsChatDisplayed: (state, { payload }: PayloadAction<boolean>) => {
+      state.isChatDisplayed = payload;
+    },
   },
 });
 
@@ -108,5 +114,6 @@ export const {
   setIsNoiseSuppressionEnabled,
   setNoiseSuppressionMode,
   setNoiseSuppressionLevel,
+  setIsChatDisplayed,
 } = rtcSlice.actions;
 export default rtcSlice.reducer;

@@ -9,6 +9,7 @@ import useAppDispatch from "../hooks/useAppDispatch";
 import {
   setIsVirtualBgEnabled,
   setIsNoiseSuppressionEnabled,
+  setIsChatDisplayed,
 } from "../redux/rtcSlice";
 
 type ActiveConfigurator = "virtual-background" | "noise-suppression";
@@ -23,7 +24,8 @@ interface OptionRowProps {
 const RTCControlPanelOptions = () => {
   const [activeConfigurator, setActiveConfigurator] =
     useState<ActiveConfigurator | null>(null);
-  const { isVirtualBgEnabled, isNoiseSuppressionEnabled } = useRTC();
+  const { isVirtualBgEnabled, isNoiseSuppressionEnabled, isChatDisplayed } =
+    useRTC();
   const dispatch = useAppDispatch();
 
   const resetActiveConfigurator = () => {
@@ -45,10 +47,15 @@ const RTCControlPanelOptions = () => {
         dispatch(setIsNoiseSuppressionEnabled(!isNoiseSuppressionEnabled)),
       onConfigure: () => setActiveConfigurator("noise-suppression"),
     },
+    {
+      title: "Chat",
+      isEnabled: isChatDisplayed,
+      onSwitchChange: () => dispatch(setIsChatDisplayed(!isChatDisplayed)),
+    },
   ];
 
   return (
-    <div className="absolute bottom-[calc(100%+1rem)] left-0 z-50 rounded bg-deep-black p-4 shadow-button">
+    <div className="absolute bottom-[calc(100%+1rem)] left-0 z-50 max-w-[288px] rounded bg-deep-black p-4 shadow-button sm:max-w-[400px]">
       {optionConfigs.map((config, i) => (
         <OptionRow key={i} {...config} />
       ))}
@@ -71,18 +78,18 @@ const OptionRow = ({
   onConfigure,
 }: OptionRowProps) => {
   return (
-    <div className="flex max-w-[256px] items-center justify-between gap-8 sm:max-w-[400px]">
+    <div className="flex h-10 max-w-full items-center justify-between gap-4 sm:h-14">
       <p className="max-w-full truncate text-sm font-medium text-primary-light sm:text-lg">
         {title}
       </p>
       <div className="flex items-center gap-4">
-        <Switch checked={isEnabled} onChange={onSwitchChange} />
-
         {onConfigure && (
           <RTCControlButton onClick={onConfigure}>
             <BiCog className="h-full w-full" />
           </RTCControlButton>
         )}
+
+        <Switch checked={isEnabled} onChange={onSwitchChange} />
       </div>
     </div>
   );

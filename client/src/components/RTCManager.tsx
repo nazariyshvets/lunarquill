@@ -20,11 +20,13 @@ import RemoteUser from "./RemoteUser";
 import ScreenCaster from "./ScreenCaster";
 import FeaturedUser from "./FeaturedUser";
 import RTCControlPanel from "./RTCControlPanel";
+import Chat from "./Chat";
 import useRTMClient from "../hooks/useRTMClient";
 import useRemoteUsersTracksState from "../hooks/useRemoteUsersTracksState";
 import useRemoteUsersAttributes from "../hooks/useUsersAttributes";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useScreenCasterId from "../hooks/useScreenCasterId";
+import useRTC from "../hooks/useRTC";
 import {
   setLocalCameraTrack,
   setLocalMicrophoneTrack,
@@ -51,6 +53,7 @@ const RTCManager = () => {
   const remoteUsersTracksState = useRemoteUsersTracksState();
   const remoteUsersAttrs = useRemoteUsersAttributes();
   const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
+  const { isChatDisplayed } = useRTC();
   const screenCasterId = useScreenCasterId();
   const windowWidth = useWindowWidth();
   const alert = useAlert();
@@ -87,15 +90,12 @@ const RTCManager = () => {
 
   // Set local tracks to the redux store
   useEffect(() => {
-    if (localCameraTrack) {
-      dispatch(setLocalCameraTrack(localCameraTrack));
-    }
+    localCameraTrack && dispatch(setLocalCameraTrack(localCameraTrack));
   }, [dispatch, localCameraTrack]);
 
   useEffect(() => {
-    if (localMicrophoneTrack) {
+    localMicrophoneTrack &&
       dispatch(setLocalMicrophoneTrack(localMicrophoneTrack));
-    }
   }, [dispatch, localMicrophoneTrack]);
 
   const toggleCamera = async () => {
@@ -122,13 +122,8 @@ const RTCManager = () => {
     }
   };
 
-  const toggleScreen = () => {
-    if (isLocalScreenShared) {
-      handleScreenShareEnd();
-    } else {
-      handleScreenShareStart();
-    }
-  };
+  const toggleScreen = () =>
+    isLocalScreenShared ? handleScreenShareEnd() : handleScreenShareStart();
 
   const handleScreenShareStart = () => {
     if (screenCasterId) {
@@ -138,28 +133,140 @@ const RTCManager = () => {
     }
   };
 
-  const handleScreenShareEnd = () => {
-    setIsLocalScreenShared(false);
-  };
+  const handleScreenShareEnd = () => setIsLocalScreenShared(false);
 
-  const isUserActive = (uid: UID) => {
-    return !!activeUsers.find((user) => user.uid === uid);
-  };
+  const isUserActive = (uid: UID) =>
+    !!activeUsers.find((user) => user.uid === uid);
 
-  const isUserRemote = (uid: UID) => {
-    return !!getRemoteUser(uid);
-  };
+  const isUserRemote = (uid: UID) => !!getRemoteUser(uid);
 
-  const getRemoteUser = (uid: UID) => {
-    return remoteUsers.find((user) => user.uid === uid);
-  };
+  const getRemoteUser = (uid: UID) =>
+    remoteUsers.find((user) => user.uid === uid);
 
-  const getMostActiveUserId = () => {
-    return isEmpty(activeUsers)
+  const getMostActiveUserId = () =>
+    isEmpty(activeUsers)
       ? null
       : activeUsers.reduce((res, user) => (user.level > res.level ? user : res))
           .uid;
-  };
+
+  const renderMobileView = () => (
+    <div className="h-full w-full overflow-auto">
+      <div
+        className={`h-full flex-col gap-4 ${
+          isChatDisplayed ? "hidden" : "flex"
+        }`}
+      >
+        <VideoTracksContainer>
+          {(screenCasterId || localUserId !== mostActiveUserId) && (
+            <VideoTrack isActive={isUserActive(localUserId)}>
+              <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
+            </VideoTrack>
+          )}
+
+          {remoteUsers
+            .filter((user) =>
+              screenCasterId
+                ? user.uid !== screenCasterId
+                : user.uid !== mostActiveUserId,
+            )
+            .map((user) => (
+              <VideoTrack key={user.uid} isActive={isUserActive(user.uid)}>
+                <RemoteUser
+                  username={remoteUsersAttrs[user.uid]?.username}
+                  user={user}
+                  playVideo={!remoteUsersTracksState[user.uid]?.camera?.muted}
+                  playAudio={
+                    !remoteUsersTracksState[user.uid]?.microphone?.muted
+                  }
+                />
+              </VideoTrack>
+            ))}
+        </VideoTracksContainer>
+
+        <FeaturedUser>
+          {screenCasterId ? (
+            <RemoteUser
+              user={getRemoteUser(screenCasterId)}
+              isScreenCaster
+              playVideo
+            />
+          ) : mostActiveUserId && isUserRemote(mostActiveUserId) ? (
+            <RemoteUser
+              username={remoteUsersAttrs[mostActiveUserId]?.username}
+              user={getRemoteUser(mostActiveUserId)}
+              playVideo={
+                !remoteUsersTracksState[mostActiveUserId]?.camera?.muted
+              }
+              playAudio={
+                !remoteUsersTracksState[mostActiveUserId]?.microphone?.muted
+              }
+            />
+          ) : mostActiveUserId && !isUserRemote(mostActiveUserId) ? (
+            <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
+          ) : (
+            <></>
+          )}
+        </FeaturedUser>
+      </div>
+
+      <div className={`h-full ${isChatDisplayed ? "" : "hidden"}`}>
+        <Chat />
+      </div>
+    </div>
+  );
+
+  const renderLaptopView = () => (
+    <div className="flex h-full w-full gap-4 overflow-auto">
+      <div className="flex h-full w-full flex-col gap-4">
+        <VideoTracksContainer isScreenShared={!!screenCasterId}>
+          <VideoTrack
+            size={screenCasterId ? "fixed" : "auto"}
+            isActive={isUserActive(localUserId)}
+          >
+            <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
+          </VideoTrack>
+
+          {remoteUsers
+            .filter((user) => user.uid !== screenCasterId)
+            .map((user) => (
+              <VideoTrack
+                key={user.uid}
+                size={screenCasterId ? "fixed" : "auto"}
+                isActive={isUserActive(user.uid)}
+              >
+                <RemoteUser
+                  username={remoteUsersAttrs[user.uid]?.username}
+                  user={user}
+                  playVideo={!remoteUsersTracksState[user.uid]?.camera?.muted}
+                  playAudio={
+                    !remoteUsersTracksState[user.uid]?.microphone?.muted
+                  }
+                />
+              </VideoTrack>
+            ))}
+        </VideoTracksContainer>
+
+        {screenCasterId && (
+          <FeaturedUser>
+            <RemoteUser
+              user={getRemoteUser(screenCasterId)}
+              isScreenCaster
+              playVideo
+            />
+          </FeaturedUser>
+        )}
+      </div>
+
+      <div className={`h-full ${isChatDisplayed ? "w-[400px]" : "hidden"}`}>
+        <Chat />
+      </div>
+    </div>
+  );
+
+  const renderScreenCaster = () =>
+    isLocalScreenShared && (
+      <ScreenCaster setIsLocalScreenShared={setIsLocalScreenShared} />
+    );
 
   // Check if devices are still loading
   if (
@@ -176,108 +283,8 @@ const RTCManager = () => {
 
   return (
     <div className="flex h-screen min-h-screen flex-col gap-4 overflow-auto bg-deep-black p-4">
-      {isMobile ? (
-        <>
-          <VideoTracksContainer>
-            {(screenCasterId || localUserId !== mostActiveUserId) && (
-              <VideoTrack isActive={isUserActive(localUserId)}>
-                <LocalVideoTrack
-                  track={localCameraTrack}
-                  play={!isCameraMuted}
-                />
-              </VideoTrack>
-            )}
-
-            {remoteUsers
-              .filter((user) =>
-                screenCasterId
-                  ? user.uid !== screenCasterId
-                  : user.uid !== mostActiveUserId,
-              )
-              .map((user) => (
-                <VideoTrack key={user.uid} isActive={isUserActive(user.uid)}>
-                  <RemoteUser
-                    username={remoteUsersAttrs[user.uid]?.username}
-                    user={user}
-                    playVideo={!remoteUsersTracksState[user.uid]?.camera?.muted}
-                    playAudio={
-                      !remoteUsersTracksState[user.uid]?.microphone?.muted
-                    }
-                  />
-                </VideoTrack>
-              ))}
-          </VideoTracksContainer>
-
-          <FeaturedUser>
-            {screenCasterId ? (
-              <RemoteUser
-                user={getRemoteUser(screenCasterId)}
-                isScreenCaster
-                playVideo
-              />
-            ) : mostActiveUserId && isUserRemote(mostActiveUserId) ? (
-              <RemoteUser
-                username={remoteUsersAttrs[mostActiveUserId]?.username}
-                user={getRemoteUser(mostActiveUserId)}
-                playVideo={
-                  !remoteUsersTracksState[mostActiveUserId]?.camera?.muted
-                }
-                playAudio={
-                  !remoteUsersTracksState[mostActiveUserId]?.microphone?.muted
-                }
-              />
-            ) : mostActiveUserId && !isUserRemote(mostActiveUserId) ? (
-              <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
-            ) : (
-              <></>
-            )}
-          </FeaturedUser>
-        </>
-      ) : (
-        <>
-          <VideoTracksContainer isScreenShared={!!screenCasterId}>
-            <VideoTrack
-              size={screenCasterId ? "fixed" : "auto"}
-              isActive={isUserActive(localUserId)}
-            >
-              <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
-            </VideoTrack>
-
-            {remoteUsers
-              .filter((user) => user.uid !== screenCasterId)
-              .map((user) => (
-                <VideoTrack
-                  key={user.uid}
-                  size={screenCasterId ? "fixed" : "auto"}
-                  isActive={isUserActive(user.uid)}
-                >
-                  <RemoteUser
-                    username={remoteUsersAttrs[user.uid]?.username}
-                    user={user}
-                    playVideo={!remoteUsersTracksState[user.uid]?.camera?.muted}
-                    playAudio={
-                      !remoteUsersTracksState[user.uid]?.microphone?.muted
-                    }
-                  />
-                </VideoTrack>
-              ))}
-          </VideoTracksContainer>
-
-          {screenCasterId && (
-            <FeaturedUser>
-              <RemoteUser
-                user={getRemoteUser(screenCasterId)}
-                isScreenCaster
-                playVideo
-              />
-            </FeaturedUser>
-          )}
-        </>
-      )}
-
-      {isLocalScreenShared && (
-        <ScreenCaster setIsLocalScreenShared={setIsLocalScreenShared} />
-      )}
+      {isMobile ? renderMobileView() : renderLaptopView()}
+      {renderScreenCaster()}
 
       <RTCControlPanel
         isCameraMuted={isCameraMuted}

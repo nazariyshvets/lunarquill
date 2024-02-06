@@ -23,6 +23,7 @@ const saveRtcSubsetFilter = createFilter("rtc", [
   "isNoiseSuppressionEnabled",
   "noiseSuppressionMode",
   "noiseSuppressionLevel",
+  "isChatDisplayed",
 ]);
 
 const persistConfig = {
