@@ -93,7 +93,7 @@ export default {
     },
   },
   plugins: [
-    plugin(function ({ matchUtilities, theme }) {
+    plugin(({ matchUtilities, theme }) => {
       matchUtilities(
         {
           "text-shadow": (value) => ({
@@ -102,6 +102,19 @@ export default {
         },
         { values: theme("textShadow") },
       );
+    }),
+    plugin(({ addUtilities, theme }) => {
+      const fontSize = theme("fontSize.2xs", "0.625rem");
+      const lineHeight = theme("lineHeight.2xs", "0.75rem");
+
+      const styles = {
+        ".text-2xs": {
+          "font-size": fontSize,
+          "line-height": lineHeight,
+        },
+      };
+
+      addUtilities(styles, ["responsive", "hover"]);
     }),
     scrollbarHide,
   ],
