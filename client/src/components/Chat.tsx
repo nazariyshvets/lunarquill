@@ -16,6 +16,7 @@ const Chat = () => {
   const [message, setMessage] = useState("");
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const connection = useChatConnection();
 
   const handleTextMessageInput = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -112,62 +113,124 @@ const Chat = () => {
     }
   };
 
+  const handleImageMessageSend = async () => {
+    if (!fileInputRef.current) {
+      return;
+    }
+
+    const file = AC.utils.getFileUrl(fileInputRef.current);
+    const options: AgoraChat.CreateMsgType = {
+      type: "img",
+      file,
+      to: ChatConfig.chatId,
+      chatType: "groupChat",
+      ext: {
+        senderUsername: ChatConfig.username,
+      },
+      onFileUploadComplete: (event) => {
+        file.url = event.url;
+      },
+    };
+
+    try {
+      const msg = AC.message.create(options);
+      const { serverMsgId } = await connection.send(msg);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: serverMsgId,
+          type: "img",
+          msg: file.url,
+          senderId: ChatConfig.uid,
+          senderUsername: ChatConfig.username,
+          recipientId: msg.to,
+          time: Date.now(),
+        },
+      ]);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const handleRecordedAudioSubmit = (blob: Blob) => {
     handleAudioMessageSend(blob);
     setIsRecordingAudio(false);
   };
 
+  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+
+    if (selectedFile) {
+      if (selectedFile.type.startsWith("image/")) {
+        handleImageMessageSend();
+      }
+    }
+  };
+
   useEffect(() => {
     connection.addEventHandler("message", {
-      onTextMessage: ({ id, type, msg, from, to, time, ext }) => {
+      onTextMessage: (message) => {
         setMessages((prev) => [
           ...prev,
           {
-            id,
-            type,
-            msg,
-            senderId: from,
-            senderUsername: ext?.senderUsername,
-            recipientId: to,
-            time,
+            id: message.id,
+            type: message.type,
+            msg: message.msg,
+            senderId: message.from,
+            senderUsername: message.ext?.senderUsername,
+            recipientId: message.to,
+            time: message.time,
           },
         ]);
       },
-      onAudioMessage: async ({
-        id,
-        type,
-        url,
-        filename,
-        from,
-        to,
-        time,
-        ext,
-      }) => {
-        if (url) {
+      onAudioMessage: async (message) => {
+        if (message.url) {
           try {
-            const audioFile = await fetchAudioFile(url, filename);
+            const audioFile = await fetchAudioFile(
+              message.url,
+              message.filename,
+            );
             const file: AgoraChat.FileObj = {
               data: audioFile,
-              filename,
+              filename: message.filename,
               filetype: audioFile.type,
-              url,
+              url: message.url,
             };
 
             setMessages((prev) => [
               ...prev,
               {
-                id,
-                type,
+                id: message.id,
+                type: message.type,
                 msg: file,
-                senderId: from,
-                senderUsername: ext?.senderUsername,
-                recipientId: to,
-                time,
+                senderId: message.from,
+                senderUsername: message.ext?.senderUsername,
+                recipientId: message.to,
+                time: message.time,
               },
             ]);
           } catch (err) {
             console.log("Error in onAudioMessage:", err);
           }
+        }
+      },
+      onImageMessage: async (message) => {
+        const url = message.url;
+
+        if (url) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: message.id,
+              type: message.type,
+              msg: url,
+              senderId: message.from,
+              senderUsername: message.ext?.senderUsername,
+              recipientId: message.to,
+              time: message.time,
+            },
+          ]);
         }
       },
     });
@@ -218,7 +281,13 @@ const Chat = () => {
           <SimpleButton onClick={() => setIsRecordingAudio(true)}>
             <BiMicrophone className="text-lg sm:text-xl" />
           </SimpleButton>
-          <SimpleButton>
+          <SimpleButton onClick={() => fileInputRef.current?.click()}>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileUpload}
+            />
             <BiPaperclip className="-rotate-45 text-lg sm:text-xl" />
           </SimpleButton>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { AgoraChat } from "agora-chat";
 import { BiPlayCircle, BiPauseCircle } from "react-icons/bi";
 import AudioVisualizer from "./AudioVisualizer";
@@ -14,13 +14,19 @@ const AudioMessage = ({ audio }: AudioMessageProps) => {
   const [playbackTime, setPlaybackTime] = useState(0);
   const audioRef = useRef(new Audio(audio.url));
 
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (isPlayingBack) {
       audioRef.current.pause();
       setIsPlayingBack(false);
     } else {
-      audioRef.current.play();
-      setIsPlayingBack(true);
+      try {
+        await audioRef.current.play();
+        setIsPlayingBack(true);
+      } catch (err) {
+        setIsPlayingBack(false);
+        setPlaybackTime(0);
+        console.log(err)
+      }
     }
   };
 
@@ -44,6 +50,7 @@ const AudioMessage = ({ audio }: AudioMessageProps) => {
     };
   }, []);
 
+  const blob = useMemo(() => getBlobFromFile(audio.data), [audio.data])
   const displayTimeStr = `${Math.floor(playbackTime / 60)}:${String(
     Math.floor(playbackTime) % 60,
   ).padStart(2, "0")}`;
@@ -52,7 +59,7 @@ const AudioMessage = ({ audio }: AudioMessageProps) => {
     <div className="flex h-10 w-[9999px] max-w-full items-center">
       <div className="relative h-full w-full">
         <AudioVisualizer
-          blob={getBlobFromFile(audio.data)}
+          blob={blob}
           currentTime={playbackTime}
         />
         <span className="absolute bottom-0 right-0 text-white text-2xs sm:text-xs">

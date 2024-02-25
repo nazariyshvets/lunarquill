@@ -259,7 +259,7 @@ const RTCManager = () => {
 
       <div
         className={`h-full flex-shrink-0 ${
-          isChatDisplayed ? "w-[400px]" : "hidden"
+          isChatDisplayed ? "sm:w-[280px] xl:w-[420px]" : "hidden"
         }`}
       >
         <Chat />

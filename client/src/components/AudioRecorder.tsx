@@ -38,7 +38,7 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
     }
   };
 
-  const togglePlayback = (blob: Blob) => {
+  const togglePlayback = async (blob: Blob) => {
     if (isPlayingBack) {
       playbackAudioRef.current.pause();
       setIsPlayingBack(false);
@@ -49,8 +49,14 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
         playbackAudioUrlRef.current = url;
       }
 
-      playbackAudioRef.current.play();
-      setIsPlayingBack(true);
+      try {
+        await playbackAudioRef.current.play();
+        setIsPlayingBack(true);
+      } catch(err) {
+        setIsPlayingBack(false);
+        setPlaybackTime(0);
+        console.log(err)
+      }
     }
   };
 
