@@ -1,7 +1,6 @@
-import { AgoraChat } from "agora-chat";
 import TextMessage from "./TextMessage";
 import AudioMessage from "./AudioMessage";
-import ImageMessage from "./ImageMessage";
+import ImageVideoMessage from "./ImageVideoMessage.tsx";
 import formatTime from "../utils/formatTime";
 import type Message from "../types/Message";
 
@@ -26,9 +25,11 @@ const MessageRow = ({
           />
         );
       case "audio":
-        return <AudioMessage audio={message.msg as AgoraChat.FileObj} />;
+        return <AudioMessage url={message.msg as string} />;
       case "img":
-        return <ImageMessage url={message.msg as string} />;
+        return <ImageVideoMessage type="img" url={message.msg as string} />;
+      case "video":
+        return <ImageVideoMessage type="video" url={message.msg as string} />;
       default:
         return <></>;
     }
