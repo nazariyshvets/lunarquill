@@ -1,6 +1,7 @@
 import TextMessage from "./TextMessage";
 import AudioMessage from "./AudioMessage";
-import ImageVideoMessage from "./ImageVideoMessage.tsx";
+import ImageVideoMessage from "./ImageVideoMessage";
+import FileMessage from "./FileMessage";
 import formatTime from "../utils/formatTime";
 import type Message from "../types/Message";
 
@@ -19,19 +20,39 @@ const MessageRow = ({
     switch (message.type) {
       case "txt":
         return (
-          <TextMessage
-            message={message.msg as string}
-            isLocalUser={isLocalUser}
-          />
+          message.msg && (
+            <TextMessage message={message.msg} isLocalUser={isLocalUser} />
+          )
         );
       case "audio":
-        return <AudioMessage url={message.msg as string} />;
+        return (
+          message.url &&
+          message.fileName && (
+            <AudioMessage url={message.url} fileName={message.fileName} />
+          )
+        );
       case "img":
-        return <ImageVideoMessage type="img" url={message.msg as string} />;
+        return (
+          message.url && <ImageVideoMessage type="img" url={message.url} />
+        );
       case "video":
-        return <ImageVideoMessage type="video" url={message.msg as string} />;
+        return (
+          message.url && <ImageVideoMessage type="video" url={message.url} />
+        );
+      case "file":
+        return (
+          message.url &&
+          message.fileType && (
+            <FileMessage
+              url={message.url}
+              fileType={message.fileType}
+              fileName={message.fileName}
+              fileSize={message.fileSize}
+            />
+          )
+        );
       default:
-        return <></>;
+        return;
     }
   };
 

@@ -99,6 +99,9 @@ const Chat = () => {
       chatType: "groupChat",
       ext: {
         senderUsername: ChatConfig.username,
+        fileType: file.filetype,
+        fileName: file.filename,
+        fileSize: file.data.size,
       },
       onFileUploadComplete: (event: AgoraChat.UploadFileResult) => {
         file.url = event.url;
@@ -114,7 +117,11 @@ const Chat = () => {
         {
           id: serverMsgId,
           type,
-          msg: file.url,
+          file,
+          fileType: file.filetype,
+          fileName: file.filename,
+          fileSize: file.data.size,
+          url: file.url,
           senderId: ChatConfig.uid,
           senderUsername: ChatConfig.username,
           recipientId: msg.to,
@@ -161,22 +168,22 @@ const Chat = () => {
         | AgoraChat.VideoMsgBody
         | AgoraChat.FileMsgBody,
     ) => {
-      const url = message.url;
-
-      if (url) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: message.id,
-            type: message.type,
-            msg: url,
-            senderId: message.from,
-            senderUsername: message.ext?.senderUsername,
-            recipientId: message.to,
-            time: message.time,
-          },
-        ]);
-      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: message.id,
+          type: message.type,
+          file: message.file,
+          fileType: message.ext?.fileType,
+          fileName: message.ext?.fileName,
+          fileSize: message.ext?.fileSize,
+          url: message.url,
+          senderId: message.from,
+          senderUsername: message.ext?.senderUsername,
+          recipientId: message.to,
+          time: message.time,
+        },
+      ]);
     };
 
     connection.addEventHandler("message", {

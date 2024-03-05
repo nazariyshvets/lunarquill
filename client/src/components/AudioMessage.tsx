@@ -4,13 +4,14 @@ import { BiPlayCircle, BiPauseCircle } from "react-icons/bi";
 import AudioVisualizer from "./AudioVisualizer";
 import SimpleButton from "./SimpleButton";
 import getBlobFromFile from "../utils/getBlobFromFile";
-import fetchAudioFile from "../utils/fetchAudioFile.ts";
+import fetchFile from "../utils/fetchFile.ts";
 
 interface AudioMessageProps {
   url: string;
+  fileName: string;
 }
 
-const AudioMessage = ({ url }: AudioMessageProps) => {
+const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
   const [audio, setAudio] = useState<File>();
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(0);
@@ -36,7 +37,7 @@ const AudioMessage = ({ url }: AudioMessageProps) => {
   useEffect(() => {
     const fetchAudio = async () => {
       try {
-        const audioFile = await fetchAudioFile(url, "audio.mp3");
+        const audioFile = await fetchFile(url, "audio/mp3", fileName);
 
         setAudio(audioFile);
       } catch (err) {
