@@ -1,9 +1,10 @@
 import { useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import PdfViewer from "./PdfViewer.tsx";
+import PdfViewer from "./PdfViewer";
+import TextFileViewer from "./TextFileViewer";
 
 interface MediaModalProps {
-  type: "img" | "video" | "pdf";
+  type: "img" | "video" | "pdf" | "txt";
   url: string;
   onClose: () => void;
 }
@@ -32,6 +33,8 @@ const MediaModal = ({ type, url, onClose }: MediaModalProps) => {
         );
       case "pdf":
         return url && <PdfViewer url={url} />;
+      case "txt":
+        return url && <TextFileViewer url={url} />;
       default:
         return;
     }

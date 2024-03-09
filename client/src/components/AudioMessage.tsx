@@ -4,7 +4,7 @@ import { BiPlayCircle, BiPauseCircle } from "react-icons/bi";
 import AudioVisualizer from "./AudioVisualizer";
 import SimpleButton from "./SimpleButton";
 import getBlobFromFile from "../utils/getBlobFromFile";
-import fetchFile from "../utils/fetchFile.ts";
+import fetchFile from "../utils/fetchFile";
 
 interface AudioMessageProps {
   url: string;

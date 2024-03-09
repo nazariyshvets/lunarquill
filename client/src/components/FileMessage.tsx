@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BiFile } from "react-icons/bi";
-import MediaModal from "./MediaModal.tsx";
-import formatBytes from "../utils/formatBytes.ts";
+import MediaModal from "./MediaModal";
+import formatBytes from "../utils/formatBytes";
 
 interface FileMessageProps {
   url: string;
@@ -34,7 +34,7 @@ const FileMessage = ({
         </div>
         <BiFile className="flex-shrink-0 text-xl sm:text-2xl" />
       </div>
-      {isOpen && fileType === "pdf" && (
+      {isOpen && (fileType === "pdf" || fileType === "txt") && (
         <MediaModal
           type={fileType}
           url={url}
