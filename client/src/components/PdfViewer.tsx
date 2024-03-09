@@ -6,7 +6,7 @@ import SimpleButton from "./SimpleButton";
 import {
   MOBILE_SCREEN_THRESHOLD,
   LAPTOP_SCREEN_THRESHOLD,
-} from "../constants/constants.ts";
+} from "../constants/constants";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
 

@@ -30,6 +30,7 @@ export default {
         white: "#fff",
         grey: "#474B4F",
         lightgrey: "#868686",
+        danger: "#EF4444",
       },
       boxShadow: {
         input: "0 0 5px rgba(0,255,0,.2), inset 0 0 5px rgba(0,255,0,.1)",
