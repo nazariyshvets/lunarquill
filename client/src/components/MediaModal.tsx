@@ -2,9 +2,10 @@ import { useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import PdfViewer from "./PdfViewer";
 import TextFileViewer from "./TextFileViewer";
+import type SupportedFileType from "../types/SupportedFileType";
 
 interface MediaModalProps {
-  type: "img" | "video" | "pdf" | "txt";
+  type: SupportedFileType;
   url: string;
   onClose: () => void;
 }
