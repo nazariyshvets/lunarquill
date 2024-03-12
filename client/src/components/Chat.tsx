@@ -1,5 +1,13 @@
-import { useState, useRef, useEffect, ChangeEvent, FormEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  ChangeEvent,
+  FormEvent,
+} from "react";
 import AC, { AgoraChat } from "agora-chat";
+import * as _ from "lodash";
 import { useAlert } from "react-alert";
 import { BiSend, BiSmile, BiMicrophone, BiPaperclip } from "react-icons/bi";
 import MessageGroup from "./MessageGroup";
@@ -7,6 +15,7 @@ import AudioRecorder from "./AudioRecorder";
 import SimpleButton from "./SimpleButton";
 import useChatConnection from "../hooks/useChatConnection";
 import groupMessages from "../utils/groupMessages";
+import parseMessage from "../utils/parseMessage";
 import ChatConfig from "../config/ChatConfig";
 import type Message from "../types/Message";
 
@@ -14,8 +23,11 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const areMessagesFetchingRef = useRef(false);
+  const messagesCursorRef = useRef<string>();
   const connection = useChatConnection();
   const alert = useAlert();
 
@@ -160,51 +172,96 @@ const Chat = () => {
     }
   };
 
+  const getMessages = useCallback(async () => {
+    areMessagesFetchingRef.current = true;
+
+    try {
+      const res = await connection.getHistoryMessages({
+        targetId: ChatConfig.chatId,
+        chatType: "groupChat",
+        pageSize: 20,
+        searchDirection: "up",
+        cursor: messagesCursorRef.current,
+      });
+
+      messagesCursorRef.current = res.cursor;
+      setMessages((prevState) => [
+        ...(
+          res.messages
+            .map((message) => parseMessage(message))
+            .filter(Boolean) as Message[]
+        ).reverse(),
+        ...prevState,
+      ]);
+    } catch (err) {
+      alert.error("Could not retrieve history messages");
+      console.log(err);
+    } finally {
+      areMessagesFetchingRef.current = false;
+    }
+  }, [connection, alert]);
+
   useEffect(() => {
-    const handleFileMessage = async (
+    getMessages();
+  }, [getMessages]);
+
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+
+    const handleMessagesContainerScroll = _.debounce(() => {
+      if (
+        !areMessagesFetchingRef.current &&
+        messagesCursorRef.current !== "undefined" &&
+        messagesContainer &&
+        messagesContainer.scrollTop <= 100
+      ) {
+        getMessages();
+      }
+    }, 200);
+
+    messagesContainer?.addEventListener(
+      "scroll",
+      handleMessagesContainerScroll,
+    );
+
+    return () => {
+      messagesContainer?.removeEventListener(
+        "scroll",
+        handleMessagesContainerScroll,
+      );
+    };
+  }, [getMessages]);
+
+  useEffect(() => {
+    const handleMessage = async (
       message:
+        | AgoraChat.TextMsgBody
         | AgoraChat.ImgMsgBody
         | AgoraChat.AudioMsgBody
         | AgoraChat.VideoMsgBody
         | AgoraChat.FileMsgBody,
     ) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: message.id,
-          type: message.type,
-          file: message.file,
-          fileType: message.ext?.fileType,
-          fileName: message.ext?.fileName,
-          fileSize: message.ext?.fileSize,
-          url: message.url,
-          senderId: message.from,
-          senderUsername: message.ext?.senderUsername,
-          recipientId: message.to,
-          time: message.time,
-        },
-      ]);
+      const parsedMessage = parseMessage(message);
+
+      if (parsedMessage) {
+        setMessages((prev) => [...prev, parsedMessage]);
+      }
     };
 
     connection.addEventHandler("message", {
-      onTextMessage: (message) => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: message.id,
-            type: message.type,
-            msg: message.msg,
-            senderId: message.from,
-            senderUsername: message.ext?.senderUsername,
-            recipientId: message.to,
-            time: message.time,
-          },
-        ]);
-      },
-      onImageMessage: handleFileMessage,
-      onAudioMessage: handleFileMessage,
-      onVideoMessage: handleFileMessage,
-      onFileMessage: handleFileMessage,
+      onTextMessage: handleMessage,
+      onImageMessage: handleMessage,
+      onAudioMessage: handleMessage,
+      onVideoMessage: handleMessage,
+      onFileMessage: handleMessage,
     });
 
     return () => {
@@ -216,7 +273,10 @@ const Chat = () => {
 
   return (
     <div className="flex h-full flex-col bg-deep-black">
-      <div className="flex h-full flex-col gap-4 overflow-auto px-1 py-2 sm:px-2 sm:py-3">
+      <div
+        ref={messagesContainerRef}
+        className="flex h-full flex-col gap-4 overflow-auto px-1 py-2 sm:px-2 sm:py-3"
+      >
         {messageGroups.map((group) => (
           <MessageGroup
             key={group.id}
