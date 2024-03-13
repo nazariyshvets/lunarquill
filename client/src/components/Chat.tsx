@@ -1,15 +1,20 @@
 import {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
   ChangeEvent,
   FormEvent,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
 } from "react";
 import AC, { AgoraChat } from "agora-chat";
 import * as _ from "lodash";
 import { useAlert } from "react-alert";
-import { BiSend, BiSmile, BiMicrophone, BiPaperclip } from "react-icons/bi";
+import EmojiPicker, {
+  EmojiStyle,
+  Theme,
+  EmojiClickData,
+} from "emoji-picker-react";
+import { BiMicrophone, BiPaperclip, BiSend, BiSmile } from "react-icons/bi";
 import MessageGroup from "./MessageGroup";
 import AudioRecorder from "./AudioRecorder";
 import SimpleButton from "./SimpleButton";
@@ -22,6 +27,7 @@ import type Message from "../types/Message";
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+  const [isEmojiPickerOpened, setIsEmojiPickerOpened] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
@@ -31,14 +37,34 @@ const Chat = () => {
   const connection = useChatConnection();
   const alert = useAlert();
 
-  const handleTextMessageInput = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto";
-      messageInputRef.current.style.height = `${
-        event.target.scrollHeight + 2
-      }px`;
+  const adjustMessageInputHeight = () => {
+    const messageInput = messageInputRef.current;
+
+    if (messageInput) {
+      messageInput.style.height = "auto";
+      messageInput.style.height = `${messageInput.scrollHeight + 2}px`;
     }
+  };
+
+  const handleTextMessageInput = (event: ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(event.target.value);
+    adjustMessageInputHeight();
+  };
+
+  const handleEmojiAdd = (data: EmojiClickData) => {
+    const messageInput = messageInputRef.current;
+
+    if (messageInput) {
+      setMessage(
+        (prevState) =>
+          prevState.slice(0, messageInput.selectionStart) +
+          data.emoji +
+          prevState.slice(messageInput.selectionEnd),
+      );
+      messageInput.focus();
+    }
+
+    adjustMessageInputHeight();
   };
 
   const handleTextMessageSend = async (event: FormEvent<HTMLFormElement>) => {
@@ -70,10 +96,7 @@ const Chat = () => {
 
       setMessages((prev) => [...prev, newMessage]);
       setMessage("");
-
-      if (messageInputRef.current) {
-        messageInputRef.current.style.height = "auto";
-      }
+      adjustMessageInputHeight();
     } catch (err) {
       alert.error(
         "An error occurred while sending text message. Please try again",
@@ -286,7 +309,7 @@ const Chat = () => {
         ))}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-lightgrey p-2">
+      <div className="relative flex flex-col gap-2 border-t border-lightgrey p-2">
         <form
           method="POST"
           onSubmit={handleTextMessageSend}
@@ -307,7 +330,10 @@ const Chat = () => {
         </form>
 
         <div className="flex items-center">
-          <SimpleButton>
+          <SimpleButton
+            isActive={isEmojiPickerOpened}
+            onClick={() => setIsEmojiPickerOpened((prevState) => !prevState)}
+          >
             <BiSmile className="text-lg sm:text-xl" />
           </SimpleButton>
           <SimpleButton onClick={() => setIsRecordingAudio(true)}>
@@ -323,6 +349,17 @@ const Chat = () => {
             <BiPaperclip className="-rotate-45 text-lg sm:text-xl" />
           </SimpleButton>
         </div>
+
+        {isEmojiPickerOpened && (
+          <div className="absolute bottom-full left-0">
+            <EmojiPicker
+              theme={Theme.DARK}
+              emojiStyle={EmojiStyle.NATIVE}
+              skinTonesDisabled
+              onEmojiClick={handleEmojiAdd}
+            />
+          </div>
+        )}
 
         {isRecordingAudio && (
           <AudioRecorder
