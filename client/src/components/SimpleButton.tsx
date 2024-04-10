@@ -7,13 +7,14 @@ interface SimpleButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const SimpleButton = ({
   children,
   isActive,
+  className,
   ...rest
 }: PropsWithChildren<SimpleButtonProps>) => {
   return (
     <button
       className={`p-2 transition-colors ${
         isActive ? "text-primary-light" : "text-white hover:text-primary-light"
-      }`}
+      } ${className}`}
       {...rest}
     >
       {children}

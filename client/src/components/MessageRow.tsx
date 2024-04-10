@@ -1,7 +1,9 @@
+import { BiSmile } from "react-icons/bi";
 import TextMessage from "./TextMessage";
 import AudioMessage from "./AudioMessage";
 import ImageVideoMessage from "./ImageVideoMessage";
 import FileMessage from "./FileMessage";
+import SimpleButton from "./SimpleButton";
 import formatTime from "../utils/formatTime";
 import type Message from "../types/Message";
 
@@ -9,12 +11,14 @@ interface MessageRowProps {
   message: Message;
   displayUsername?: boolean;
   isLocalUser?: boolean;
+  onReactionClick: () => void;
 }
 
 const MessageRow = ({
   message,
   displayUsername = false,
   isLocalUser = false,
+  onReactionClick,
 }: MessageRowProps) => {
   const getMessageWidget = () => {
     switch (message.type) {
@@ -57,28 +61,53 @@ const MessageRow = ({
   };
 
   return (
-    <div
-      className={`flex max-w-full flex-col gap-1 rounded bg-charcoal py-1 ${
-        isLocalUser
-          ? "items-end pl-2 pr-6 outline outline-1 outline-lightgrey"
-          : "pl-6 pr-2"
-      }`}
-    >
-      {displayUsername && (
-        <span className="truncate text-sm font-medium tracking-wider text-primary-light sm:text-base">
-          {isLocalUser ? "You" : message.senderUsername ?? "Unknown"}
-        </span>
-      )}
-
+    <div className={`flex flex-col gap-1 ${isLocalUser ? "items-end" : ""}`}>
       <div
-        className={`flex max-w-full items-end gap-2 sm:gap-4 ${
-          isLocalUser ? "flex-row-reverse" : ""
+        className={`group relative flex flex-col gap-1 rounded bg-charcoal py-1 ${
+          isLocalUser
+            ? "items-end pl-2 pr-6 outline outline-1 outline-lightgrey"
+            : "pl-6 pr-2"
         }`}
       >
-        {getMessageWidget()}
-        <i className="text-lightgrey text-2xs sm:text-xs">
-          {formatTime(message.time)}
-        </i>
+        {displayUsername && (
+          <span className="truncate text-sm font-medium tracking-wider text-primary-light sm:text-base">
+            {isLocalUser ? "You" : message.senderUsername ?? "Unknown"}
+          </span>
+        )}
+
+        <div
+          className={`flex max-w-full items-end gap-2 sm:gap-4 ${
+            isLocalUser ? "flex-row-reverse" : ""
+          }`}
+        >
+          {getMessageWidget()}
+          <i className="text-lightgrey text-2xs sm:text-xs">
+            {formatTime(message.time)}
+          </i>
+        </div>
+
+        <SimpleButton
+          className={`absolute bottom-0 hidden group-hover:inline-block ${
+            isLocalUser ? "right-full" : "left-full"
+          }`}
+          onClick={onReactionClick}
+        >
+          <BiSmile className="text-lg sm:text-xl" />
+        </SimpleButton>
+      </div>
+
+      <div className="flex items-center gap-1">
+        {message.reactions?.map((reaction) => (
+          <div
+            key={reaction.reaction}
+            className="flex items-center gap-1 rounded-full px-1 text-sm outline outline-1 outline-lightgrey sm:text-base"
+          >
+            <span role="img">
+              {String.fromCodePoint(parseInt(reaction.reaction, 16))}
+            </span>
+            <span className="text-primary-light">{reaction.count}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

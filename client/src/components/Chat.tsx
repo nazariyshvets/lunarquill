@@ -29,6 +29,7 @@ const Chat = () => {
   const [message, setMessage] = useState("");
   const [isEmojiPickerOpened, setIsEmojiPickerOpened] = useState(false);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [reactionMessageId, setReactionMessageId] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,10 +52,44 @@ const Chat = () => {
     adjustMessageInputHeight();
   };
 
-  const handleEmojiAdd = (data: EmojiClickData) => {
+  const handleEmojiAdd = async (data: EmojiClickData) => {
     const messageInput = messageInputRef.current;
 
-    if (messageInput) {
+    if (reactionMessageId) {
+      try {
+        const reactionMessage = messages.find(
+          (message) => message.id === reactionMessageId,
+        );
+        const prevReactions = reactionMessage?.reactions?.filter((reaction) =>
+          reaction.userList.find((userId) => userId === ChatConfig.uid),
+        );
+        const removeReactionPromises = prevReactions?.map((prevReaction) =>
+          connection.deleteReaction({
+            messageId: reactionMessageId,
+            reaction: prevReaction.reaction,
+          }),
+        );
+
+        if (removeReactionPromises) await Promise.all(removeReactionPromises);
+
+        await connection.addReaction({
+          messageId: reactionMessageId,
+          reaction: data.unified,
+        });
+      } catch (err) {
+        const reactionErr = err as { type: number; message: string };
+
+        if (reactionErr?.type === 1101) {
+          alert.info("Reaction is already added");
+        } else {
+          alert.info("Something went wrong");
+        }
+
+        console.log("Error adding a reaction:", reactionErr);
+      } finally {
+        setIsEmojiPickerOpened(false);
+      }
+    } else if (messageInput) {
       setMessage(
         (prevState) =>
           prevState.slice(0, messageInput.selectionStart) +
@@ -62,9 +97,8 @@ const Chat = () => {
           prevState.slice(messageInput.selectionEnd),
       );
       messageInput.focus();
+      adjustMessageInputHeight();
     }
-
-    adjustMessageInputHeight();
   };
 
   const handleTextMessageSend = async (event: FormEvent<HTMLFormElement>) => {
@@ -122,10 +156,6 @@ const Chat = () => {
     type: "img" | "audio" | "video" | "file",
     file: AgoraChat.FileObj,
   ) => {
-    if (!fileInputRef.current) {
-      return;
-    }
-
     const options: AgoraChat.CreateMsgType = {
       type,
       file,
@@ -285,6 +315,15 @@ const Chat = () => {
       onAudioMessage: handleMessage,
       onVideoMessage: handleMessage,
       onFileMessage: handleMessage,
+      onReactionChange: (reactionMsg) => {
+        setMessages((prevState) =>
+          prevState.map((message) =>
+            message.id === reactionMsg.messageId
+              ? { ...message, reactions: reactionMsg.reactions }
+              : message,
+          ),
+        );
+      },
     });
 
     return () => {
@@ -305,6 +344,10 @@ const Chat = () => {
             key={group.id}
             {...group}
             isLocalUser={group.messages.at(0)?.senderId === ChatConfig.uid}
+            onReactionClick={(messageId) => {
+              setReactionMessageId(messageId);
+              setIsEmojiPickerOpened(true);
+            }}
           />
         ))}
       </div>
@@ -332,7 +375,10 @@ const Chat = () => {
         <div className="flex items-center">
           <SimpleButton
             isActive={isEmojiPickerOpened}
-            onClick={() => setIsEmojiPickerOpened((prevState) => !prevState)}
+            onClick={() => {
+              setReactionMessageId("");
+              setIsEmojiPickerOpened((prevState) => !prevState);
+            }}
           >
             <BiSmile className="text-lg sm:text-xl" />
           </SimpleButton>
@@ -351,11 +397,14 @@ const Chat = () => {
         </div>
 
         {isEmojiPickerOpened && (
-          <div className="absolute bottom-full left-0">
+          <div className="absolute bottom-full left-0 z-20">
             <EmojiPicker
               theme={Theme.DARK}
               emojiStyle={EmojiStyle.NATIVE}
               skinTonesDisabled
+              height={300}
+              searchDisabled
+              previewConfig={{ showPreview: false }}
               onEmojiClick={handleEmojiAdd}
             />
           </div>

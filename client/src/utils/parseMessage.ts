@@ -10,6 +10,7 @@ const parseMessage = (message: AgoraChat.MessagesType) =>
         senderUsername: message.ext?.senderUsername,
         recipientId: message.to,
         time: message.time,
+        reactions: message.reactions,
       }
     : message.type === "img" ||
         message.type === "audio" ||
@@ -27,6 +28,7 @@ const parseMessage = (message: AgoraChat.MessagesType) =>
           senderUsername: message.ext?.senderUsername,
           recipientId: message.to,
           time: message.time,
+          reactions: message.reactions,
         }
       : undefined;
 

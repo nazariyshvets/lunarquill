@@ -13,7 +13,7 @@ const ImageVideoMessage = ({ type, url }: ImageVideoMessageProps) => {
     () => ({
       src: url,
       className:
-        "max-h-[128px] max-w-[128px] cursor-pointer rounded object-cover xl:max-h-[256px] xl:max-w-[256px]",
+        "max-h-[128px] max-w-[128px] cursor-pointer rounded object-cover xl:max-h-[240px] xl:max-w-[240px]",
       draggable: false,
       onClick: () => setIsOpened(true),
     }),
