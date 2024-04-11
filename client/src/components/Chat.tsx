@@ -9,11 +9,7 @@ import {
 import AC, { AgoraChat } from "agora-chat";
 import * as _ from "lodash";
 import { useAlert } from "react-alert";
-import EmojiPicker, {
-  EmojiStyle,
-  Theme,
-  EmojiClickData,
-} from "emoji-picker-react";
+import EmojiPicker, { EmojiStyle, Theme } from "emoji-picker-react";
 import { BiMicrophone, BiPaperclip, BiSend, BiSmile } from "react-icons/bi";
 import MessageGroup from "./MessageGroup";
 import AudioRecorder from "./AudioRecorder";
@@ -21,15 +17,18 @@ import SimpleButton from "./SimpleButton";
 import useChatConnection from "../hooks/useChatConnection";
 import groupMessages from "../utils/groupMessages";
 import parseMessage from "../utils/parseMessage";
+import { ERROR_CODES } from "../constants/constants";
 import ChatConfig from "../config/ChatConfig";
 import type Message from "../types/Message";
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
-  const [isEmojiPickerOpened, setIsEmojiPickerOpened] = useState(false);
+  const [emojiPickerState, setEmojiPickerState] = useState<{
+    isOpened: boolean;
+    messageId?: string;
+  }>();
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
-  const [reactionMessageId, setReactionMessageId] = useState("");
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,52 +51,91 @@ const Chat = () => {
     adjustMessageInputHeight();
   };
 
-  const handleEmojiAdd = async (data: EmojiClickData) => {
+  const handleEmojiAdd = async (emojiUnified: string) => {
     const messageInput = messageInputRef.current;
 
-    if (reactionMessageId) {
-      try {
-        const reactionMessage = messages.find(
-          (message) => message.id === reactionMessageId,
-        );
-        const prevReactions = reactionMessage?.reactions?.filter((reaction) =>
-          reaction.userList.find((userId) => userId === ChatConfig.uid),
-        );
-        const removeReactionPromises = prevReactions?.map((prevReaction) =>
-          connection.deleteReaction({
-            messageId: reactionMessageId,
-            reaction: prevReaction.reaction,
-          }),
-        );
-
-        if (removeReactionPromises) await Promise.all(removeReactionPromises);
-
-        await connection.addReaction({
-          messageId: reactionMessageId,
-          reaction: data.unified,
-        });
-      } catch (err) {
-        const reactionErr = err as { type: number; message: string };
-
-        if (reactionErr?.type === 1101) {
-          alert.info("Reaction is already added");
-        } else {
-          alert.info("Something went wrong");
-        }
-
-        console.log("Error adding a reaction:", reactionErr);
-      } finally {
-        setIsEmojiPickerOpened(false);
-      }
-    } else if (messageInput) {
+    if (messageInput) {
       setMessage(
         (prevState) =>
           prevState.slice(0, messageInput.selectionStart) +
-          data.emoji +
+          String.fromCodePoint(parseInt(emojiUnified, 16)) +
           prevState.slice(messageInput.selectionEnd),
       );
       messageInput.focus();
       adjustMessageInputHeight();
+    }
+  };
+
+  const handleReactionAdd = async (messageId: string, emojiUnified: string) => {
+    try {
+      await connection.addReaction({
+        messageId: messageId,
+        reaction: emojiUnified,
+      });
+    } catch (err) {
+      const reactionErr = err as { type: number; message: string };
+
+      if (reactionErr?.type === ERROR_CODES.REACTION_ALREADY_ADDED) {
+        alert.info("Reaction is already added");
+      } else {
+        alert.info("Something went wrong");
+      }
+
+      console.log("Error adding reaction:", reactionErr);
+    }
+  };
+
+  const getLocalUserReactions = (messageId: string) => {
+    const reactionMessage = messages.find(
+      (message) => message.id === messageId,
+    );
+
+    return reactionMessage?.reactions?.filter((reaction) =>
+      reaction.userList.find((userId) => userId === ChatConfig.uid),
+    );
+  };
+
+  const handleReactionRemove = async (messageId: string) => {
+    const localUserReactions = getLocalUserReactions(messageId);
+    const removeReactionPromises = localUserReactions?.map((prevReaction) =>
+      connection.deleteReaction({
+        messageId: messageId,
+        reaction: prevReaction.reaction,
+      }),
+    );
+
+    if (removeReactionPromises?.length) {
+      try {
+        await Promise.all(removeReactionPromises);
+      } catch (err) {
+        alert.error("Could not remove reaction. Please try again");
+        console.log("Error removing reaction:", err);
+      }
+    }
+  };
+
+  const handleReactionClick = async (
+    messageId: string,
+    emojiUnified?: string,
+  ) => {
+    if (emojiUnified) {
+      const localUserReactions = getLocalUserReactions(messageId);
+
+      await handleReactionRemove(messageId);
+
+      if (
+        !localUserReactions?.find(
+          (reaction) => reaction.reaction === emojiUnified,
+        )
+      ) {
+        await handleReactionAdd(messageId, emojiUnified);
+      }
+    } else {
+      setEmojiPickerState((prevState) => ({
+        ...prevState,
+        isOpened: true,
+        messageId,
+      }));
     }
   };
 
@@ -139,7 +177,7 @@ const Chat = () => {
     }
   };
 
-  const handleAudioMessageSend = async (blob: Blob) => {
+  const handleAudioMessageSend = (blob: Blob) => {
     const filename = "audio.mp3";
     const filetype = "audio/mp3";
     const file: AgoraChat.FileObj = {
@@ -344,10 +382,7 @@ const Chat = () => {
             key={group.id}
             {...group}
             isLocalUser={group.messages.at(0)?.senderId === ChatConfig.uid}
-            onReactionClick={(messageId) => {
-              setReactionMessageId(messageId);
-              setIsEmojiPickerOpened(true);
-            }}
+            onReactionClick={handleReactionClick}
           />
         ))}
       </div>
@@ -374,11 +409,14 @@ const Chat = () => {
 
         <div className="flex items-center">
           <SimpleButton
-            isActive={isEmojiPickerOpened}
-            onClick={() => {
-              setReactionMessageId("");
-              setIsEmojiPickerOpened((prevState) => !prevState);
-            }}
+            isActive={emojiPickerState?.isOpened}
+            onClick={() =>
+              setEmojiPickerState((prevState) => ({
+                ...prevState,
+                isOpened: !prevState?.isOpened,
+                messageId: "",
+              }))
+            }
           >
             <BiSmile className="text-lg sm:text-xl" />
           </SimpleButton>
@@ -396,7 +434,7 @@ const Chat = () => {
           </SimpleButton>
         </div>
 
-        {isEmojiPickerOpened && (
+        {emojiPickerState?.isOpened && (
           <div className="absolute bottom-full left-0 z-20">
             <EmojiPicker
               theme={Theme.DARK}
@@ -405,7 +443,20 @@ const Chat = () => {
               height={300}
               searchDisabled
               previewConfig={{ showPreview: false }}
-              onEmojiClick={handleEmojiAdd}
+              onEmojiClick={async (data) => {
+                const messageId = emojiPickerState?.messageId;
+
+                if (messageId) {
+                  await handleReactionClick(messageId, data.unified);
+                  setEmojiPickerState((prevState) => ({
+                    ...prevState,
+                    isOpened: false,
+                    messageId: "",
+                  }));
+                } else {
+                  await handleEmojiAdd(data.unified);
+                }
+              }}
             />
           </div>
         )}

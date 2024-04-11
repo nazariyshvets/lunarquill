@@ -3,7 +3,7 @@ import type { GroupedMessage } from "../utils/groupMessages";
 
 interface MessageGroupProps extends GroupedMessage {
   isLocalUser?: boolean;
-  onReactionClick: (messageId: string) => void;
+  onReactionClick: (messageId: string, emojiUnified?: string) => Promise<void>;
 }
 
 const MessageGroup = ({
@@ -36,7 +36,9 @@ const MessageGroup = ({
             message={message}
             isLocalUser={isLocalUser}
             displayUsername={i === 0}
-            onReactionClick={() => onReactionClick(message.id)}
+            onReactionClick={(emojiUnified?: string) =>
+              onReactionClick(message.id, emojiUnified)
+            }
           />
         ))}
       </div>

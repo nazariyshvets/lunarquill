@@ -5,13 +5,14 @@ import ImageVideoMessage from "./ImageVideoMessage";
 import FileMessage from "./FileMessage";
 import SimpleButton from "./SimpleButton";
 import formatTime from "../utils/formatTime";
+import ChatConfig from "../config/ChatConfig";
 import type Message from "../types/Message";
 
 interface MessageRowProps {
   message: Message;
   displayUsername?: boolean;
   isLocalUser?: boolean;
-  onReactionClick: () => void;
+  onReactionClick: (emojiUnified?: string) => Promise<void>;
 }
 
 const MessageRow = ({
@@ -90,24 +91,32 @@ const MessageRow = ({
           className={`absolute bottom-0 hidden group-hover:inline-block ${
             isLocalUser ? "right-full" : "left-full"
           }`}
-          onClick={onReactionClick}
+          onClick={() => onReactionClick()}
         >
           <BiSmile className="text-lg sm:text-xl" />
         </SimpleButton>
       </div>
 
       <div className="flex items-center gap-1">
-        {message.reactions?.map((reaction) => (
-          <div
-            key={reaction.reaction}
-            className="flex items-center gap-1 rounded-full px-1 text-sm outline outline-1 outline-lightgrey sm:text-base"
-          >
-            <span role="img">
-              {String.fromCodePoint(parseInt(reaction.reaction, 16))}
-            </span>
-            <span className="text-primary-light">{reaction.count}</span>
-          </div>
-        ))}
+        {message.reactions?.map(
+          (reaction) =>
+            reaction.count > 0 && (
+              <div
+                key={reaction.reaction}
+                className={`flex cursor-pointer items-center gap-1 rounded-full px-1 text-sm outline outline-1 sm:text-base ${
+                  reaction.userList.find((userId) => userId === ChatConfig.uid)
+                    ? "bg-charcoal outline-primary-light"
+                    : "outline-lightgrey"
+                }`}
+                onClick={() => onReactionClick(reaction.reaction)}
+              >
+                <span role="img">
+                  {String.fromCodePoint(parseInt(reaction.reaction, 16))}
+                </span>
+                <span className="text-primary-light">{reaction.count}</span>
+              </div>
+            ),
+        )}
       </div>
     </div>
   );
