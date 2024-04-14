@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+
 import { useAlert } from "react-alert";
 import { BiPlayCircle, BiPauseCircle } from "react-icons/bi";
+
 import AudioVisualizer from "./AudioVisualizer";
 import SimpleButton from "./SimpleButton";
 import getBlobFromFile from "../utils/getBlobFromFile";

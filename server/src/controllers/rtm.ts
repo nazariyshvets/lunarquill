@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import { generateRTMToken } from "../services/rtm";
 
 const generateRTMTokenController = (req: Request, res: Response) => {

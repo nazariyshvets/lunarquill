@@ -1,10 +1,12 @@
 import { Link } from "react-router-dom";
+
 import { logout } from "../redux/authSlice";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const ProfilePage = () => {
   const dispatch = useAppDispatch();
+
   useDocumentTitle("LunarQuill | Profile");
 
   return (

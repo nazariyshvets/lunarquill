@@ -8,6 +8,7 @@ const fetchFile = async (url: string, fileType: string, fileName: string) => {
     return new File([blob], fileName, { type: fileType });
   } catch (err) {
     console.log("Error fetching the audio file:", err);
+
     throw err;
   }
 };

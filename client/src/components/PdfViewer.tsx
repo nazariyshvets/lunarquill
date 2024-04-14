@@ -1,7 +1,9 @@
-import { useState, KeyboardEvent } from "react";
+import React, { useState } from "react";
+
 import { pdfjs, Document, Page } from "react-pdf";
 import { useWindowWidth } from "@react-hook/window-size";
 import { BiChevronLeftCircle, BiChevronRightCircle } from "react-icons/bi";
+
 import SimpleButton from "./SimpleButton";
 import {
   MOBILE_SCREEN_THRESHOLD,
@@ -64,7 +66,9 @@ const PdfViewer = ({ url }: PdfViewerProps) => {
     }
   };
 
-  const handleInputKeyPress = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (event.key === "Enter") {
       setPage();
     }

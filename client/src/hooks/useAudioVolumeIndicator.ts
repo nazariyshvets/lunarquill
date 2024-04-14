@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+
 import { IAgoraRTCClient } from "agora-rtc-react";
 
 const useAudioVolumeIndicator = (RTCClient: IAgoraRTCClient) => {

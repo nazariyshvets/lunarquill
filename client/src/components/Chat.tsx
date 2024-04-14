@@ -1,33 +1,33 @@
-import {
-  ChangeEvent,
-  FormEvent,
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-} from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+
 import AC, { AgoraChat } from "agora-chat";
-import * as _ from "lodash";
+import _ from "lodash";
 import { useAlert } from "react-alert";
 import EmojiPicker, {
+  EmojiClickData,
   EmojiStyle,
   Theme,
-  EmojiClickData,
 } from "emoji-picker-react";
-import { BiMicrophone, BiPaperclip, BiSend, BiSmile } from "react-icons/bi";
+import { BiMicrophone, BiPaperclip, BiSmile } from "react-icons/bi";
+
 import MessageGroup from "./MessageGroup";
-import AudioRecorder from "./AudioRecorder";
+import ChatForm from "./CharForm";
 import SimpleButton from "./SimpleButton";
+import AudioRecorder from "./AudioRecorder";
 import useChatConnection from "../hooks/useChatConnection";
 import groupMessages from "../utils/groupMessages";
 import parseMessage from "../utils/parseMessage";
+import { ERROR_CODES } from "../constants/constants";
 import ChatConfig from "../config/ChatConfig";
 import type Message from "../types/Message";
 
 const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
-  const [isEmojiPickerOpened, setIsEmojiPickerOpened] = useState(false);
+  const [emojiPickerState, setEmojiPickerState] = useState<{
+    isOpened: boolean;
+    messageId?: string;
+  }>();
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
@@ -36,6 +36,37 @@ const Chat = () => {
   const messagesCursorRef = useRef<string>();
   const connection = useChatConnection();
   const alert = useAlert();
+
+  // ===== FUNCTIONS =====
+
+  const getMessages = useCallback(async () => {
+    areMessagesFetchingRef.current = true;
+
+    try {
+      const res = await connection.getHistoryMessages({
+        targetId: ChatConfig.chatId,
+        chatType: "groupChat",
+        pageSize: 20,
+        searchDirection: "up",
+        cursor: messagesCursorRef.current,
+      });
+
+      messagesCursorRef.current = res.cursor;
+      setMessages((prevState) => [
+        ...(
+          res.messages
+            .map((message) => parseMessage(message))
+            .filter(Boolean) as Message[]
+        ).reverse(),
+        ...prevState,
+      ]);
+    } catch (err) {
+      alert.error("Could not retrieve history messages");
+      console.log(err);
+    } finally {
+      areMessagesFetchingRef.current = false;
+    }
+  }, [connection, alert]);
 
   const adjustMessageInputHeight = () => {
     const messageInput = messageInputRef.current;
@@ -46,28 +77,28 @@ const Chat = () => {
     }
   };
 
-  const handleTextMessageInput = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  const getLocalUserReactions = (messageId: string) => {
+    const reactionMessage = messages.find(
+      (message) => message.id === messageId,
+    );
+
+    return reactionMessage?.reactions?.filter((reaction) =>
+      reaction.userList.find((userId) => userId === ChatConfig.uid),
+    );
+  };
+
+  // ===== HANDLERS =====
+
+  const handleTextMessageInput = (
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     setMessage(event.target.value);
     adjustMessageInputHeight();
   };
 
-  const handleEmojiAdd = (data: EmojiClickData) => {
-    const messageInput = messageInputRef.current;
-
-    if (messageInput) {
-      setMessage(
-        (prevState) =>
-          prevState.slice(0, messageInput.selectionStart) +
-          data.emoji +
-          prevState.slice(messageInput.selectionEnd),
-      );
-      messageInput.focus();
-    }
-
-    adjustMessageInputHeight();
-  };
-
-  const handleTextMessageSend = async (event: FormEvent<HTMLFormElement>) => {
+  const handleTextMessageSend = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
     const options: AgoraChat.CreateMsgType = {
@@ -105,7 +136,7 @@ const Chat = () => {
     }
   };
 
-  const handleAudioMessageSend = async (blob: Blob) => {
+  const handleAudioMessageSend = (blob: Blob) => {
     const filename = "audio.mp3";
     const filetype = "audio/mp3";
     const file: AgoraChat.FileObj = {
@@ -122,10 +153,6 @@ const Chat = () => {
     type: "img" | "audio" | "video" | "file",
     file: AgoraChat.FileObj,
   ) => {
-    if (!fileInputRef.current) {
-      return;
-    }
-
     const options: AgoraChat.CreateMsgType = {
       type,
       file,
@@ -171,12 +198,101 @@ const Chat = () => {
     }
   };
 
+  const handleEmojiAdd = async (emojiUnified: string) => {
+    const messageInput = messageInputRef.current;
+
+    if (messageInput) {
+      setMessage(
+        (prevState) =>
+          prevState.slice(0, messageInput.selectionStart) +
+          String.fromCodePoint(parseInt(emojiUnified, 16)) +
+          prevState.slice(messageInput.selectionEnd),
+      );
+      messageInput.focus();
+      adjustMessageInputHeight();
+    }
+  };
+
+  const handleEmojiClick = async (data: EmojiClickData) => {
+    const messageId = emojiPickerState?.messageId;
+
+    if (messageId) {
+      await handleReactionClick(messageId, data.unified);
+      setEmojiPickerState((prevState) => ({
+        ...prevState,
+        isOpened: false,
+        messageId: "",
+      }));
+    } else {
+      await handleEmojiAdd(data.unified);
+    }
+  };
+
+  const handleReactionAdd = async (messageId: string, emojiUnified: string) => {
+    try {
+      await connection.addReaction({
+        messageId: messageId,
+        reaction: emojiUnified,
+      });
+    } catch (err) {
+      const reactionErr = err as { type: number; message: string };
+
+      if (reactionErr?.type === ERROR_CODES.REACTION_ALREADY_ADDED) {
+        alert.info("Reaction is already added");
+      } else {
+        alert.info("Something went wrong");
+      }
+
+      console.log("Error adding reaction:", reactionErr);
+    }
+  };
+
+  const handleReactionRemove = async (messageId: string) => {
+    const localUserReactions = getLocalUserReactions(messageId);
+    const removeReactionPromises = localUserReactions?.map((prevReaction) =>
+      connection.deleteReaction({
+        messageId: messageId,
+        reaction: prevReaction.reaction,
+      }),
+    );
+
+    if (removeReactionPromises?.length) {
+      try {
+        await Promise.all(removeReactionPromises);
+      } catch (err) {
+        alert.error("Could not remove reaction. Please try again");
+        console.log("Error removing reaction:", err);
+      }
+    }
+  };
+
+  const handleReactionClick = async (
+    messageId: string,
+    emojiUnified?: string,
+  ) => {
+    if (emojiUnified) {
+      const localUserReactions = getLocalUserReactions(messageId);
+      const isReactionSelected = localUserReactions?.find(
+        (reaction) => reaction.reaction === emojiUnified,
+      );
+
+      await handleReactionRemove(messageId);
+
+      if (!isReactionSelected) await handleReactionAdd(messageId, emojiUnified);
+    } else
+      setEmojiPickerState((prevState) => ({
+        ...prevState,
+        isOpened: true,
+        messageId,
+      }));
+  };
+
   const handleRecordedAudioSubmit = (blob: Blob) => {
     handleAudioMessageSend(blob);
     setIsRecordingAudio(false);
   };
 
-  const handleFileUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
 
     if (selectedFile && fileInputRef.current) {
@@ -195,46 +311,9 @@ const Chat = () => {
     }
   };
 
-  const getMessages = useCallback(async () => {
-    areMessagesFetchingRef.current = true;
-
-    try {
-      const res = await connection.getHistoryMessages({
-        targetId: ChatConfig.chatId,
-        chatType: "groupChat",
-        pageSize: 20,
-        searchDirection: "up",
-        cursor: messagesCursorRef.current,
-      });
-
-      messagesCursorRef.current = res.cursor;
-      setMessages((prevState) => [
-        ...(
-          res.messages
-            .map((message) => parseMessage(message))
-            .filter(Boolean) as Message[]
-        ).reverse(),
-        ...prevState,
-      ]);
-    } catch (err) {
-      alert.error("Could not retrieve history messages");
-      console.log(err);
-    } finally {
-      areMessagesFetchingRef.current = false;
-    }
-  }, [connection, alert]);
-
   useEffect(() => {
     getMessages();
   }, [getMessages]);
-
-  useEffect(() => {
-    const messagesContainer = messagesContainerRef.current;
-
-    if (messagesContainer) {
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-  }, [messages]);
 
   useEffect(() => {
     const messagesContainer = messagesContainerRef.current;
@@ -264,6 +343,14 @@ const Chat = () => {
   }, [getMessages]);
 
   useEffect(() => {
+    const messagesContainer = messagesContainerRef.current;
+
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
     const handleMessage = async (
       message:
         | AgoraChat.TextMsgBody
@@ -285,6 +372,15 @@ const Chat = () => {
       onAudioMessage: handleMessage,
       onVideoMessage: handleMessage,
       onFileMessage: handleMessage,
+      onReactionChange: (reactionMsg) => {
+        setMessages((prevState) =>
+          prevState.map((message) =>
+            message.id === reactionMsg.messageId
+              ? { ...message, reactions: reactionMsg.reactions }
+              : message,
+          ),
+        );
+      },
     });
 
     return () => {
@@ -305,34 +401,29 @@ const Chat = () => {
             key={group.id}
             {...group}
             isLocalUser={group.messages.at(0)?.senderId === ChatConfig.uid}
+            onReactionClick={handleReactionClick}
           />
         ))}
       </div>
 
       <div className="relative flex flex-col gap-2 border-t border-lightgrey p-2">
-        <form
-          method="POST"
+        <ChatForm
+          ref={messageInputRef}
+          message={message}
+          onMessageInput={handleTextMessageInput}
           onSubmit={handleTextMessageSend}
-          className="flex items-end"
-        >
-          <textarea
-            ref={messageInputRef}
-            value={message}
-            rows={1}
-            placeholder="Message..."
-            className="ml-2 max-h-[4rem] w-full resize-none border-b-2 border-white bg-transparent px-2 text-sm text-white caret-primary-light outline-none placeholder:text-lightgrey focus:border-primary-light sm:max-h-[4.6rem] sm:text-base"
-            onInput={handleTextMessageInput}
-          />
-
-          <SimpleButton>
-            <BiSend className="text-xl sm:text-2xl" />
-          </SimpleButton>
-        </form>
+        />
 
         <div className="flex items-center">
           <SimpleButton
-            isActive={isEmojiPickerOpened}
-            onClick={() => setIsEmojiPickerOpened((prevState) => !prevState)}
+            isActive={emojiPickerState?.isOpened}
+            onClick={() =>
+              setEmojiPickerState((prevState) => ({
+                ...prevState,
+                isOpened: !prevState?.isOpened,
+                messageId: "",
+              }))
+            }
           >
             <BiSmile className="text-lg sm:text-xl" />
           </SimpleButton>
@@ -350,13 +441,16 @@ const Chat = () => {
           </SimpleButton>
         </div>
 
-        {isEmojiPickerOpened && (
-          <div className="absolute bottom-full left-0">
+        {emojiPickerState?.isOpened && (
+          <div className="absolute bottom-full left-0 z-20">
             <EmojiPicker
               theme={Theme.DARK}
               emojiStyle={EmojiStyle.NATIVE}
               skinTonesDisabled
-              onEmojiClick={handleEmojiAdd}
+              height={300}
+              searchDisabled
+              previewConfig={{ showPreview: false }}
+              onEmojiClick={handleEmojiClick}
             />
           </div>
         )}

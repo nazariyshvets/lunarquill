@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import { generateChatToken } from "../services/chat";
 
 const generateChatTokenController = (req: Request, res: Response) => {

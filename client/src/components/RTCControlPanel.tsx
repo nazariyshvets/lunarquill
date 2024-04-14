@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import {
   BiDotsHorizontalRounded,
   BiCamera,
@@ -10,6 +11,7 @@ import {
   BiWindowClose,
   BiPhoneOff,
 } from "react-icons/bi";
+
 import RTCControlPanelOptions from "./RTCControlPanelOptions";
 import RTCControlButton from "./RTCControlButton";
 
@@ -33,9 +35,7 @@ const RTCControlPanel = ({
   const [areOptionsDisplayed, setAreOptionsDisplayed] = useState(false);
   const navigate = useNavigate();
 
-  const toggleOptions = () => {
-    setAreOptionsDisplayed((prev) => !prev);
-  };
+  const toggleOptions = () => setAreOptionsDisplayed((prev) => !prev);
 
   return (
     <div className="relative flex w-full items-center justify-center gap-4 text-white">

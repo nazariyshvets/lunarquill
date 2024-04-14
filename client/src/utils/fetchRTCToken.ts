@@ -1,5 +1,6 @@
 import { UID } from "agora-rtc-react";
 import axios, { AxiosRequestConfig } from "axios";
+
 import RTCConfig from "../config/RTCConfig";
 
 const fetchRTCToken = async (
@@ -17,11 +18,12 @@ const fetchRTCToken = async (
       return data;
     } catch (err) {
       console.log(err);
+
       throw err;
     }
-  } else {
-    return RTCConfig.rtcToken;
   }
+
+  return RTCConfig.rtcToken;
 };
 
 export default fetchRTCToken;

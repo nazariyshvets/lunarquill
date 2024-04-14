@@ -1,5 +1,6 @@
 import { Strategy, ExtractJwt, StrategyOptions } from "passport-jwt";
 import { PassportStatic } from "passport";
+
 import User from "../models/User";
 
 const opts: StrategyOptions = {
@@ -11,16 +12,12 @@ export default (passport: PassportStatic) => {
   passport.use(
     new Strategy(opts, (jwt_payload, done) => {
       User.findOne({ email: jwt_payload.email })
-        .then((user) => {
-          if (user) {
-            return done(null, user);
-          }
-          return done(null, false);
-        })
+        .then((user) => done(null, user ?? false))
         .catch((err) => {
           console.log(err);
+
           return done(err, false);
         });
-    })
+    }),
   );
 };

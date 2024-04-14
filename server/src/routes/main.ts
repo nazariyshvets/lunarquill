@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import auth from "./auth";
 import rtc from "./rtc";
 import rtm from "./rtm";
@@ -12,8 +13,8 @@ router.use("/rtc", authenticateJWT, rtc);
 router.use("/rtm", authenticateJWT, rtm);
 router.use("/chat", authenticateJWT, chat);
 
-router.get("/profile", authenticateJWT, (req, res) => {
-  res.json({ user: req.user });
-});
+router.get("/profile", authenticateJWT, (req, res) =>
+  res.json({ user: req.user }),
+);
 
 export default router;

@@ -28,6 +28,7 @@ const MediaModal = ({ type, url, onClose }: MediaModalProps) => {
         return (
           <video
             src={url}
+            controls
             className="max-h-full max-w-full rounded object-cover"
             draggable={false}
           />

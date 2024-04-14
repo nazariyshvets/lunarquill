@@ -1,6 +1,8 @@
 import { PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
+
 import { capitalize } from "lodash";
+
 import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 

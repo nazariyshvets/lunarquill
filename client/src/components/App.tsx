@@ -4,8 +4,10 @@ import {
   Route,
   RouterProvider,
 } from "react-router-dom";
+
 import { jwtDecode } from "jwt-decode";
 import { initDB } from "react-indexed-db-hook";
+
 import WelcomePage from "../pages/WelcomePage";
 import LoginPage from "../pages/LoginPage";
 import SignupPage from "../pages/SignupPage";
@@ -20,7 +22,7 @@ import RTCConfig from "../config/RTCConfig";
 import RTMConfig from "../config/RTMConfig";
 import ChatConfig from "../config/ChatConfig";
 import DBConfig from "../config/DBConfig";
-import DecodedUserToken from "../types/DecodedUserToken";
+import type DecodedUserToken from "../types/DecodedUserToken";
 
 initDB(DBConfig);
 

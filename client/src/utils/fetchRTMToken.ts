@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
+
 import RTMConfig from "../config/RTMConfig";
 
 const fetchRTMToken = async (
@@ -15,11 +16,12 @@ const fetchRTMToken = async (
       return data;
     } catch (err) {
       console.log(err);
+
       throw err;
     }
-  } else {
-    return RTMConfig.rtmToken;
   }
+
+  return RTMConfig.rtmToken;
 };
 
 export default fetchRTMToken;

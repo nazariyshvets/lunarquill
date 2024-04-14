@@ -13,6 +13,7 @@ interface Message {
   senderUsername?: string;
   recipientId: string;
   time: number;
+  reactions?: AgoraChat.Reaction[];
 }
 
 export default Message;

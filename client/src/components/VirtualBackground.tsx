@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+
 import AgoraRTC from "agora-rtc-react";
 import VirtualBackgroundExtension, {
   IVirtualBackgroundProcessor,
 } from "agora-extension-virtual-background";
 import { useAlert } from "react-alert";
 import { useIndexedDB } from "react-indexed-db-hook";
+
 import useRTC from "../hooks/useRTC";
 import type VirtualBgMediaSource from "../types/VirtualBgMediaSource";
 
@@ -32,6 +34,7 @@ const VirtualBackground = () => {
         if (!imgSrcUrlsRef.current[imgId]) {
           const file: VirtualBgMediaSource = await getImgById(imgId);
           const url = URL.createObjectURL(file.source);
+
           imgSrcUrlsRef.current[imgId] = url;
         }
 
@@ -39,6 +42,7 @@ const VirtualBackground = () => {
 
         if (imgSrcUrl) {
           const img = new Image();
+
           img.src = imgSrcUrl;
           img.onload = () => {
             processor.current?.setOptions({ type: "img", source: img });
@@ -60,6 +64,7 @@ const VirtualBackground = () => {
         if (!videoSrcUrlsRef.current[videoId]) {
           const file: VirtualBgMediaSource = await getVideoById(videoId);
           const url = URL.createObjectURL(file.source);
+
           videoSrcUrlsRef.current[videoId] = url;
         }
 
@@ -67,6 +72,7 @@ const VirtualBackground = () => {
 
         if (videoSrcUrl) {
           const video = document.createElement("video");
+
           video.src = videoSrcUrl;
           video.setAttribute("loop", "");
           video.onloadeddata = () => {

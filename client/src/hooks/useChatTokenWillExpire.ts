@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+
 import { AgoraChat } from "agora-chat";
+
 import useAuthRequestConfig from "./useAuthRequestConfig";
 import fetchChatToken from "../utils/fetchChatToken";
 import ChatConfig from "../config/ChatConfig";

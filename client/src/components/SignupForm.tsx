@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
+
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa6";
+
 import InputWithIcon from "./InputWithIcon";
 import Button from "./Button";
 import { registerUser } from "../redux/authActions";

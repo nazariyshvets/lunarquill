@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+
 import { useAudioRecorder } from "react-audio-voice-recorder";
 import { useAlert } from "react-alert";
 import {
@@ -7,6 +8,7 @@ import {
   BiCheckCircle,
   BiXCircle,
 } from "react-icons/bi";
+
 import AudioVisualizer from "./AudioVisualizer";
 import SimpleButton from "./SimpleButton";
 
@@ -52,10 +54,10 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
       try {
         await playbackAudioRef.current.play();
         setIsPlayingBack(true);
-      } catch(err) {
+      } catch (err) {
         setIsPlayingBack(false);
         setPlaybackTime(0);
-        console.log(err)
+        console.log(err);
       }
     }
   };

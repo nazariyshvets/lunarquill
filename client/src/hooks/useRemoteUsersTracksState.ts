@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+
 import { useRTCClient, IAgoraRTCRemoteUser } from "agora-rtc-react";
+
 import useUsersAttributes from "./useUsersAttributes";
 import RTMConfig from "../config/RTMConfig";
 import type RTCMediaType from "../types/RTCMediaType";

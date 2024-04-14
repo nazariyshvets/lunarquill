@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import AgoraRTC from "agora-rtc-react";
 import {
   AIDenoiserExtension,
@@ -7,6 +8,7 @@ import {
   IAIDenoiserProcessor,
 } from "agora-extension-ai-denoiser";
 import { useAlert } from "react-alert";
+
 import useRTC from "../hooks/useRTC";
 
 const NoiseSuppression = () => {

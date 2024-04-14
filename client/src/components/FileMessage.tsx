@@ -1,5 +1,7 @@
 import { useState } from "react";
+
 import { BiFile, BiCloudDownload } from "react-icons/bi";
+
 import MediaModal from "./MediaModal";
 import formatBytes from "../utils/formatBytes";
 import isSupportedFileType from "../utils/isSupportedFileType";
