@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
+
 import ChatConfig from "../config/ChatConfig";
 
 const fetchChatToken = async (
@@ -15,11 +16,12 @@ const fetchChatToken = async (
       return data;
     } catch (err) {
       console.log(err);
+
       throw err;
     }
-  } else {
-    return ChatConfig.token;
   }
+
+  return ChatConfig.token;
 };
 
 export default fetchChatToken;

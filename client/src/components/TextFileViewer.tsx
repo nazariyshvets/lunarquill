@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+
 import ReactLoading from "react-loading";
 import { useAlert } from "react-alert";
+
 import fetchFile from "../utils/fetchFile";
 
 interface TextFileViewerProps {

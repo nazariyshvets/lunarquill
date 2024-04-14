@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, PropsWithChildren } from "react";
+
 import { BiFullscreen, BiExitFullscreen } from "react-icons/bi";
+
 import RTCControlButton from "./RTCControlButton";
 
 const FeaturedUser = ({

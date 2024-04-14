@@ -1,5 +1,6 @@
 import ReactSwitch, { ReactSwitchProps } from "react-switch";
 import { useWindowWidth } from "@react-hook/window-size";
+
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 
 const Switch = (props: ReactSwitchProps) => {

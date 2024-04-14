@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+
 import AgoraRTC, {
   AgoraRTCProvider,
   AgoraRTCScreenShareProvider,
 } from "agora-rtc-react";
 import { RtmChannel, RtmClient } from "agora-rtm-react";
 import { AgoraChat } from "agora-chat";
+
 import Loading from "../components/Loading";
 import RTCManager from "../components/RTCManager";
 import VirtualBackground from "../components/VirtualBackground";

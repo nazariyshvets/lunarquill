@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+
 import { RtmClient } from "agora-rtm-react";
+
 import useAuthRequestConfig from "./useAuthRequestConfig";
 import fetchRTMToken from "../utils/fetchRTMToken";
 import RTMConfig from "../config/RTMConfig";

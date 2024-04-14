@@ -1,11 +1,14 @@
 import { Navigate, Link } from "react-router-dom";
+
 import { TypeAnimation } from "react-type-animation";
+
 import StarryBackground from "../components/StarryBackground";
 import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const WelcomePage = () => {
   const { userToken } = useAuth();
+
   useDocumentTitle("LunarQuill | Welcome");
 
   return (

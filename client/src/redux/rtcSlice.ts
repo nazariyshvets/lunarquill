@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { ICameraVideoTrack, IMicrophoneAudioTrack } from "agora-rtc-react";
+
 import isValidHexColorCode from "../utils/isValidHexColorCode";
 import type VirtualBgType from "../types/VirtualBgType";
 import type VirtualBgBlurDegree from "../types/VirtualBgBlurDegree";

@@ -7,7 +7,7 @@ const sendEmail = async (
   email: string,
   subject: string,
   payload: Record<string, string>,
-  template: string
+  template: string,
 ) => {
   try {
     // create reusable transporter object using the default SMTP transport
@@ -19,7 +19,6 @@ const sendEmail = async (
         pass: process.env.EMAIL_PASSWORD,
       },
     });
-
     const source = fs.readFileSync(path.join(__dirname, template), "utf8");
     const compiledTemplate = handlebars.compile(source);
     const options = () => ({
@@ -30,15 +29,13 @@ const sendEmail = async (
     });
 
     // Send email
-    return transporter.sendMail(options(), (error) => {
-      if (error) {
-        return error;
-      } else {
-        return {
+    return transporter.sendMail(
+      options(),
+      (error) =>
+        error ?? {
           success: true,
-        };
-      }
-    });
+        },
+    );
   } catch (error) {
     return error;
   }

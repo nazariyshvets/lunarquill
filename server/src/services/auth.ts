@@ -1,8 +1,7 @@
 import bcrypt from "bcrypt";
 import { OAuth2Client } from "google-auth-library";
 import { GaxiosResponse } from "gaxios";
-import User from "../models/User";
-import Token from "../models/Token";
+
 import validateRegisterInput from "../validation/register";
 import validateLoginInput from "../validation/login";
 import validateRequestPasswordResetInput from "../validation/requestPasswordReset";
@@ -11,19 +10,21 @@ import sendEmail from "../utils/email/sendEmail";
 import generateJwtToken from "../utils/generateJwtToken";
 import createToken from "../utils/createToken";
 import hashString from "../utils/hashString";
+import User from "../models/User";
+import Token from "../models/Token";
 
 const clientURL = process.env.CLIENT_URL;
 const oAuth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  `${clientURL}/login`
+  `${clientURL}/login`,
 );
 
 const registerUser = async (
   username: string,
   email: string,
   password: string,
-  password2: string
+  password2: string,
 ) => {
   // Form validation
   const { errors, isValid } = validateRegisterInput({
@@ -34,9 +35,7 @@ const registerUser = async (
   });
 
   // Check validation
-  if (!isValid) {
-    throw new Error(JSON.stringify(errors));
-  }
+  if (!isValid) throw new Error(JSON.stringify(errors));
 
   // Check if email or username already exists
   const existingUser = await User.findOne({
@@ -45,11 +44,8 @@ const registerUser = async (
 
   if (existingUser) {
     // Determine if it's the email or username that already exists
-    if (existingUser.email === email) {
-      throw new Error("Email already exists");
-    } else {
-      throw new Error("Username already exists");
-    }
+    if (existingUser.email === email) throw new Error("Email already exists");
+    else throw new Error("Username already exists");
   }
 
   // Hash password before saving in the database
@@ -70,7 +66,7 @@ const registerUser = async (
     email,
     "Welcome to LunarQuill",
     { username },
-    "./templates/welcome.handlebars"
+    "./templates/welcome.handlebars",
   );
 
   // Account verification
@@ -93,7 +89,7 @@ const registerUser = async (
       link: `${clientURL}/account-verification?token=${verificationToken}&id=${newUser._id}`,
       linkText: "Activate",
     },
-    "./templates/template.handlebars"
+    "./templates/template.handlebars",
   );
 
   return { success: true };
@@ -102,15 +98,12 @@ const registerUser = async (
 const verifyAccount = async (userId: string, token: string) => {
   const verificationToken = await Token.findOne({ userId });
 
-  if (!verificationToken) {
+  if (!verificationToken)
     throw new Error("Invalid or expired verification token");
-  }
 
   const isTokenValid = await bcrypt.compare(token, verificationToken.token);
 
-  if (!isTokenValid) {
-    throw new Error("Invalid or expired verification token");
-  }
+  if (!isTokenValid) throw new Error("Invalid or expired verification token");
 
   const user = await User.findById(userId);
 
@@ -127,7 +120,7 @@ const verifyAccount = async (userId: string, token: string) => {
         link: `${clientURL}/login`,
         linkText: "Log In",
       },
-      "./templates/template.handlebars"
+      "./templates/template.handlebars",
     );
   }
 
@@ -140,35 +133,28 @@ const loginUser = async (email: string, password: string) => {
   // Form validation
   const { errors, isValid } = validateLoginInput({ email, password });
   // Check validation
-  if (!isValid) {
-    throw new Error(JSON.stringify(errors));
-  }
+  if (!isValid) throw new Error(JSON.stringify(errors));
 
   // Find user by email
   const user = await User.findOne({ email });
 
-  if (!user) {
-    throw new Error("Email not found");
-  }
+  if (!user) throw new Error("Email not found");
 
   // Check if the email is verified
-  if (!user.active) {
-    throw new Error("You need to verify your email");
-  }
+  if (!user.active) throw new Error("You need to verify your email");
 
   // Check password
   const isMatch = await bcrypt.compare(password, user.password);
 
-  if (isMatch) {
-    return generateJwtToken(user.id, email, user.username);
-  } else {
-    throw new Error("Password incorrect");
-  }
+  if (isMatch) return generateJwtToken(user.id, email, user.username);
+  else throw new Error("Password incorrect");
 };
 
 const loginUserWithGoogle = async (code: string) => {
   const { tokens } = await oAuth2Client.getToken(code); // exchange code for tokens
+
   oAuth2Client.setCredentials(tokens);
+
   const userInfoResponse: GaxiosResponse<{ email: string }> =
     await oAuth2Client.request({
       url: "https://www.googleapis.com/oauth2/v1/userinfo",
@@ -179,6 +165,7 @@ const loginUserWithGoogle = async (code: string) => {
     });
   const { email } = userInfoResponse.data;
   let user = await User.findOne({ email });
+
   // Create user if does not exist
   if (!user) {
     user = await User.create({ email, active: true });
@@ -187,7 +174,7 @@ const loginUserWithGoogle = async (code: string) => {
       email,
       "Welcome to LunarQuill",
       { username: email.split("@")[0] || "user" },
-      "./templates/welcome.handlebars"
+      "./templates/welcome.handlebars",
     );
   }
 
@@ -201,9 +188,7 @@ const requestPasswordReset = async (email: string) => {
   });
 
   // Check validation
-  if (!isValid) {
-    throw new Error(error);
-  }
+  if (!isValid) throw new Error(error);
 
   const user = await User.findOne({ email });
 
@@ -217,14 +202,16 @@ const requestPasswordReset = async (email: string) => {
 
   if (lastToken) {
     const timeRemaining = Math.ceil(
-      (lastToken.createdAt.getTime() + 60000 - Date.now()) / 1000
+      (lastToken.createdAt.getTime() + 60000 - Date.now()) / 1000,
     );
+
     throw new Error(
-      `Please wait ${timeRemaining} seconds before requesting another password reset`
+      `Please wait ${timeRemaining} seconds before requesting another password reset`,
     );
   }
 
   const token = await Token.findOne({ userId: user._id });
+
   if (token) await token.deleteOne();
 
   const resetToken = createToken();
@@ -245,8 +232,9 @@ const requestPasswordReset = async (email: string) => {
       username: user.username,
       link,
     },
-    "./templates/requestPasswordReset.handlebars"
+    "./templates/requestPasswordReset.handlebars",
   );
+
   return { link };
 };
 
@@ -254,7 +242,7 @@ const resetPassword = async (
   userId: string,
   token: string,
   password: string,
-  password2: string
+  password2: string,
 ) => {
   // Form validation
   const { error, isValid } = validatePasswordResetInput({
@@ -263,21 +251,16 @@ const resetPassword = async (
   });
 
   // Check validation
-  if (!isValid) {
-    throw new Error(error);
-  }
+  if (!isValid) throw new Error(error);
 
   const passwordResetToken = await Token.findOne({ userId });
 
-  if (!passwordResetToken) {
+  if (!passwordResetToken)
     throw new Error("Invalid or expired password reset token");
-  }
 
   const isTokenValid = await bcrypt.compare(token, passwordResetToken.token);
 
-  if (!isTokenValid) {
-    throw new Error("Invalid or expired password reset token");
-  }
+  if (!isTokenValid) throw new Error("Invalid or expired password reset token");
 
   const user = await User.findById(userId);
 
@@ -295,7 +278,7 @@ const resetPassword = async (
         link: `${clientURL}/login`,
         linkText: "Log In",
       },
-      "./templates/template.handlebars"
+      "./templates/template.handlebars",
     );
   }
 

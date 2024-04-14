@@ -6,12 +6,14 @@ import React, {
   SetStateAction,
   PropsWithChildren,
 } from "react";
+
 import { HexColorPicker } from "react-colorful";
 import { useAlert } from "react-alert";
 import { FileRejection } from "react-dropzone";
 import { useIndexedDB } from "react-indexed-db-hook";
 import { nanoid } from "@reduxjs/toolkit";
 import { BiTrash } from "react-icons/bi";
+
 import Modal from "./Modal";
 import Select, { SelectOption } from "./Select";
 import FileUploader from "./FileUploader";
@@ -250,7 +252,9 @@ const MediaSourcePicker = ({
       return fileSrcUrlsRef.current[id];
     } else {
       const url = URL.createObjectURL(source);
+
       fileSrcUrlsRef.current[id] = url;
+
       return url;
     }
   };

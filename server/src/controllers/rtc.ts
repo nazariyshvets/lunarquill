@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import { generateRTCToken } from "../services/rtc";
 
 const generateRTCTokenController = (req: Request, res: Response) => {
@@ -20,8 +21,9 @@ const generateRTCTokenController = (req: Request, res: Response) => {
     role,
     tokentype,
     uid,
-    expiry?.toString()
+    expiry?.toString(),
   );
+
   return res.json(generateRTCTokenService);
 };
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
+
 import { BiCog } from "react-icons/bi";
+
 import Switch from "./Switch";
 import RTCControlButton from "./RTCControlButton";
 import VirtualBackgroundConfigurator from "./VirtualBackgroundConfigurator";
@@ -28,9 +30,7 @@ const RTCControlPanelOptions = () => {
     useRTC();
   const dispatch = useAppDispatch();
 
-  const resetActiveConfigurator = () => {
-    setActiveConfigurator(null);
-  };
+  const resetActiveConfigurator = () => setActiveConfigurator(null);
 
   const optionConfigs = [
     {
@@ -76,23 +76,21 @@ const OptionRow = ({
   isEnabled,
   onSwitchChange,
   onConfigure,
-}: OptionRowProps) => {
-  return (
-    <div className="flex h-10 max-w-full items-center justify-between gap-4 sm:h-14">
-      <p className="max-w-full truncate text-sm font-medium text-primary-light sm:text-lg">
-        {title}
-      </p>
-      <div className="flex items-center gap-4">
-        {onConfigure && (
-          <RTCControlButton onClick={onConfigure}>
-            <BiCog className="h-full w-full" />
-          </RTCControlButton>
-        )}
+}: OptionRowProps) => (
+  <div className="flex h-10 max-w-full items-center justify-between gap-4 sm:h-14">
+    <p className="max-w-full truncate text-sm font-medium text-primary-light sm:text-lg">
+      {title}
+    </p>
+    <div className="flex items-center gap-4">
+      {onConfigure && (
+        <RTCControlButton onClick={onConfigure}>
+          <BiCog className="h-full w-full" />
+        </RTCControlButton>
+      )}
 
-        <Switch checked={isEnabled} onChange={onSwitchChange} />
-      </div>
+      <Switch checked={isEnabled} onChange={onSwitchChange} />
     </div>
-  );
-};
+  </div>
+);
 
 export default RTCControlPanelOptions;

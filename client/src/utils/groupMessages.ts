@@ -1,4 +1,5 @@
 import { nanoid } from "@reduxjs/toolkit";
+
 import formatDate from "./formatDate";
 import type Message from "../types/Message";
 
@@ -9,9 +10,7 @@ interface GroupedMessage {
 }
 
 const groupMessages = (messages: Message[]) => {
-  if (messages.length === 0) {
-    return [];
-  }
+  if (messages.length === 0) return [];
 
   const groups: GroupedMessage[] = [];
   let currentGroup: GroupedMessage = {

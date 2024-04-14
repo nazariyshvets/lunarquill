@@ -3,6 +3,7 @@ import {
   RemoteUserProps as AgoraRemoteUserProps,
 } from "agora-rtc-react";
 import { BiMicrophoneOff } from "react-icons/bi";
+
 import MutedVideoPlaceholder from "./MutedVideoPlaceholder";
 
 interface RemoteUserProps extends AgoraRemoteUserProps {
@@ -15,8 +16,8 @@ const RemoteUser = ({
   isScreenCaster = false,
   playAudio,
   ...rest
-}: RemoteUserProps) => {
-  return isScreenCaster ? (
+}: RemoteUserProps) =>
+  isScreenCaster ? (
     <AgoraRemoteUser {...rest} />
   ) : (
     <div className="relative h-full w-full">
@@ -30,6 +31,5 @@ const RemoteUser = ({
       )}
     </div>
   );
-};
 
 export default RemoteUser;

@@ -1,5 +1,7 @@
 import { useEffect } from "react";
+
 import { useWindowSize } from "@react-hook/window-size";
+
 import ShootingStar from "./ShootingStar";
 
 const numberOfShootingStars = 10;
@@ -8,11 +10,15 @@ const StarryBackground = () => {
   const [width, height] = useWindowSize();
 
   useEffect(() => {
+    let animationId: number;
+
     const animate = () => {
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     };
 
-    animate();
+    animationId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationId);
   }, []);
 
   const stars = Array.from({ length: numberOfShootingStars }, (_, i) => (

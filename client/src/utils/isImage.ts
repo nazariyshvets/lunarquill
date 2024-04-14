@@ -1,5 +1,3 @@
-const isImage = (file: File) => {
-  return file.type.startsWith("image/");
-};
+const isImage = (file: File) => file.type.startsWith("image/");
 
 export default isImage;

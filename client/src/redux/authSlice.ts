@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+
 import { registerUser, loginUser, loginUserWithGoogle } from "./authActions";
 import type CustomError from "../types/CustomError";
 

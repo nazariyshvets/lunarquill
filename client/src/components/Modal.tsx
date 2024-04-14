@@ -1,5 +1,6 @@
 import { PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
+
 import Button from "./Button";
 
 interface ModalProps {
@@ -13,8 +14,8 @@ const Modal = ({
   children,
   onCancel,
   onSave,
-}: PropsWithChildren<ModalProps>) => {
-  return createPortal(
+}: PropsWithChildren<ModalProps>) =>
+  createPortal(
     <div className="fixed bottom-0 left-0 right-0 top-0 z-[99] flex items-center justify-center bg-deep-black bg-opacity-70 p-4">
       <div className="flex max-h-full w-full flex-col gap-8 rounded bg-black p-4 shadow-lg shadow-primary-600 sm:w-1/2 xl:w-1/3 xl:p-6">
         <h1 className="flex-shrink-0 truncate text-xl font-bold text-lightgrey sm:text-2xl">
@@ -31,6 +32,5 @@ const Modal = ({
     </div>,
     document.body,
   );
-};
 
 export default Modal;

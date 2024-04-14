@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+
 import {
   useRTCClient,
   useLocalCameraTrack,
@@ -12,6 +13,7 @@ import {
 import { useWindowWidth } from "@react-hook/window-size";
 import { isEmpty } from "lodash";
 import { useAlert } from "react-alert";
+
 import Loading from "./Loading";
 import VideoTracksContainer from "./VideoTracksContainer";
 import VideoTrack from "./VideoTrack";

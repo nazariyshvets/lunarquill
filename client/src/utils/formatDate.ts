@@ -4,8 +4,6 @@ const formatDate = (timestamp: number) => {
   const messageDate = new Date(timestamp);
   const today = new Date();
   const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-
   const optionsSameYear = { month: "short", day: "numeric" } as const;
   const optionsDifferentYear = {
     year: "numeric",
@@ -13,6 +11,8 @@ const formatDate = (timestamp: number) => {
     day: "numeric",
   } as const;
   const optionsSameWeek = { weekday: "long" } as const;
+
+  yesterday.setDate(today.getDate() - 1);
 
   if (
     messageDate.getDate() === today.getDate() &&
