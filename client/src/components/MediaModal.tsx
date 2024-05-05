@@ -60,7 +60,7 @@ const MediaModal = ({ type, url, onClose }: MediaModalProps) => {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed bottom-0 left-0 right-0 top-0 z-[99] flex items-center justify-center bg-deep-black bg-opacity-70 p-4">
+    <div className="fixed bottom-0 left-0 right-0 top-0 z-[9000] flex items-center justify-center bg-deep-black bg-opacity-70 p-4">
       <div
         ref={mediaWrapperRef}
         className="max-h-full max-w-[256px] overflow-auto sm:max-w-[512px] xl:max-w-[1024px]"

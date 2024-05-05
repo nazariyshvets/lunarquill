@@ -14,6 +14,7 @@ import { useWindowWidth } from "@react-hook/window-size";
 import { isEmpty } from "lodash";
 import { useAlert } from "react-alert";
 
+import Whiteboard from "./Whiteboard";
 import Loading from "./Loading";
 import VideoTracksContainer from "./VideoTracksContainer";
 import VideoTrack from "./VideoTrack";
@@ -29,6 +30,7 @@ import useRemoteUsersAttributes from "../hooks/useUsersAttributes";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useScreenCasterId from "../hooks/useScreenCasterId";
 import useRTC from "../hooks/useRTC";
+import useWhiteboardRoom from "../hooks/useWhiteboardRoom";
 import {
   setLocalCameraTrack,
   setLocalMicrophoneTrack,
@@ -55,7 +57,8 @@ const RTCManager = () => {
   const remoteUsersTracksState = useRemoteUsersTracksState();
   const remoteUsersAttrs = useRemoteUsersAttributes();
   const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
-  const { isChatDisplayed } = useRTC();
+  const { isChatDisplayed, isWhiteboardDisplayed } = useRTC();
+  const whiteboardRoomCredentials = useWhiteboardRoom();
   const screenCasterId = useScreenCasterId();
   const windowWidth = useWindowWidth();
   const alert = useAlert();
@@ -155,7 +158,7 @@ const RTCManager = () => {
     <div className="h-full w-full overflow-auto">
       <div
         className={`h-full flex-col gap-4 ${
-          isChatDisplayed ? "hidden" : "flex"
+          isChatDisplayed || isWhiteboardDisplayed ? "hidden" : "flex"
         }`}
       >
         <VideoTracksContainer>
@@ -211,15 +214,31 @@ const RTCManager = () => {
         </FeaturedUser>
       </div>
 
-      <div className={`h-full ${isChatDisplayed ? "" : "hidden"}`}>
+      <div
+        className={`h-full ${
+          isChatDisplayed && !isWhiteboardDisplayed ? "" : "hidden"
+        }`}
+      >
         <Chat />
       </div>
+
+      {whiteboardRoomCredentials && (
+        <div
+          className={`h-full w-full ${isWhiteboardDisplayed ? "" : "hidden"}`}
+        >
+          <Whiteboard roomCredentials={whiteboardRoomCredentials} />
+        </div>
+      )}
     </div>
   );
 
   const renderLaptopView = () => (
     <div className="flex h-full w-full gap-4 overflow-auto">
-      <div className="flex h-full w-full flex-col gap-4">
+      <div
+        className={`h-full w-full flex-col gap-4 ${
+          isWhiteboardDisplayed ? "hidden" : "flex"
+        }`}
+      >
         <VideoTracksContainer isScreenShared={!!screenCasterId}>
           <VideoTrack
             size={screenCasterId ? "fixed" : "auto"}
@@ -261,11 +280,21 @@ const RTCManager = () => {
 
       <div
         className={`h-full flex-shrink-0 ${
-          isChatDisplayed ? "sm:w-[280px] xl:w-[420px]" : "hidden"
+          isChatDisplayed && !isWhiteboardDisplayed
+            ? "sm:w-[280px] xl:w-[420px]"
+            : "hidden"
         }`}
       >
         <Chat />
       </div>
+
+      {whiteboardRoomCredentials && (
+        <div
+          className={`h-full w-full ${isWhiteboardDisplayed ? "" : "hidden"}`}
+        >
+          <Whiteboard roomCredentials={whiteboardRoomCredentials} />
+        </div>
+      )}
     </div>
   );
 

@@ -12,6 +12,7 @@ import {
   setIsVirtualBgEnabled,
   setIsNoiseSuppressionEnabled,
   setIsChatDisplayed,
+  setIsWhiteboardDisplayed,
 } from "../redux/rtcSlice";
 
 type ActiveConfigurator = "virtual-background" | "noise-suppression";
@@ -26,8 +27,12 @@ interface OptionRowProps {
 const RTCControlPanelOptions = () => {
   const [activeConfigurator, setActiveConfigurator] =
     useState<ActiveConfigurator | null>(null);
-  const { isVirtualBgEnabled, isNoiseSuppressionEnabled, isChatDisplayed } =
-    useRTC();
+  const {
+    isVirtualBgEnabled,
+    isNoiseSuppressionEnabled,
+    isChatDisplayed,
+    isWhiteboardDisplayed,
+  } = useRTC();
   const dispatch = useAppDispatch();
 
   const resetActiveConfigurator = () => setActiveConfigurator(null);
@@ -52,10 +57,16 @@ const RTCControlPanelOptions = () => {
       isEnabled: isChatDisplayed,
       onSwitchChange: () => dispatch(setIsChatDisplayed(!isChatDisplayed)),
     },
+    {
+      title: "Whiteboard",
+      isEnabled: isWhiteboardDisplayed,
+      onSwitchChange: () =>
+        dispatch(setIsWhiteboardDisplayed(!isWhiteboardDisplayed)),
+    },
   ];
 
   return (
-    <div className="absolute bottom-[calc(100%+1rem)] left-0 z-50 max-w-[288px] rounded bg-deep-black p-4 shadow-button sm:max-w-[400px]">
+    <div className="absolute bottom-[calc(100%+1rem)] left-0 z-[200] max-w-[288px] rounded bg-deep-black p-4 shadow-button sm:max-w-[400px]">
       {optionConfigs.map((config, i) => (
         <OptionRow key={i} {...config} />
       ))}
