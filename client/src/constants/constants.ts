@@ -13,6 +13,9 @@ const ALERT_OPTIONS = {
   position: positions.TOP_CENTER,
   timeout: 5000,
   transition: transitions.SCALE,
+  containerStyle: {
+    zIndex: 9999,
+  },
 };
 
 const BASE_SERVER_URL = "http://127.0.0.1:8000";

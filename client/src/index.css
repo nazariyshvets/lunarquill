@@ -30,6 +30,15 @@
   background-color: #222;
 }
 
+.netless-window-manager-sizer {
+  background-color: #151515 !important;
+}
+
+.netless-window-manager-wrapper {
+  background-color: #333 !important;
+  box-shadow: inset 0 0 15px 5px rgb(255 255 255 / 0.1) !important;
+}
+
 @media screen and (max-width: 640px) {
   ::-webkit-scrollbar {
     width: 0.7rem;
