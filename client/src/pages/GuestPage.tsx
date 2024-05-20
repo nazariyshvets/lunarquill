@@ -12,7 +12,8 @@ interface GuestPageProps {
 
 const GuestPage = ({ title, children }: PropsWithChildren<GuestPageProps>) => {
   const { userToken } = useAuth();
-  useDocumentTitle(`LunarQuill | ${capitalize(title)}`);
+
+  useDocumentTitle(capitalize(title));
 
   return (
     <>

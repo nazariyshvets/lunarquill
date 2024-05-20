@@ -9,7 +9,7 @@ import useDocumentTitle from "../hooks/useDocumentTitle";
 const WelcomePage = () => {
   const { userToken } = useAuth();
 
-  useDocumentTitle("LunarQuill | Welcome");
+  useDocumentTitle("Welcome");
 
   return (
     <>

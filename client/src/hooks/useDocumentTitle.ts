@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 
-function useDocumentTitle(title: string) {
+const useDocumentTitle = (title: string, withPrefix = true) => {
   useEffect(() => {
-    document.title = title;
-  }, [title]);
-}
+    document.title = `${withPrefix ? "LunarQuill | " : ""}${title}`;
+  }, [title, withPrefix]);
+};
 
 export default useDocumentTitle;

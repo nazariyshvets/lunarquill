@@ -30,6 +30,15 @@
   background-color: #222;
 }
 
+@media screen and (max-width: 640px) {
+  ::-webkit-scrollbar {
+    width: 0.7rem;
+    height: 0.7rem;
+  }
+}
+
+/* ===== WHITEBOARD STYLES ===== */
+
 .netless-window-manager-sizer {
   background-color: #151515 !important;
 }
@@ -39,9 +48,61 @@
   box-shadow: inset 0 0 15px 5px rgb(255 255 255 / 0.1) !important;
 }
 
+/* ===== TABS STYLES ===== */
+
+.react-tabs {
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.react-tabs__tab-list {
+  border-bottom: 1px solid #fff;
+}
+
+.react-tabs__tab {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  font-size: 16px;
+  color: #fff;
+  list-style: none;
+  cursor: pointer;
+}
+
+.react-tabs__tab:focus {
+  outline: none;
+}
+
+.react-tabs__tab--selected {
+  border-color: #86c232;
+  border-radius: 5px 5px 0 0;
+  color: #86c232;
+}
+
+.react-tabs__tab--disabled {
+  color: #868686;
+  cursor: default;
+}
+
+.react-tabs__tab-panel {
+  display: none;
+  height: 100%;
+  max-height: 100%;
+  overflow: auto;
+}
+
+.react-tabs__tab-panel--selected {
+  display: block;
+}
+
 @media screen and (max-width: 640px) {
-  ::-webkit-scrollbar {
-    width: 0.7rem;
-    height: 0.7rem;
+  .react-tabs__tab {
+    font-size: 14px;
   }
 }

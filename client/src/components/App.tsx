@@ -15,7 +15,11 @@ import AccountVerificationPage from "../pages/AccountVerificationPage";
 import RequestPasswordResetPage from "../pages/RequestPasswordResetPage";
 import PasswordResetPage from "../pages/PasswordResetPage";
 import ProtectedRoute from "./ProtectedRoute";
+import SidebarLayout from "./SidebarLayout";
 import ProfilePage from "../pages/ProfilePage";
+import ContactAdditionPage from "../pages/ContactAdditionPage";
+import ChannelAdditionPage from "../pages/ChannelAdditionPage";
+import RequestsPage from "../pages/RequestsPage";
 import ChannelPage from "../pages/ChannelPage";
 import useAuth from "../hooks/useAuth";
 import RTCConfig from "../config/RTCConfig";
@@ -42,9 +46,12 @@ const router = createBrowserRouter(
       />
       <Route path="/password-reset" element={<PasswordResetPage />} />
       <Route element={<ProtectedRoute />}>
-        <Route path="/profile" element={<ProfilePage />} />
-      </Route>
-      <Route element={<ProtectedRoute />}>
+        <Route element={<SidebarLayout />}>
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/add-contact" element={<ContactAdditionPage />} />
+          <Route path="/add-channel" element={<ChannelAdditionPage />} />
+          <Route path="/requests" element={<RequestsPage />} />
+        </Route>
         <Route path="/channel" element={<ChannelPage />} />
       </Route>
     </>,
