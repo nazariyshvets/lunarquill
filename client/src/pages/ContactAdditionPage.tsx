@@ -1,13 +1,37 @@
 import { SubmitHandler } from "react-hook-form";
+import { useAlert } from "react-alert";
 
 import ContactAdditionForm from "../components/ContactAdditionForm";
 import useDocumentTitle from "../hooks/useDocumentTitle";
+import { useCreateRequestMutation } from "../services/mainService";
+import getErrorMessage from "../utils/getErrorMessage";
+import RTCConfig from "../config/RTCConfig";
+import { RequestTypeEnum } from "../types/Request";
 
 const ContactAdditionPage = () => {
+  const [createRequest] = useCreateRequestMutation();
+  const alert = useAlert();
+
   useDocumentTitle("Add a contact");
 
-  const handleSubmit: SubmitHandler<{ contactId: string }> = (data) =>
-    console.log("submit with data:", data);
+  const handleSubmit: SubmitHandler<{ contactId: string }> = async (data) => {
+    try {
+      await createRequest({
+        from: RTCConfig.uid.toString(),
+        to: data.contactId,
+        type: RequestTypeEnum.Contact,
+      }).unwrap();
+      alert.success("Request created successfully!");
+    } catch (err) {
+      throw new Error(
+        getErrorMessage({
+          error: err,
+          defaultErrorMessage:
+            "Could not send a contact request. Please try again",
+        }),
+      );
+    }
+  };
 
   return (
     <div className="flex h-full w-full flex-col justify-center gap-12">
@@ -18,7 +42,7 @@ const ContactAdditionPage = () => {
       <ContactAdditionForm
         submitBtnText="Add"
         onSubmit={handleSubmit}
-        formField={{
+        inputField={{
           name: "contactId",
           placeholder: "Enter id of the contact...",
           required: true,

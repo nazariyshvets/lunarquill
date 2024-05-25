@@ -12,12 +12,13 @@ interface InputProps<TFormValues extends FieldValues>
   extends Omit<InputHTMLAttributes<HTMLInputElement>, "pattern"> {
   name: Path<TFormValues>;
   register: UseFormRegister<TFormValues>;
-  type?: "text" | "password";
+  type?: "text" | "password" | "checkbox";
   errors?: FieldError;
   pattern?: RegExp;
   validate?:
     | Validate<string, TFormValues>
     | Record<string, Validate<string, TFormValues>>;
+  label?: string;
 }
 
 export default InputProps;

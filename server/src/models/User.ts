@@ -1,37 +1,44 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 
-interface IUser {
+interface IUser extends Document {
   username: string;
   email: string;
   password: string;
-  date: Date;
   active: boolean;
+  isOnline: boolean;
 }
 
-const UserSchema = new Schema<IUser>({
-  username: {
-    type: String,
-    unique: true,
+interface IUserWithoutPassword extends Omit<IUser, "password"> {}
+
+const UserSchema = new Schema<IUser>(
+  {
+    username: {
+      type: String,
+      unique: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+    },
+    active: {
+      type: Boolean,
+      default: false,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
+  {
+    timestamps: true,
   },
-  password: {
-    type: String,
-  },
-  date: {
-    type: Date,
-    default: Date.now,
-  },
-  active: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
 const User = model<IUser>("User", UserSchema);
 
 export default User;
-export { IUser };
+export type { IUser, IUserWithoutPassword };

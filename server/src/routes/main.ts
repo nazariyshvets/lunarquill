@@ -5,6 +5,9 @@ import rtc from "./rtc";
 import rtm from "./rtm";
 import chat from "./chat";
 import whiteboard from "./whiteboard";
+import request from "./request";
+import channel from "./channel";
+import user from "./user";
 import authenticateJWT from "../middleware/authenticateJWT";
 
 const router = Router();
@@ -14,9 +17,8 @@ router.use("/rtc", authenticateJWT, rtc);
 router.use("/rtm", authenticateJWT, rtm);
 router.use("/chat", authenticateJWT, chat);
 router.use("/whiteboard", authenticateJWT, whiteboard);
-
-router.get("/profile", authenticateJWT, (req, res) =>
-  res.json({ user: req.user }),
-);
+router.use("/requests", authenticateJWT, request);
+router.use("/channels", authenticateJWT, channel);
+router.use("/users", authenticateJWT, user);
 
 export default router;

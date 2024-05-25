@@ -1,10 +1,16 @@
-import { Schema, model } from "mongoose";
+import { Schema, model, Document } from "mongoose";
 
-const TokenSchema = new Schema({
+interface IToken extends Document {
+  userId: Schema.Types.ObjectId;
+  token: string;
+  createdAt: Date;
+}
+
+const TokenSchema = new Schema<IToken>({
   userId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: "user",
+    ref: "User",
   },
   token: {
     type: String,
@@ -18,6 +24,7 @@ const TokenSchema = new Schema({
   },
 });
 
-const Token = model("Token", TokenSchema);
+const Token = model<IToken>("Token", TokenSchema);
 
 export default Token;
+export { IToken };

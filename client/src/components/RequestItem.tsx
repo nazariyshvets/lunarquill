@@ -2,31 +2,38 @@ import { BiXCircle, BiCheckCircle } from "react-icons/bi";
 
 import Contact from "./Contact";
 import RequestItemActionButton from "./RequestItemActionButton";
+import { RequestType, RequestTypeEnum } from "../types/Request";
 
 interface RequestItemProps {
-  type: "contactship" | "invite" | "join";
+  type: RequestType;
   context: "inbox" | "outbox";
   username: string;
   channelName?: string;
+  onDecline?: () => void;
+  onAccept?: () => void;
+  onRecall?: () => void;
 }
 
 const RequestItem = ({
   type,
   context,
   username,
-  channelName,
+  channelName = "unknown",
+  onDecline,
+  onAccept,
+  onRecall,
 }: RequestItemProps) => {
   const renderMessage = () => {
     switch (type) {
-      case "contactship":
+      case RequestTypeEnum.Contact:
         return context === "inbox"
-          ? "sends you a contactship request"
-          : "received your contactship request";
-      case "invite":
+          ? "sends you a contact request"
+          : "received your contact request";
+      case RequestTypeEnum.Invite:
         return context === "inbox"
           ? "invites you to join"
           : "received your invite to join";
-      case "join":
+      case RequestTypeEnum.Join:
         return context === "inbox"
           ? "wants to join"
           : "channel received your joining request";
@@ -43,12 +50,14 @@ const RequestItem = ({
           <span className="text-sm text-lightgrey">{renderMessage()}</span>
         </div>
 
-        {type !== "contactship" && channelName && (
-          <div className="flex items-center gap-1">
-            <Contact name={channelName} isOnline={false} />
-            <span className="text-sm text-lightgrey">channel</span>
-          </div>
-        )}
+        {(type === RequestTypeEnum.Invite ||
+          (type === RequestTypeEnum.Join && context === "inbox")) &&
+          channelName && (
+            <div className="flex items-center gap-1">
+              <Contact name={channelName} isOnline={false} />
+              <span className="text-sm text-lightgrey">channel</span>
+            </div>
+          )}
       </div>
 
       <div className="flex items-center gap-2 self-end">
@@ -57,6 +66,7 @@ const RequestItem = ({
             label="Recall"
             icon={BiXCircle}
             isPositiveAction={false}
+            onClick={onRecall}
           />
         ) : (
           <>
@@ -64,8 +74,13 @@ const RequestItem = ({
               label="Decline"
               icon={BiXCircle}
               isPositiveAction={false}
+              onClick={onDecline}
             />
-            <RequestItemActionButton label="Accept" icon={BiCheckCircle} />
+            <RequestItemActionButton
+              label="Accept"
+              icon={BiCheckCircle}
+              onClick={onAccept}
+            />
           </>
         )}
       </div>

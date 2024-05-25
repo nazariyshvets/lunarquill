@@ -5,12 +5,16 @@ import Button from "./Button";
 
 interface ModalProps {
   title: string;
+  cancelBtnText?: string;
+  saveBtnText?: string;
   onCancel: () => void;
   onSave: () => void;
 }
 
 const Modal = ({
   title,
+  cancelBtnText = "Cancel",
+  saveBtnText = "Save",
   children,
   onCancel,
   onSave,
@@ -25,8 +29,8 @@ const Modal = ({
         <div className="overflow-auto">{children}</div>
 
         <div className="flex gap-2 self-end">
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button onClick={onSave}>Save</Button>
+          <Button onClick={onCancel}>{cancelBtnText}</Button>
+          <Button onClick={onSave}>{saveBtnText}</Button>
         </div>
       </div>
     </div>,
