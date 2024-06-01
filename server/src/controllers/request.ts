@@ -38,11 +38,11 @@ const declineRequestController = async (req: Request, res: Response) => {
 };
 
 const acceptRequestController = async (req: Request, res: Response) => {
-  const { requestId, uid } = req.body;
+  const { requestId, uid, whiteboardRoomId } = req.body;
 
   if (!requestId || !uid) throw new Error("Fields are required");
 
-  const response = await acceptRequest(requestId, uid);
+  const response = await acceptRequest(requestId, uid, whiteboardRoomId);
 
   return res.json(response);
 };

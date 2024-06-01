@@ -70,6 +70,52 @@ export const createRoom = (
   request(options, callback);
 };
 
+export const disableRoom = (
+  roomUuid: string,
+  sdkToken: string,
+  callback: (
+    error: unknown,
+    res: request.Response,
+  ) => express.Response<unknown, Record<string, unknown>>,
+) => {
+  const options = {
+    method: "PATCH",
+    url: `https://api.netless.link/v5/rooms/${roomUuid}`,
+    headers: {
+      token: sdkToken,
+      "Content-Type": "application/json",
+      region: "eu",
+    },
+    body: JSON.stringify({
+      isBan: true,
+    }),
+  };
+
+  request(options, callback);
+};
+
+export const listRooms = (
+  sdkToken: string,
+  callback: (
+    error: unknown,
+    res: request.Response,
+  ) => express.Response<unknown, Record<string, unknown>>,
+) => {
+  const options = {
+    method: "GET",
+    url: "https://api.netless.link/v5/rooms",
+    headers: {
+      token: sdkToken,
+      "Content-Type": "application/json",
+      region: "eu",
+    },
+  };
+
+  request(options, (error, res) => {
+    callback(error, res);
+  });
+};
+
 const createToken =
   <T extends {}>(prefix: TokenPrefix) =>
   (

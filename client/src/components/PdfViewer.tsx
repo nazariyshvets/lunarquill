@@ -11,6 +11,7 @@ import {
 } from "../constants/constants";
 
 import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 
 interface PdfViewerProps {
   url: string;
@@ -32,9 +33,8 @@ const PdfViewer = ({ url }: PdfViewerProps) => {
   const [pageInputValue, setPageInputValue] = useState("1");
   const windowWidth = useWindowWidth();
 
-  const handleDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+  const handleDocumentLoadSuccess = ({ numPages }: { numPages: number }) =>
     setNumPages(numPages);
-  };
 
   const decreasePage = () => {
     const prevPage = Math.max(pageNumber - 1, 1);
@@ -66,13 +66,8 @@ const PdfViewer = ({ url }: PdfViewerProps) => {
     }
   };
 
-  const handleInputKeyPress = (
-    event: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
-    if (event.key === "Enter") {
-      setPage();
-    }
-  };
+  const handleInputKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) =>
+    event.key === "Enter" && setPage();
 
   const pageWidth =
     windowWidth < MOBILE_SCREEN_THRESHOLD
@@ -93,7 +88,7 @@ const PdfViewer = ({ url }: PdfViewerProps) => {
       </Document>
 
       {numPages && (
-        <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded bg-black text-white sm:gap-1">
+        <div className="absolute bottom-2 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-0.5 rounded bg-black text-white sm:gap-1">
           <SimpleButton onClick={decreasePage}>
             <BiChevronLeftCircle className="text-sm sm:text-base" />
           </SimpleButton>

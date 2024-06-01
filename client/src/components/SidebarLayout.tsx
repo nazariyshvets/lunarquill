@@ -1,26 +1,28 @@
 import { useState } from "react";
+
 import { Outlet } from "react-router-dom";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 import { BiMenu } from "react-icons/bi";
 
 import Sidebar from "./Sidebar";
 import SimpleButton from "./SimpleButton";
 import {
-  useGetUserDetailsQuery,
+  useGetUserByIdQuery,
   useGetUserRequestsQuery,
   useGetUserContactsQuery,
   useGetUserChannelsQuery,
 } from "../services/mainService";
-import RTCConfig from "../config/RTCConfig";
+import useAuth from "../hooks/useAuth";
 
 const SidebarLayout = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const userId = RTCConfig.uid.toString();
-  const { data: userDetails } = useGetUserDetailsQuery({});
-  const { data: requests } = useGetUserRequestsQuery(userId);
-  const { data: contacts } = useGetUserContactsQuery(userId);
-  const { data: channels } = useGetUserChannelsQuery(userId);
+  const { userId } = useAuth();
+  const { data: userDetails } = useGetUserByIdQuery(userId ?? skipToken);
+  const { data: requests } = useGetUserRequestsQuery(userId ?? skipToken);
+  const { data: contacts } = useGetUserContactsQuery(userId ?? skipToken);
+  const { data: channels } = useGetUserChannelsQuery(userId ?? skipToken);
 
   return (
     <div className="relative flex h-screen max-h-screen min-h-screen flex-col gap-2 bg-deep-black p-4 xl:flex-row">
@@ -36,7 +38,7 @@ const SidebarLayout = () => {
         } xl:static xl:block xl:w-1/5 xl:p-0`}
       >
         <Sidebar
-          username={userDetails?.username ?? "You"}
+          user={userDetails}
           inboxRequestsCount={
             requests?.filter((request) => request.to._id === userId).length ?? 0
           }

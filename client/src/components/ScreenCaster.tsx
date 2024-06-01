@@ -7,16 +7,23 @@ import {
   usePublish,
   useTrackEvent,
 } from "agora-rtc-react";
+import { RtmClient, RtmChannel } from "agora-rtm-react";
 
-import useRTMClient from "../hooks/useRTMClient";
-import useRTMChannel from "../hooks/useRTMChannel";
 import RTCConfig from "../config/RTCConfig";
 
 interface ScreenCasterProps {
+  RTMClient: RtmClient;
+  RTMChannel: RtmChannel;
+  channelId: string;
   setIsLocalScreenShared: Dispatch<SetStateAction<boolean>>;
 }
 
-const ScreenCaster = ({ setIsLocalScreenShared }: ScreenCasterProps) => {
+const ScreenCaster = ({
+  RTMClient,
+  RTMChannel,
+  channelId,
+  setIsLocalScreenShared,
+}: ScreenCasterProps) => {
   const screenShareClient = useRTCScreenShareClient();
   const { screenTrack, error } = useLocalScreenTrack(
     true,
@@ -24,13 +31,11 @@ const ScreenCaster = ({ setIsLocalScreenShared }: ScreenCasterProps) => {
     "disable",
     screenShareClient || undefined,
   );
-  const RTMClient = useRTMClient();
-  const RTMChannel = useRTMChannel(RTMClient);
 
   useJoin(
     {
       appid: RTCConfig.appId,
-      channel: RTCConfig.channelName,
+      channel: channelId,
       token: RTCConfig.rtcTokenScreen,
       uid: RTCConfig.uidScreen,
     },

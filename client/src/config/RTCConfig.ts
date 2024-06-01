@@ -2,10 +2,8 @@ import { EncryptionMode, UID, SDK_MODE } from "agora-rtc-react";
 import { nanoid } from "@reduxjs/toolkit";
 
 const RTCConfig: RTCConfigType = {
-  uid: nanoid(),
   uidScreen: nanoid(),
   appId: import.meta.env.VITE_AGORA_APP_ID,
-  channelName: "test",
   rtcToken: "",
   rtcTokenScreen: "",
   serverUrl: "http://localhost:8000",
@@ -26,10 +24,8 @@ const RTCConfig: RTCConfigType = {
 };
 
 export type RTCConfigType = {
-  uid: UID;
   uidScreen: UID;
   appId: string;
-  channelName: string;
   rtcToken: string | null;
   rtcTokenScreen: string | null;
   serverUrl: string;

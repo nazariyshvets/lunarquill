@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 
 import { RtmClient, RtmChannel } from "agora-rtm-react";
 
-import useRTMClient from "./useRTMClient";
-import useRTMChannel from "./useRTMChannel";
-
 interface UsersAttributes {
   [uid: string]: {
     username?: string;
@@ -23,6 +20,7 @@ const fetchUsersAttributes = async (
       members.map(async (uid) => {
         const { isCameraMuted, isMicrophoneMuted, ...rest } =
           await RTMClient.getUserAttributes(uid);
+
         return [
           uid,
           {
@@ -41,18 +39,15 @@ const fetchUsersAttributes = async (
   }
 };
 
-const useUsersAttributes = () => {
+const useUsersAttributes = (RTMClient: RtmClient, RTMChannel: RtmChannel) => {
   const [usersAttributes, setUsersAttributes] = useState<UsersAttributes>({});
-  const RTMClient = useRTMClient();
-  const RTMChannel = useRTMChannel(RTMClient);
 
   useEffect(() => {
-    const fetchAttributes = async () => {
+    (async () => {
       const attributes = await fetchUsersAttributes(RTMClient, RTMChannel);
-      setUsersAttributes(attributes);
-    };
 
-    fetchAttributes();
+      setUsersAttributes(attributes);
+    })();
   }, [RTMClient, RTMChannel]);
 
   return usersAttributes;

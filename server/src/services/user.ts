@@ -1,13 +1,13 @@
 import * as mongoose from "mongoose";
 
-import User from "../models/User";
+import User, { IUser, IUserWithoutPassword } from "../models/User";
 import Channel from "../models/Channel";
 import Membership from "../models/Membership";
 import Contact from "../models/Contact";
 
 const getUserContacts = async (userId: string) => {
   if (!mongoose.Types.ObjectId.isValid(userId))
-    throw new Error("Invalid user ID");
+    throw new Error("Invalid user id");
 
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
@@ -25,7 +25,7 @@ const getUserContacts = async (userId: string) => {
 
 const getUserChannels = async (userId: string) => {
   if (!mongoose.Types.ObjectId.isValid(userId))
-    throw new Error("Invalid user ID");
+    throw new Error("Invalid user id");
 
   // Find all memberships for the user
   const memberships = await Membership.find({ user: userId });
@@ -37,4 +37,30 @@ const getUserChannels = async (userId: string) => {
   return Channel.find({ _id: { $in: channelIds } });
 };
 
-export { getUserContacts, getUserChannels };
+const getUserById = async (userId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(userId))
+    throw new Error("Invalid user id");
+
+  const user = await User.findById(userId).select("-password");
+
+  if (!user) throw new Error("User not found");
+
+  return user.toObject() as IUserWithoutPassword;
+};
+
+const updateUserById = async (userId: string, updateData: Partial<IUser>) => {
+  if (!mongoose.Types.ObjectId.isValid(userId))
+    throw new Error("Invalid user id");
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { $set: updateData },
+    { new: true },
+  ).select("-password");
+
+  if (!updatedUser) throw new Error("User not found");
+
+  return updatedUser;
+};
+
+export { getUserContacts, getUserChannels, getUserById, updateUserById };

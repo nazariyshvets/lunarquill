@@ -8,6 +8,7 @@ import whiteboard from "./whiteboard";
 import request from "./request";
 import channel from "./channel";
 import user from "./user";
+import contact from "./contact";
 import authenticateJWT from "../middleware/authenticateJWT";
 
 const router = Router();
@@ -20,5 +21,6 @@ router.use("/whiteboard", authenticateJWT, whiteboard);
 router.use("/requests", authenticateJWT, request);
 router.use("/channels", authenticateJWT, channel);
 router.use("/users", authenticateJWT, user);
+router.use("/contacts", authenticateJWT, contact);
 
 export default router;

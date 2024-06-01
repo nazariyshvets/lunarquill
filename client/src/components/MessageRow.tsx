@@ -5,8 +5,8 @@ import AudioMessage from "./AudioMessage";
 import ImageVideoMessage from "./ImageVideoMessage";
 import FileMessage from "./FileMessage";
 import SimpleButton from "./SimpleButton";
+import useAuth from "../hooks/useAuth";
 import formatTime from "../utils/formatTime";
-import ChatConfig from "../config/ChatConfig";
 import type Message from "../types/Message";
 
 interface MessageRowProps {
@@ -22,6 +22,8 @@ const MessageRow = ({
   isLocalUser = false,
   onReactionClick,
 }: MessageRowProps) => {
+  const { userId } = useAuth();
+
   const getMessageWidget = () => {
     switch (message.type) {
       case "txt":
@@ -105,7 +107,7 @@ const MessageRow = ({
               <div
                 key={reaction.reaction}
                 className={`flex cursor-pointer items-center gap-1 rounded-full px-1 text-sm outline outline-1 sm:text-base ${
-                  reaction.userList.find((userId) => userId === ChatConfig.uid)
+                  reaction.userList.find((uid) => uid === userId)
                     ? "bg-charcoal outline-primary-light"
                     : "outline-lightgrey"
                 }`}

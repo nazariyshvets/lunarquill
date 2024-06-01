@@ -4,6 +4,8 @@ interface IChannel extends Document {
   name: string;
   admin: Types.ObjectId;
   isPrivate: boolean;
+  chatTargetId: string;
+  whiteboardRoomId: string;
 }
 
 const ChannelSchema = new Schema<IChannel>(
@@ -20,6 +22,14 @@ const ChannelSchema = new Schema<IChannel>(
     isPrivate: {
       type: Boolean,
       default: false,
+    },
+    chatTargetId: {
+      type: String,
+      required: true,
+    },
+    whiteboardRoomId: {
+      type: String,
+      required: true,
     },
   },
   {

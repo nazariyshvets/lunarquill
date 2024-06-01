@@ -38,9 +38,7 @@ const AudioVisualizer = ({
     };
   }, []);
 
-  if ((isLive && !mediaRecorder) || (!isLive && !blob)) {
-    return <></>;
-  }
+  if ((isLive && !mediaRecorder) || (!isLive && !blob)) return <></>;
 
   return (
     <div ref={visualizerWrapperRef} className="h-full w-full">

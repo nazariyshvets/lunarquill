@@ -49,12 +49,11 @@ const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
     };
 
     fetchAudio();
-  }, [url, alert]);
+  }, [url, alert, fileName]);
 
   useEffect(() => {
-    const handleTimeUpdate = () => {
+    const handleTimeUpdate = () =>
       setPlaybackTime(audioRef.current.currentTime);
-    };
 
     const handleEnd = () => {
       setIsPlayingBack(false);
@@ -77,8 +76,8 @@ const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
   ).padStart(2, "0")}`;
 
   return (
-    <div className="flex h-10 w-[9999px] max-w-full items-center">
-      <div className="relative h-full w-full">
+    <div className="flex h-10 w-[150px] max-w-[150px] items-center">
+      <div className="relative h-full w-[calc(100%-36px)]">
         {blob && <AudioVisualizer blob={blob} currentTime={playbackTime} />}
         <span className="absolute bottom-0 right-0 text-white text-2xs sm:text-xs">
           {displayTimeStr}

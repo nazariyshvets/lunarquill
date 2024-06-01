@@ -5,11 +5,15 @@ import { createFilter } from "redux-persist-transform-filter";
 
 import authReducer, { AuthState } from "./authSlice";
 import rtcReducer, { RTCState } from "./rtcSlice";
+import rtmReducer, { RTMState } from "./rtmSlice";
+import chatReducer, { ChatState } from "./chatSlice";
 import { mainApi } from "../services/mainService";
 
 interface RootState {
   auth: AuthState;
   rtc: RTCState;
+  rtm: RTMState;
+  chat: ChatState;
   [mainApi.reducerPath]: ReturnType<typeof mainApi.reducer>;
 }
 
@@ -37,6 +41,8 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   rtc: rtcReducer,
+  rtm: rtmReducer,
+  chat: chatReducer,
   [mainApi.reducerPath]: mainApi.reducer,
 });
 

@@ -1,67 +1,195 @@
 import { useState } from "react";
 
-import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
+import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import { capitalize } from "lodash";
+import { useAlert } from "react-alert";
 
 import RequestItem from "../components/RequestItem";
 import Modal from "../components/Modal";
 import NoDataBox from "../components/NoDataBox";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import useAlertMessage from "../hooks/useAlertMessage";
+import useAuth from "../hooks/useAuth";
+import useAuthRequestConfig from "../hooks/useAuthRequestConfig";
+import useChatConnection from "../hooks/useChatConnection";
+import useRTMClient from "../hooks/useRTMClient";
 import {
-  useGetUserRequestsQuery,
-  useDeclineRequestMutation,
   useAcceptRequestMutation,
+  useDeclineRequestMutation,
+  useGetUserRequestsQuery,
+  useCreateWhiteboardRoomMutation,
 } from "../services/mainService";
-import RTCConfig from "../config/RTCConfig";
+import fetchWhiteboardSdkToken from "../utils/fetchWhiteboardSdkToken";
+import type { IPopulatedRequest } from "../../../server/src/models/Request";
+import PeerMessage from "../types/PeerMessage";
 import { RequestTypeEnum } from "../types/Request";
 
 type RequestAction = "decline" | "accept" | "recall";
 
 const RequestsPage = () => {
-  const userId = RTCConfig.uid.toString();
-
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     action?: RequestAction;
-    requestId?: string;
+    request?: IPopulatedRequest;
   }>({
     isOpen: false,
   });
-  const { data } = useGetUserRequestsQuery(userId);
-  const [
-    declineRequest,
-    { isSuccess: isDecliningRequestSuccess, isError: isDecliningRequestError },
-  ] = useDeclineRequestMutation();
-  const [
-    acceptRequest,
-    { isSuccess: isAcceptingRequestSuccess, isError: isAcceptingRequestError },
-  ] = useAcceptRequestMutation();
-
-  const { setAlertMessage: setDecliningAlertMessage } = useAlertMessage(
-    isDecliningRequestSuccess,
-    isDecliningRequestError,
-  );
-  const { setAlertMessage: setAcceptingAlertMessage } = useAlertMessage(
-    isAcceptingRequestSuccess,
-    isAcceptingRequestError,
-  );
+  const { userId } = useAuth();
+  const { data: requests } = useGetUserRequestsQuery(userId ?? "");
+  const [declineRequest] = useDeclineRequestMutation();
+  const [acceptRequest] = useAcceptRequestMutation();
+  const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
+  const alert = useAlert();
+  const chatConnection = useChatConnection();
+  const RTMClient = useRTMClient();
+  const authRequestConfig = useAuthRequestConfig();
 
   useDocumentTitle("Inbox/Outbox requests");
 
   const handleRequestItemBtnClick = (
     action: RequestAction,
-    requestId: string,
+    request: IPopulatedRequest,
   ) =>
     setModalState((prevState) => ({
       ...prevState,
       isOpen: true,
       action,
-      requestId,
+      request,
     }));
 
-  const inboxRequests = data?.filter((request) => request.to._id === userId);
-  const outboxRequests = data?.filter((request) => request.from._id === userId);
+  const handleCancel = () =>
+    setModalState((prevState) => ({
+      ...prevState,
+      isOpen: false,
+    }));
+
+  const handleSave = async () => {
+    const action = modalState.action;
+    const request = modalState.request;
+
+    if (action && request) {
+      switch (action) {
+        case "recall":
+          try {
+            await declineRequest({
+              requestId: request._id,
+              uid: userId ?? "",
+            }).unwrap();
+            await RTMClient.sendMessageToPeer(
+              { text: PeerMessage.RequestRecalled },
+              request.to._id,
+            );
+            alert.success("Request is recalled successfully");
+          } catch (err) {
+            alert.error("Could not recall a request. Please try again");
+            console.log(err);
+          }
+          break;
+        case "decline":
+          try {
+            await Promise.all([
+              declineRequest({
+                requestId: request._id,
+                uid: userId ?? "",
+              }).unwrap(),
+              ...(request.type === RequestTypeEnum.Join
+                ? [
+                    await chatConnection.rejectGroupJoinRequest({
+                      applicant: request.from._id,
+                      groupId: request.channel?.chatTargetId ?? "",
+                      reason: "",
+                    }),
+                  ]
+                : []),
+              ...(request.type === RequestTypeEnum.Invite
+                ? [
+                    await chatConnection.rejectGroupInvite({
+                      invitee: request.to._id,
+                      groupId: request.channel?.chatTargetId ?? "",
+                    }),
+                  ]
+                : []),
+            ]);
+            await RTMClient.sendMessageToPeer(
+              { text: PeerMessage.RequestDeclined },
+              request.from._id,
+            );
+            alert.success("Request is declined successfully");
+          } catch (err) {
+            alert.error("Could not decline a request. Please try again");
+            console.log(err);
+          }
+          break;
+        case "accept":
+          try {
+            let whiteboardRoomId: string | undefined;
+
+            if (request.type === RequestTypeEnum.Contact) {
+              const whiteboardSdkToken =
+                await fetchWhiteboardSdkToken(authRequestConfig);
+              const whiteboardRoomCreationResponse = await createWhiteboardRoom(
+                {
+                  sdkToken: whiteboardSdkToken,
+                },
+              );
+
+              whiteboardRoomId =
+                "data" in whiteboardRoomCreationResponse &&
+                JSON.parse(whiteboardRoomCreationResponse.data).uuid;
+            }
+
+            await Promise.all([
+              acceptRequest({
+                requestId: request._id,
+                uid: userId ?? "",
+                whiteboardRoomId: RequestTypeEnum.Contact
+                  ? whiteboardRoomId
+                  : undefined,
+              }).unwrap(),
+              ...(request.type === RequestTypeEnum.Join
+                ? [
+                    await chatConnection.acceptGroupJoinRequest({
+                      applicant: request.from._id,
+                      groupId: request.channel?.chatTargetId ?? "",
+                    }),
+                  ]
+                : []),
+              ...(request.type === RequestTypeEnum.Invite
+                ? [
+                    await chatConnection.acceptGroupInvite({
+                      invitee: request.to._id,
+                      groupId: request.channel?.chatTargetId ?? "",
+                    }),
+                  ]
+                : []),
+            ]);
+            await RTMClient.sendMessageToPeer(
+              {
+                text:
+                  request.type === RequestTypeEnum.Contact
+                    ? PeerMessage.ContactRequestAccepted
+                    : request.type === RequestTypeEnum.Join
+                      ? PeerMessage.JoinRequestAccepted
+                      : PeerMessage.InviteRequestAccepted,
+              },
+              request.from._id,
+            );
+            alert.success("Request is accepted successfully");
+          } catch (err) {
+            alert.error("Could not accept a request. Please try again");
+            console.log(err);
+          }
+      }
+    }
+
+    setModalState({ isOpen: false });
+  };
+
+  const inboxRequests = requests?.filter(
+    (request) => request.to._id === userId,
+  );
+  const outboxRequests = requests?.filter(
+    (request) => request.from._id === userId,
+  );
 
   return (
     <div className="flex h-full w-full flex-col justify-center gap-12">
@@ -86,11 +214,9 @@ const RequestsPage = () => {
                   username={request.from.username}
                   channelName={request.channel?.name}
                   onDecline={() =>
-                    handleRequestItemBtnClick("decline", request._id)
+                    handleRequestItemBtnClick("decline", request)
                   }
-                  onAccept={() =>
-                    handleRequestItemBtnClick("accept", request._id)
-                  }
+                  onAccept={() => handleRequestItemBtnClick("accept", request)}
                 />
               ))}
             </div>
@@ -112,9 +238,7 @@ const RequestsPage = () => {
                       : request.to.username
                   }
                   channelName={request.channel?.name}
-                  onRecall={() =>
-                    handleRequestItemBtnClick("recall", request._id)
-                  }
+                  onRecall={() => handleRequestItemBtnClick("recall", request)}
                 />
               ))}
             </div>
@@ -128,35 +252,8 @@ const RequestsPage = () => {
         <Modal
           title={`Are you sure you want to ${modalState.action} this request`}
           saveBtnText={capitalize(modalState.action)}
-          onCancel={() =>
-            setModalState((prevState) => ({
-              ...prevState,
-              isOpen: false,
-            }))
-          }
-          onSave={() => {
-            const action = modalState.action;
-            const requestId = modalState.requestId;
-
-            if (action && requestId) {
-              switch (action) {
-                case "decline":
-                case "recall":
-                  setDecliningAlertMessage(
-                    `Request is ${
-                      action === "decline" ? "declined" : "recalled"
-                    } successfully`,
-                  );
-                  declineRequest({ requestId, uid: userId });
-                  break;
-                case "accept":
-                  setAcceptingAlertMessage("Request is accepted successfully");
-                  acceptRequest({ requestId, uid: userId });
-              }
-            }
-
-            setModalState({ isOpen: false });
-          }}
+          onCancel={handleCancel}
+          onSave={handleSave}
         />
       )}
     </div>

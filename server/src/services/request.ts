@@ -113,6 +113,16 @@ const handleInviteRequest = async (
   const channel = await Channel.findById(channelId);
   if (!channel) throw new Error("Channel not found");
 
+  // Check if an invitation request already exists
+  const existingRequest = await Request.findOne({
+    from,
+    to: toUser._id,
+    type: RequestTypeEnum.Invite,
+    channel: channel._id,
+  });
+
+  if (existingRequest) throw new Error("Invite request already exists");
+
   // Check if the user is already a member of the channel
   const membership = await Membership.findOne({
     user: toUser._id,
@@ -212,12 +222,19 @@ const declineRequest = async (requestId: string, userId: string) => {
   return { success: true };
 };
 
-const acceptRequest = async (requestId: string, userId: string) => {
+const acceptRequest = async (
+  requestId: string,
+  userId: string,
+  whiteboardRoomId?: string,
+) => {
   const request = await Request.findById(requestId);
 
   if (!request) throw new Error("Request not found");
   if (request.from.toString() !== userId && request.to.toString() !== userId)
     throw new Error("Unauthorized to accept this request");
+
+  if (request.type === RequestTypeEnum.Contact && !whiteboardRoomId)
+    throw new Error("Whiteboard id is required for creating a contact");
 
   // Start a session for atomic updates
   const session = await mongoose.startSession();
@@ -231,7 +248,7 @@ const acceptRequest = async (requestId: string, userId: string) => {
             ? [request.from, request.to]
             : [request.to, request.from];
         await Contact.findOneAndUpdate(
-          { user1, user2 },
+          { user1, user2, whiteboardRoomId },
           {},
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );

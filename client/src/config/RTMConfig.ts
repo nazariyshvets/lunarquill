@@ -1,9 +1,7 @@
 import RTCConfig from "./RTCConfig";
 
 const RTMConfig: RTMConfigType = {
-  uid: RTCConfig.uid.toString(),
   appId: RTCConfig.appId,
-  channelName: RTCConfig.channelName,
   rtmToken: "",
   proxyUrl: RTCConfig.proxyUrl,
   serverUrl: RTCConfig.serverUrl,
@@ -21,9 +19,7 @@ const RTMConfig: RTMConfigType = {
 };
 
 export type RTMConfigType = {
-  uid: string;
   appId: string;
-  channelName: string;
   rtmToken: string | null;
   proxyUrl: string;
   serverUrl: string;

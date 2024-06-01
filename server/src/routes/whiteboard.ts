@@ -2,6 +2,8 @@ import { Router } from "express";
 
 import {
   createRoomController,
+  disableRoomController,
+  listRoomsController,
   generateSDKTokenController,
   generateRoomTokenController,
   generateTaskTokenController,
@@ -9,7 +11,9 @@ import {
 
 const router = Router();
 
-router.post("/room", createRoomController);
+router.post("/rooms", createRoomController);
+router.patch("/rooms", disableRoomController);
+router.get(`/rooms/:sdkToken`, listRoomsController);
 router.get("/sdk-token", generateSDKTokenController);
 router.get("/room-token/:roomUUID", generateRoomTokenController);
 router.get("/task-token/:userUUID", generateTaskTokenController);

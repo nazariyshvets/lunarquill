@@ -2,18 +2,20 @@ import { useEffect } from "react";
 
 import { AgoraChat } from "agora-chat";
 
+import useAuth from "./useAuth";
 import useAuthRequestConfig from "./useAuthRequestConfig";
 import fetchChatToken from "../utils/fetchChatToken";
 import ChatConfig from "../config/ChatConfig";
 
 const useChatTokenWillExpire = (connection: AgoraChat.Connection) => {
+  const { userId } = useAuth();
   const requestConfig = useAuthRequestConfig();
 
   useEffect(() => {
     connection.addEventHandler("connection", {
       onTokenWillExpire: async () => {
         try {
-          const token = await fetchChatToken(ChatConfig.uid, requestConfig);
+          const token = await fetchChatToken(userId ?? "", requestConfig);
 
           ChatConfig.token = token;
           connection.token = token;
@@ -26,7 +28,7 @@ const useChatTokenWillExpire = (connection: AgoraChat.Connection) => {
     return () => {
       connection.removeEventHandler("connection");
     };
-  }, [connection, requestConfig]);
+  }, [connection, requestConfig, userId]);
 };
 
 export default useChatTokenWillExpire;

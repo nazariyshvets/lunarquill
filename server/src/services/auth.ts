@@ -10,6 +10,7 @@ import sendEmail from "../utils/email/sendEmail";
 import generateJwtToken from "../utils/generateJwtToken";
 import createToken from "../utils/createToken";
 import hashString from "../utils/hashString";
+import { registerChatUser } from "./chat";
 import User from "../models/User";
 import Token from "../models/Token";
 
@@ -60,6 +61,9 @@ const registerUser = async (
 
   // Save the new user to DB
   await newUser.save();
+
+  // Register user in Agora Chat
+  await registerChatUser(newUser._id, newUser.password);
 
   // Send a greeting email
   sendEmail(
@@ -168,12 +172,21 @@ const loginUserWithGoogle = async (code: string) => {
 
   // Create user if does not exist
   if (!user) {
-    user = await User.create({ email, active: true });
+    const username = email.split("@")[0];
+
+    user = await User.create({
+      email,
+      username,
+      active: true,
+    });
+
+    // Register user in Agora Chat
+    await registerChatUser(user._id, user.password);
 
     sendEmail(
       email,
       "Welcome to LunarQuill",
-      { username: email.split("@")[0] || "user" },
+      { username: username || "user" },
       "./templates/welcome.handlebars",
     );
   }

@@ -1,28 +1,25 @@
 import { useState, useEffect } from "react";
 
 import { UID } from "agora-rtc-react";
+import { RtmClient, RtmChannel } from "agora-rtm-react";
 
-import useRTMClient from "../hooks/useRTMClient";
-import useRTMChannel from "../hooks/useRTMChannel";
-
-const useScreenCasterId = () => {
-  const RTMClient = useRTMClient();
-  const RTMChannel = useRTMChannel(RTMClient);
+const useScreenCasterId = (
+  RTMClient: RtmClient,
+  RTMChannel: RtmChannel,
+  channelId: string,
+) => {
   const [id, setId] = useState<UID | null>(null);
 
   useEffect(() => {
     const getScreenCasterId = async () => {
       try {
         const { screenCasterId } = await RTMClient.getChannelAttributesByKeys(
-          RTMChannel.channelId,
+          channelId,
           ["screenCasterId"],
         );
 
-        if (screenCasterId) {
-          setId(screenCasterId.value);
-        } else {
-          setId(null);
-        }
+        if (screenCasterId) setId(screenCasterId.value);
+        else setId(null);
       } catch (err) {
         console.log(err);
       }
@@ -34,7 +31,7 @@ const useScreenCasterId = () => {
     return () => {
       RTMChannel.off("AttributesUpdated", getScreenCasterId);
     };
-  }, [RTMClient, RTMChannel]);
+  }, [RTMClient, RTMChannel, channelId]);
 
   return id;
 };

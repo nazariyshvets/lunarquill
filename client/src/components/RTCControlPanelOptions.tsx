@@ -40,26 +40,26 @@ const RTCControlPanelOptions = () => {
   const optionConfigs = [
     {
       title: "Virtual background",
-      isEnabled: isVirtualBgEnabled,
+      isEnabled: isVirtualBgEnabled ?? false,
       onSwitchChange: () =>
         dispatch(setIsVirtualBgEnabled(!isVirtualBgEnabled)),
       onConfigure: () => setActiveConfigurator("virtual-background"),
     },
     {
       title: "Noise suppression",
-      isEnabled: isNoiseSuppressionEnabled,
+      isEnabled: isNoiseSuppressionEnabled ?? false,
       onSwitchChange: () =>
         dispatch(setIsNoiseSuppressionEnabled(!isNoiseSuppressionEnabled)),
       onConfigure: () => setActiveConfigurator("noise-suppression"),
     },
     {
       title: "Chat",
-      isEnabled: isChatDisplayed,
+      isEnabled: isChatDisplayed ?? false,
       onSwitchChange: () => dispatch(setIsChatDisplayed(!isChatDisplayed)),
     },
     {
       title: "Whiteboard",
-      isEnabled: isWhiteboardDisplayed,
+      isEnabled: isWhiteboardDisplayed ?? false,
       onSwitchChange: () =>
         dispatch(setIsWhiteboardDisplayed(!isWhiteboardDisplayed)),
     },

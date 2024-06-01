@@ -1,33 +1,72 @@
 import { Link } from "react-router-dom";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { debounce } from "lodash";
 import { useAlert } from "react-alert";
-import { BiCopy, BiUserPlus, BiGroup, BiBell, BiExit } from "react-icons/bi";
+import { BiBell, BiCopy, BiExit, BiGroup, BiUserPlus } from "react-icons/bi";
 
 import SimpleButton, { SimpleButtonProps } from "../components/SimpleButton";
+import Switch from "../components/Switch";
 import { logout } from "../redux/authSlice";
-import { useGetUserDetailsQuery } from "../services/mainService";
+import {
+  useGetUserByIdQuery,
+  useUpdateUserByIdMutation,
+  useFetchUserContactsMutation,
+} from "../services/mainService";
+import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppDispatch from "../hooks/useAppDispatch";
+import useRTMClient from "../hooks/useRTMClient";
+import useCopyToClipboard from "../hooks/useCopyToClipboard";
+import getErrorMessage from "../utils/getErrorMessage";
+import PeerMessage from "../types/PeerMessage";
 
 const ProfilePage = () => {
-  const { data: userDetails } = useGetUserDetailsQuery({});
+  const { userId } = useAuth();
+  const { data: userDetails } = useGetUserByIdQuery(userId ?? skipToken);
+  const [updateUser] = useUpdateUserByIdMutation();
+  const [fetchUserContacts] = useFetchUserContactsMutation();
+  const RTMClient = useRTMClient();
   const dispatch = useAppDispatch();
+  const copyToClipboard = useCopyToClipboard();
   const alert = useAlert();
 
   useDocumentTitle("Profile");
 
-  const handleCopyIdToClipboard = async () => {
-    const userId = userDetails?._id;
+  const handleCopyIdToClipboard = () => userId && copyToClipboard(userId, "id");
 
+  const handleOnlineStatusChange = debounce(async (isOnline: boolean) => {
     if (userId) {
       try {
-        await navigator.clipboard.writeText(userId);
-        alert.success("The id is copied successfully");
-      } catch (err) {
-        alert.error("Could not copy the id. Please try again");
-        console.log(err);
+        const updatedUser = await updateUser({
+          userId,
+          updateData: { isOnline },
+        }).unwrap();
+        const contacts = await fetchUserContacts(userId).unwrap();
+
+        const onlineStatus = updatedUser.isOnline
+          ? PeerMessage.UserWentOnline
+          : PeerMessage.UserWentOffline;
+
+        contacts.forEach((contact) =>
+          RTMClient.sendMessageToPeer(
+            {
+              text: onlineStatus,
+            },
+            contact._id,
+          ),
+        );
+      } catch (error) {
+        alert.error(
+          getErrorMessage({
+            error,
+            defaultErrorMessage:
+              "Could not set online status. Please try again",
+          }),
+        );
+        console.log(error);
       }
     }
-  };
+  }, 200);
 
   const username = userDetails?.username ?? "You";
 
@@ -39,12 +78,21 @@ const ProfilePage = () => {
             <div className="flex h-32 w-32 cursor-default items-center justify-center rounded-full bg-primary text-5xl text-white">
               {username.slice(0, 2).toUpperCase()}
             </div>
-            <div
-              className="absolute bottom-0 right-0 flex cursor-pointer items-center gap-1 p-2 text-sm text-lightgrey hover:text-primary-light"
-              onClick={handleCopyIdToClipboard}
-            >
-              <BiCopy />
-              Copy id
+            <div className="absolute bottom-0 right-0 flex flex-col items-end gap-8 p-2">
+              <div
+                className="flex cursor-pointer items-center gap-1 text-sm text-lightgrey hover:text-primary-light"
+                onClick={handleCopyIdToClipboard}
+              >
+                <BiCopy />
+                Copy id
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={userDetails?.isOnline ?? false}
+                  onChange={handleOnlineStatusChange}
+                />
+                <span className="text-white">Online</span>
+              </div>
             </div>
           </div>
           <span className="truncate text-center text-lg font-medium text-primary">

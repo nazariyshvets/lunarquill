@@ -1,7 +1,19 @@
-import { createChannel } from "agora-rtm-react";
+import { useState, useEffect } from "react";
 
-import RTMConfig from "../config/RTMConfig";
+import {
+  createChannel as createAgoraChannel,
+  RtmClient,
+  RtmChannel,
+} from "agora-rtm-react";
 
-const useRTMChannel = createChannel(RTMConfig.channelName);
+const useRTMChannel = (client: RtmClient, channelId: string) => {
+  const [channel, setChannel] = useState<RtmChannel>();
+
+  useEffect(() => {
+    if (channelId) setChannel(createAgoraChannel(channelId)(client));
+  }, [channelId, client]);
+
+  return channel;
+};
 
 export default useRTMChannel;

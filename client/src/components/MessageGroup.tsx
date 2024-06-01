@@ -24,7 +24,11 @@ const MessageGroup = ({
         isLocalUser ? "flex-row-reverse self-end" : ""
       }`}
     >
-      <div className="relative z-10 h-12 w-12 flex-shrink-0 rounded-full border-4 border-deep-black bg-primary-light"></div>
+      <div className="relative z-[1] flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-4 border-deep-black bg-primary-light">
+        {(isLocalUser ? "You" : messages[0]?.senderUsername ?? "Unknown")
+          .slice(0, 2)
+          .toUpperCase()}
+      </div>
       <div
         className={`flex max-w-full flex-col gap-2 ${
           isLocalUser ? "-mr-4 items-end" : "-ml-4 items-start"

@@ -10,6 +10,7 @@ import {
   useClientEvent,
   UID,
 } from "agora-rtc-react";
+import { RtmChannel } from "agora-rtm-react";
 import { useWindowWidth } from "@react-hook/window-size";
 import { isEmpty } from "lodash";
 import { useAlert } from "react-alert";
@@ -29,6 +30,7 @@ import useRemoteUsersTracksState from "../hooks/useRemoteUsersTracksState";
 import useRemoteUsersAttributes from "../hooks/useUsersAttributes";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useScreenCasterId from "../hooks/useScreenCasterId";
+import useAuth from "../hooks/useAuth";
 import useRTC from "../hooks/useRTC";
 import useWhiteboardRoom from "../hooks/useWhiteboardRoom";
 import {
@@ -38,9 +40,24 @@ import {
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import type UserVolume from "../types/UserVolume";
+import { type ChatType, ChatTypeEnum } from "../types/ChatType";
+
+interface RTCManagerProps {
+  channelId: string;
+  RTMChannel: RtmChannel;
+  chatType: ChatType;
+  chatTargetId: string;
+  whiteboardRoomId: string;
+}
 
 // RTCManager component responsible for handling RTC-related logic and rendering UI
-const RTCManager = () => {
+const RTCManager = ({
+  channelId,
+  RTMChannel,
+  chatType,
+  chatTargetId,
+  whiteboardRoomId,
+}: RTCManagerProps) => {
   const RTCClient = useRTCClient();
   const RTMClient = useRTMClient();
   const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
@@ -54,22 +71,25 @@ const RTCManager = () => {
   );
   const [isLocalScreenShared, setIsLocalScreenShared] = useState(false);
   const remoteUsers = useRemoteUsers();
-  const remoteUsersTracksState = useRemoteUsersTracksState();
-  const remoteUsersAttrs = useRemoteUsersAttributes();
+  const remoteUsersTracksState = useRemoteUsersTracksState(
+    RTMClient,
+    RTMChannel,
+  );
+  const remoteUsersAttrs = useRemoteUsersAttributes(RTMClient, RTMChannel);
   const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
   const { isChatDisplayed, isWhiteboardDisplayed } = useRTC();
-  const whiteboardRoomCredentials = useWhiteboardRoom();
-  const screenCasterId = useScreenCasterId();
+  const whiteboardRoomCredentials = useWhiteboardRoom(whiteboardRoomId);
+  const screenCasterId = useScreenCasterId(RTMClient, RTMChannel, channelId);
+  const { userId: localUserId } = useAuth();
   const windowWidth = useWindowWidth();
   const alert = useAlert();
   const dispatch = useAppDispatch();
-  const localUserId = RTCConfig.uid;
 
   // Join channel
   useJoin(
     {
       appid: RTCConfig.appId,
-      channel: RTCConfig.channelName,
+      channel: channelId,
       token: RTCConfig.rtcToken,
       uid: localUserId,
     },
@@ -163,7 +183,7 @@ const RTCManager = () => {
       >
         <VideoTracksContainer>
           {(screenCasterId || localUserId !== mostActiveUserId) && (
-            <VideoTrack isActive={isUserActive(localUserId)}>
+            <VideoTrack isActive={isUserActive(localUserId ?? "")}>
               <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
             </VideoTrack>
           )}
@@ -219,7 +239,7 @@ const RTCManager = () => {
           isChatDisplayed && !isWhiteboardDisplayed ? "" : "hidden"
         }`}
       >
-        <Chat />
+        <Chat chatType={chatType} targetId={chatTargetId} />
       </div>
 
       {whiteboardRoomCredentials && (
@@ -242,7 +262,7 @@ const RTCManager = () => {
         <VideoTracksContainer isScreenShared={!!screenCasterId}>
           <VideoTrack
             size={screenCasterId ? "fixed" : "auto"}
-            isActive={isUserActive(localUserId)}
+            isActive={isUserActive(localUserId ?? "")}
           >
             <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
           </VideoTrack>
@@ -285,7 +305,7 @@ const RTCManager = () => {
             : "hidden"
         }`}
       >
-        <Chat />
+        <Chat chatType={chatType} targetId={chatTargetId} />
       </div>
 
       {whiteboardRoomCredentials && (
@@ -300,7 +320,12 @@ const RTCManager = () => {
 
   const renderScreenCaster = () =>
     isLocalScreenShared && (
-      <ScreenCaster setIsLocalScreenShared={setIsLocalScreenShared} />
+      <ScreenCaster
+        RTMClient={RTMClient}
+        RTMChannel={RTMChannel}
+        channelId={channelId}
+        setIsLocalScreenShared={setIsLocalScreenShared}
+      />
     );
 
   // Check if devices are still loading
@@ -325,6 +350,11 @@ const RTCManager = () => {
         isCameraMuted={isCameraMuted}
         isMicrophoneMuted={isMicrophoneMuted}
         isLocalScreenShared={isLocalScreenShared}
+        backRoute={`/${
+          chatType === ChatTypeEnum.SingleChat
+            ? `contacts/${chatTargetId}`
+            : `channels/${channelId}`
+        }/chat`}
         onToggleCamera={toggleCamera}
         onToggleMicrophone={toggleMicrophone}
         onToggleScreen={toggleScreen}

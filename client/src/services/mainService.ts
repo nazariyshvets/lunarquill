@@ -3,12 +3,14 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { RootState } from "../redux/store";
 import { BASE_SERVER_URL } from "../constants/constants";
 import type Request from "../types/Request";
+import type { UserWithoutPassword } from "../types/User";
 import type {
   IUser,
   IUserWithoutPassword,
 } from "../../../server/src/models/User";
 import type { IPopulatedRequest } from "../../../server/src/models/Request";
 import type { IChannel } from "../../../server/src/models/Channel";
+import type { IPopulatedContact } from "../../../server/src/models/Contact";
 
 export const mainApi = createApi({
   reducerPath: "mainApi",
@@ -24,7 +26,7 @@ export const mainApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["user-requests", "user-contacts", "user-channels"],
+  tagTypes: ["user-details", "user-requests", "user-contacts", "user-channels"],
   endpoints: (builder) => ({
     // ===== AUTH =====
 
@@ -52,18 +54,41 @@ export const mainApi = createApi({
 
     // ===== USERS =====
 
-    getUserDetails: builder.query({
-      query: () => "/users/profile",
-      transformResponse: (response: { user: IUser }) => response.user,
-      keepUnusedDataFor: 0,
-    }),
-    getUserContacts: builder.query<IUserWithoutPassword[], string>({
+    getUserContacts: builder.query<UserWithoutPassword[], string>({
       query: (userId) => `/users/${userId}/contacts`,
       providesTags: ["user-contacts"],
+    }),
+    fetchUserContacts: builder.mutation<UserWithoutPassword[], string>({
+      query: (userId) => ({
+        url: `/users/${userId}/contacts`,
+        method: "GET",
+      }),
     }),
     getUserChannels: builder.query<IChannel[], string>({
       query: (userId) => `/users/${userId}/channels`,
       providesTags: ["user-channels"],
+    }),
+    getUserById: builder.query<UserWithoutPassword, string>({
+      query: (userId) => `/users/${userId}`,
+      keepUnusedDataFor: 0,
+      providesTags: ["user-details"],
+    }),
+    fetchUserById: builder.mutation<UserWithoutPassword, string>({
+      query: (userId) => ({
+        url: `/users/${userId}`,
+        method: "GET",
+      }),
+    }),
+    updateUserById: builder.mutation<
+      IUserWithoutPassword,
+      { userId: string; updateData: Partial<IUser> }
+    >({
+      query: (data) => ({
+        url: `/users/${data.userId}`,
+        method: "PUT",
+        body: data.updateData,
+      }),
+      invalidatesTags: ["user-details"],
     }),
 
     // ===== REQUESTS =====
@@ -93,7 +118,7 @@ export const mainApi = createApi({
     }),
     acceptRequest: builder.mutation<
       { success: true },
-      { requestId: string; uid: string }
+      { requestId: string; uid: string; whiteboardRoomId?: string }
     >({
       query: (data) => ({
         url: "/requests/accept",
@@ -111,6 +136,8 @@ export const mainApi = createApi({
         name: string;
         admin: string;
         participants: string[];
+        chatTargetId: string;
+        whiteboardRoomId: string;
         isPrivate?: boolean;
       }
     >({
@@ -138,6 +165,77 @@ export const mainApi = createApi({
       }),
       invalidatesTags: ["user-channels"],
     }),
+    leaveChannel: builder.mutation<
+      { message: string },
+      { userId: string; channelId: string }
+    >({
+      query: (data) => ({
+        url: "/channels/leave",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["user-channels"],
+    }),
+    getChannelById: builder.query<IChannel, string>({
+      query: (id) => `/channels/${id}`,
+    }),
+    fetchChannelById: builder.mutation<IChannel, string>({
+      query: (id) => ({
+        url: `/channels/${id}`,
+        method: "GET",
+      }),
+    }),
+
+    //   ===== CONTACTS =====
+
+    fetchContactRelation: builder.mutation<
+      IPopulatedContact,
+      { userId1: string; userId2: string }
+    >({
+      query: ({ userId1, userId2 }) => ({
+        url: `/contacts/${userId1}/${userId2}`,
+        method: "GET",
+      }),
+    }),
+    getContactById: builder.query<IPopulatedContact, string>({
+      query: (id) => `/contacts/${id}`,
+    }),
+    removeContact: builder.mutation<
+      { message: string },
+      { user1Id: string; user2Id: string }
+    >({
+      query: (data) => ({
+        url: "/contacts/relation",
+        method: "DELETE",
+        body: data,
+      }),
+      invalidatesTags: ["user-contacts"],
+    }),
+
+    // WHITEBOARD
+    createWhiteboardRoom: builder.mutation<string, { sdkToken: string }>({
+      query: (data) => ({
+        url: "/whiteboard/rooms",
+        method: "POST",
+        body: data,
+      }),
+    }),
+    disableWhiteboardRoom: builder.mutation<
+      string,
+      { roomUuid: string; sdkToken: string }
+    >({
+      query: (data) => ({
+        url: "/whiteboard/rooms",
+        method: "PATCH",
+        body: data,
+      }),
+    }),
+    getWhiteboardRooms: builder.mutation<string, string>({
+      query: (sdkToken) => ({
+        url: `/whiteboard/rooms/${sdkToken}`,
+        method: "GET",
+      }),
+    }),
   }),
 });
 
@@ -147,9 +245,12 @@ export const {
   useRequestPasswordResetMutation,
   useResetPasswordMutation,
   // USERS
-  useGetUserDetailsQuery,
   useGetUserContactsQuery,
+  useFetchUserContactsMutation,
   useGetUserChannelsQuery,
+  useGetUserByIdQuery,
+  useFetchUserByIdMutation,
+  useUpdateUserByIdMutation,
   // REQUESTS
   useCreateRequestMutation,
   useGetUserRequestsQuery,
@@ -159,4 +260,15 @@ export const {
   useCreateChannelMutation,
   useSearchChannelsMutation,
   useJoinChannelMutation,
+  useLeaveChannelMutation,
+  useGetChannelByIdQuery,
+  useFetchChannelByIdMutation,
+  // CONTACTS
+  useFetchContactRelationMutation,
+  useGetContactByIdQuery,
+  useRemoveContactMutation,
+  // WHITEBOARD
+  useCreateWhiteboardRoomMutation,
+  useDisableWhiteboardRoomMutation,
+  useGetWhiteboardRoomsMutation,
 } = mainApi;

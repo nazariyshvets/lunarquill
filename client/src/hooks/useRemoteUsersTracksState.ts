@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 
 import { useRTCClient, IAgoraRTCRemoteUser } from "agora-rtc-react";
+import { RtmClient, RtmChannel } from "agora-rtm-react";
 
 import useUsersAttributes from "./useUsersAttributes";
-import RTMConfig from "../config/RTMConfig";
+import useAuth from "./useAuth";
 import type RTCMediaType from "../types/RTCMediaType";
 
 interface RemoteUsersTracksState {
@@ -17,11 +18,15 @@ interface RemoteUsersTracksState {
   };
 }
 
-const useRemoteUsersTracksState = () => {
+const useRemoteUsersTracksState = (
+  RTMClient: RtmClient,
+  RTMChannel: RtmChannel,
+) => {
   const [remoteUsersTracksState, setRemoteUsersTracksState] =
     useState<RemoteUsersTracksState>({});
   const RTCClient = useRTCClient();
-  const usersAttributes = useUsersAttributes();
+  const usersAttributes = useUsersAttributes(RTMClient, RTMChannel);
+  const { userId } = useAuth();
 
   const updateUserTrackState = (
     user: IAgoraRTCRemoteUser,
@@ -73,7 +78,7 @@ const useRemoteUsersTracksState = () => {
 
   useEffect(() => {
     // remove local user
-    delete usersAttributes[RTMConfig.uid];
+    delete usersAttributes[userId ?? ""];
     const tracksState = Object.entries(usersAttributes).reduce(
       (acc, [uid, attributes]) => {
         acc[uid] = {
@@ -86,7 +91,7 @@ const useRemoteUsersTracksState = () => {
     );
 
     setRemoteUsersTracksState(tracksState);
-  }, [usersAttributes]);
+  }, [userId, usersAttributes]);
 
   return remoteUsersTracksState;
 };

@@ -8,6 +8,8 @@ const createChannel = async (
   name: string,
   admin: string,
   participants: string[],
+  chatTargetId: string,
+  whiteboardRoomId: string,
   isPrivate = false,
 ) => {
   if (!mongoose.Types.ObjectId.isValid(admin))
@@ -22,7 +24,13 @@ const createChannel = async (
     throw new Error("Some participants are invalid");
 
   // Create the channel
-  const channel = new Channel({ name, admin, isPrivate });
+  const channel = new Channel({
+    name,
+    admin,
+    chatTargetId,
+    whiteboardRoomId,
+    isPrivate,
+  });
   await channel.save();
 
   // Create membership documents for each participant
@@ -81,4 +89,49 @@ const joinChannel = async (userId: string, channelId: string) => {
   return membership;
 };
 
-export { createChannel, searchChannels, joinChannel };
+const leaveChannel = async (userId: string, channelId: string) => {
+  // Validate user ID and channel ID
+  if (
+    !mongoose.Types.ObjectId.isValid(userId) ||
+    !mongoose.Types.ObjectId.isValid(channelId)
+  )
+    throw new Error("Invalid user or channel id");
+
+  const user = await User.findById(userId);
+  if (!user) throw new Error("Invalid user id");
+
+  const channel = await Channel.findById(channelId);
+  if (!channel) throw new Error("Channel not found");
+
+  // Find the membership document
+  const membership = await Membership.findOne({
+    user: userId,
+    channel: channelId,
+  });
+
+  if (!membership) throw new Error("Membership not found");
+
+  // Remove the membership document
+  await Membership.deleteOne({ _id: membership._id });
+
+  return { message: "User has left the channel" };
+};
+
+const getChannelById = async (channelId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(channelId))
+    throw new Error("Invalid channel id");
+
+  const channel = await Channel.findById(channelId);
+
+  if (!channel) throw new Error("Channel not found");
+
+  return channel;
+};
+
+export {
+  createChannel,
+  searchChannels,
+  joinChannel,
+  leaveChannel,
+  getChannelById,
+};

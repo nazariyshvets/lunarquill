@@ -19,6 +19,7 @@ interface RTCControlPanelProps {
   isCameraMuted: boolean;
   isMicrophoneMuted: boolean;
   isLocalScreenShared: boolean;
+  backRoute: string;
   onToggleCamera: () => void;
   onToggleMicrophone: () => void;
   onToggleScreen: () => void;
@@ -28,6 +29,7 @@ const RTCControlPanel = ({
   isCameraMuted,
   isMicrophoneMuted,
   isLocalScreenShared,
+  backRoute,
   onToggleCamera,
   onToggleMicrophone,
   onToggleScreen,
@@ -72,7 +74,7 @@ const RTCControlPanel = ({
           <BiWindowClose className="h-full w-full" />
         )}
       </RTCControlButton>
-      <RTCControlButton onClick={() => navigate("/profile")}>
+      <RTCControlButton onClick={() => navigate(backRoute)}>
         <BiPhoneOff className="h-full w-full text-red-500" />
       </RTCControlButton>
     </div>

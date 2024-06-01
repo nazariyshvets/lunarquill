@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -5,7 +7,6 @@ import {
   RouterProvider,
 } from "react-router-dom";
 
-import { jwtDecode } from "jwt-decode";
 import { initDB } from "react-indexed-db-hook";
 
 import WelcomePage from "../pages/WelcomePage";
@@ -20,13 +21,22 @@ import ProfilePage from "../pages/ProfilePage";
 import ContactAdditionPage from "../pages/ContactAdditionPage";
 import ChannelAdditionPage from "../pages/ChannelAdditionPage";
 import RequestsPage from "../pages/RequestsPage";
+import ContactChatPage from "../pages/ContactChatPage";
+import ChannelChatPage from "../pages/ChannelChatPage";
 import ChannelPage from "../pages/ChannelPage";
+import PeerMessageManager from "./PeerMessageManager";
+import CallManager from "./CallManager";
 import useAuth from "../hooks/useAuth";
-import RTCConfig from "../config/RTCConfig";
-import RTMConfig from "../config/RTMConfig";
-import ChatConfig from "../config/ChatConfig";
+import useAppDispatch from "../hooks/useAppDispatch";
+import useRTMClient from "../hooks/useRTMClient";
+import useInitRTMClient from "../hooks/useInitRTMClient";
+import useChatConnection from "../hooks/useChatConnection";
+import useInitChat from "../hooks/useInitChat";
+import useRTMTokenExpired from "../hooks/useRTMTokenExpired";
+import useChatTokenWillExpire from "../hooks/useChatTokenWillExpire";
+import { setUserId, setUsername } from "../redux/authSlice";
+import decodeUserToken from "../utils/decodeUserToken";
 import DBConfig from "../config/DBConfig";
-import type DecodedUserToken from "../types/DecodedUserToken";
 
 initDB(DBConfig);
 
@@ -46,13 +56,20 @@ const router = createBrowserRouter(
       />
       <Route path="/password-reset" element={<PasswordResetPage />} />
       <Route element={<ProtectedRoute />}>
-        <Route element={<SidebarLayout />}>
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/add-contact" element={<ContactAdditionPage />} />
-          <Route path="/add-channel" element={<ChannelAdditionPage />} />
-          <Route path="/requests" element={<RequestsPage />} />
+        <Route element={<PeerMessageManager />}>
+          <Route element={<CallManager />}>
+            <Route element={<SidebarLayout />}>
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/add-contact" element={<ContactAdditionPage />} />
+              <Route path="/add-channel" element={<ChannelAdditionPage />} />
+              <Route path="/requests" element={<RequestsPage />} />
+              <Route path="/contacts/:id/chat" element={<ContactChatPage />} />
+              <Route path="/channels/:id/chat" element={<ChannelChatPage />} />
+            </Route>
+            <Route path="/contacts/:id/call" element={<ChannelPage />} />
+            <Route path="/channels/:id/call" element={<ChannelPage />} />
+          </Route>
         </Route>
-        <Route path="/channel" element={<ChannelPage />} />
       </Route>
     </>,
   ),
@@ -60,18 +77,24 @@ const router = createBrowserRouter(
 
 const App = () => {
   const { userToken } = useAuth();
+  const RTMClient = useRTMClient();
+  const chatConnection = useChatConnection();
+  const dispatch = useAppDispatch();
 
-  if (userToken) {
-    const decodedUserToken = jwtDecode<DecodedUserToken>(userToken);
-    const userId = decodedUserToken.id;
-    const username = decodedUserToken.username;
+  useEffect(() => {
+    if (userToken) {
+      const { userId, username } = decodeUserToken(userToken);
 
-    RTCConfig.uid = userId;
-    RTMConfig.uid = userId;
-    RTMConfig.username = username;
-    ChatConfig.uid = userId;
-    ChatConfig.username = username;
-  }
+      dispatch(setUserId(userId));
+      dispatch(setUsername(username ?? null));
+    }
+  }, [dispatch, userToken]);
+
+  useInitRTMClient(RTMClient);
+  useInitChat(chatConnection);
+
+  useRTMTokenExpired(RTMClient);
+  useChatTokenWillExpire(chatConnection);
 
   return <RouterProvider router={router} />;
 };

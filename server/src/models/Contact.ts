@@ -1,8 +1,16 @@
 import { Schema, model, Document, Types } from "mongoose";
 
+import type { IUserWithoutPassword } from "./User";
+
 interface IContact extends Document {
   user1: Types.ObjectId;
   user2: Types.ObjectId;
+  whiteboardRoomId: string;
+}
+
+interface IPopulatedContact extends Omit<IContact, "user1" | "user2"> {
+  user1: IUserWithoutPassword;
+  user2: IUserWithoutPassword;
 }
 
 const ContactSchema = new Schema<IContact>(
@@ -17,6 +25,10 @@ const ContactSchema = new Schema<IContact>(
       ref: "User",
       required: true,
     },
+    whiteboardRoomId: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: true,
@@ -26,4 +38,4 @@ const ContactSchema = new Schema<IContact>(
 const Contact = model<IContact>("Contact", ContactSchema);
 
 export default Contact;
-export { IContact };
+export type { IContact, IPopulatedContact };

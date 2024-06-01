@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, memo } from "react";
 
 import AC, { AgoraChat } from "agora-chat";
 import _ from "lodash";
@@ -15,13 +15,19 @@ import ChatForm from "./CharForm";
 import SimpleButton from "./SimpleButton";
 import AudioRecorder from "./AudioRecorder";
 import useChatConnection from "../hooks/useChatConnection";
+import useAuth from "../hooks/useAuth";
 import groupMessages from "../utils/groupMessages";
 import parseMessage from "../utils/parseMessage";
 import { ERROR_CODES } from "../constants/constants";
-import ChatConfig from "../config/ChatConfig";
+import type { ChatType } from "../types/ChatType";
 import type Message from "../types/Message";
 
-const Chat = () => {
+interface ChatProps {
+  chatType: ChatType;
+  targetId: string;
+}
+
+const Chat = ({ chatType, targetId }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [emojiPickerState, setEmojiPickerState] = useState<{
@@ -35,6 +41,7 @@ const Chat = () => {
   const areMessagesFetchingRef = useRef(false);
   const messagesCursorRef = useRef<string>();
   const connection = useChatConnection();
+  const { userId, username } = useAuth();
   const alert = useAlert();
 
   // ===== FUNCTIONS =====
@@ -44,8 +51,8 @@ const Chat = () => {
 
     try {
       const res = await connection.getHistoryMessages({
-        targetId: ChatConfig.chatId,
-        chatType: "groupChat",
+        targetId,
+        chatType,
         pageSize: 20,
         searchDirection: "up",
         cursor: messagesCursorRef.current,
@@ -66,7 +73,7 @@ const Chat = () => {
     } finally {
       areMessagesFetchingRef.current = false;
     }
-  }, [connection, alert]);
+  }, [connection, targetId, chatType, alert]);
 
   const adjustMessageInputHeight = () => {
     const messageInput = messageInputRef.current;
@@ -83,7 +90,7 @@ const Chat = () => {
     );
 
     return reactionMessage?.reactions?.filter((reaction) =>
-      reaction.userList.find((userId) => userId === ChatConfig.uid),
+      reaction.userList.find((uid) => uid === userId),
     );
   };
 
@@ -104,10 +111,10 @@ const Chat = () => {
     const options: AgoraChat.CreateMsgType = {
       type: "txt",
       msg: message,
-      to: ChatConfig.chatId,
-      chatType: "groupChat",
+      to: targetId,
+      chatType,
       ext: {
-        senderUsername: ChatConfig.username,
+        senderUsername: username,
       },
     };
 
@@ -119,8 +126,8 @@ const Chat = () => {
         id: serverMsgId,
         type: "txt",
         msg: message,
-        senderId: ChatConfig.uid,
-        senderUsername: ChatConfig.username,
+        senderId: userId ?? "",
+        senderUsername: username ?? "unknown",
         recipientId: msg.to,
         time: Date.now(),
       };
@@ -157,10 +164,10 @@ const Chat = () => {
       type,
       file,
       filename: file.filename,
-      to: ChatConfig.chatId,
-      chatType: "groupChat",
+      to: targetId,
+      chatType,
       ext: {
-        senderUsername: ChatConfig.username,
+        senderUsername: username ?? "unknown",
         fileType: file.filetype,
         fileName: file.filename,
         fileSize: file.data.size,
@@ -184,8 +191,8 @@ const Chat = () => {
           fileName: file.filename,
           fileSize: file.data.size,
           url: file.url,
-          senderId: ChatConfig.uid,
-          senderUsername: ChatConfig.username,
+          senderId: userId ?? "",
+          senderUsername: username ?? "unknown",
           recipientId: msg.to,
           time: Date.now(),
         },
@@ -223,9 +230,7 @@ const Chat = () => {
         isOpened: false,
         messageId: "",
       }));
-    } else {
-      await handleEmojiAdd(data.unified);
-    }
+    } else await handleEmojiAdd(data.unified);
   };
 
   const handleReactionAdd = async (messageId: string, emojiUnified: string) => {
@@ -361,9 +366,7 @@ const Chat = () => {
     ) => {
       const parsedMessage = parseMessage(message);
 
-      if (parsedMessage) {
-        setMessages((prev) => [...prev, parsedMessage]);
-      }
+      if (parsedMessage) setMessages((prev) => [...prev, parsedMessage]);
     };
 
     connection.addEventHandler("message", {
@@ -391,7 +394,7 @@ const Chat = () => {
   const messageGroups = groupMessages(messages);
 
   return (
-    <div className="flex h-full flex-col bg-deep-black">
+    <div className="flex h-full max-h-full w-full flex-col overflow-hidden bg-deep-black">
       <div
         ref={messagesContainerRef}
         className="flex h-full flex-col gap-4 overflow-auto px-1 py-2 sm:px-2 sm:py-3"
@@ -400,7 +403,7 @@ const Chat = () => {
           <MessageGroup
             key={group.id}
             {...group}
-            isLocalUser={group.messages.at(0)?.senderId === ChatConfig.uid}
+            isLocalUser={group.messages.at(0)?.senderId === userId}
             onReactionClick={handleReactionClick}
           />
         ))}
@@ -466,4 +469,6 @@ const Chat = () => {
   );
 };
 
-export default Chat;
+const MemoizedChat = memo(Chat);
+
+export default MemoizedChat;

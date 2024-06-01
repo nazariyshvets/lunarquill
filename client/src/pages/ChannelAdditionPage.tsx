@@ -8,38 +8,41 @@ import SimpleButton from "../components/SimpleButton";
 import Contact from "../components/Contact";
 import ContactAdditionForm from "../components/ContactAdditionForm";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import useAlertMessage from "../hooks/useAlertMessage";
+import useAuth from "../hooks/useAuth";
+import useAuthRequestConfig from "../hooks/useAuthRequestConfig";
+import useRTMClient from "../hooks/useRTMClient";
+import useChatConnection from "../hooks/useChatConnection";
 import {
   useGetUserChannelsQuery,
   useCreateChannelMutation,
   useSearchChannelsMutation,
   useJoinChannelMutation,
   useCreateRequestMutation,
+  useFetchChannelByIdMutation,
+  useCreateWhiteboardRoomMutation,
 } from "../services/mainService";
+import fetchWhiteboardSdkToken from "../utils/fetchWhiteboardSdkToken";
 import getErrorMessage from "../utils/getErrorMessage";
-import RTCConfig from "../config/RTCConfig";
 import { RequestTypeEnum } from "../types/Request";
 import type { IChannel } from "../../../server/src/models/Channel";
+import PeerMessage from "../types/PeerMessage";
 
 const ChannelAdditionPage = () => {
-  const userId = RTCConfig.uid.toString();
+  const { userId } = useAuth();
 
   const [searchedChannels, setSearchedChannels] = useState<IChannel[]>([]);
 
-  const { data: userChannels } = useGetUserChannelsQuery(userId);
+  const { data: userChannels } = useGetUserChannelsQuery(userId ?? "");
   const [createChannel] = useCreateChannelMutation();
   const [searchChannels] = useSearchChannelsMutation();
-  const [
-    joinChannel,
-    { isSuccess: isJoiningChannelSuccess, isError: isJoiningChannelError },
-  ] = useJoinChannelMutation();
+  const [joinChannel] = useJoinChannelMutation();
   const [createRequest] = useCreateRequestMutation();
+  const [fetchChannel] = useFetchChannelByIdMutation();
+  const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
+  const RTMClient = useRTMClient();
+  const chatConnection = useChatConnection();
+  const authRequestConfig = useAuthRequestConfig();
   const alert = useAlert();
-
-  const { setAlertMessage: setJoiningChannelAlertMessage } = useAlertMessage(
-    isJoiningChannelSuccess,
-    isJoiningChannelError,
-  );
 
   useDocumentTitle("Join/Create a channel");
 
@@ -67,12 +70,24 @@ const ChannelAdditionPage = () => {
     privateSearchValue: string;
   }> = async (data) => {
     try {
-      await createRequest({
-        from: userId,
-        to: null,
-        type: RequestTypeEnum.Join,
-        channel: data.privateSearchValue,
-      }).unwrap();
+      const channel = await fetchChannel(data.privateSearchValue).unwrap();
+
+      await Promise.all([
+        createRequest({
+          from: userId ?? "",
+          to: null,
+          type: RequestTypeEnum.Join,
+          channel: channel._id,
+        }).unwrap(),
+        chatConnection.joinGroup({
+          groupId: channel.chatTargetId,
+          message: "",
+        }),
+      ]);
+      await RTMClient.sendMessageToPeer(
+        { text: PeerMessage.RequestCreated },
+        channel.admin.toString(),
+      );
       alert.success("Request created successfully!");
     } catch (err) {
       throw new Error(
@@ -90,13 +105,36 @@ const ChannelAdditionPage = () => {
     isPrivate: boolean;
   }> = async (data) => {
     try {
-      await createChannel({
-        name: data.channelName,
-        admin: userId,
-        participants: [userId],
-        isPrivate: data.isPrivate,
+      const whiteboardSdkToken =
+        await fetchWhiteboardSdkToken(authRequestConfig);
+      const whiteboardRoomCreationResponse = await createWhiteboardRoom({
+        sdkToken: whiteboardSdkToken,
       }).unwrap();
-      alert.success("Channel created successfully!");
+      const whiteboardRoomId = JSON.parse(whiteboardRoomCreationResponse).uuid;
+      const { data: chatData } = await chatConnection.createGroup({
+        data: {
+          groupname: data.channelName,
+          desc: "",
+          members: [userId ?? ""],
+          public: !data.isPrivate,
+          approval: data.isPrivate,
+          allowinvites: true,
+          inviteNeedConfirm: true,
+          maxusers: 100,
+        },
+      });
+
+      if (whiteboardRoomId && chatData?.groupid) {
+        await createChannel({
+          name: data.channelName,
+          admin: userId ?? "",
+          participants: [userId ?? ""],
+          chatTargetId: chatData.groupid,
+          whiteboardRoomId,
+          isPrivate: data.isPrivate,
+        }).unwrap();
+        alert.success("Channel created successfully!");
+      }
     } catch (err) {
       throw new Error(
         getErrorMessage({
@@ -107,9 +145,27 @@ const ChannelAdditionPage = () => {
     }
   };
 
-  const handleJoinChannel = (channelId: string) => {
-    setJoiningChannelAlertMessage("You joined the channel successfully");
-    joinChannel({ userId, channelId });
+  const handleJoinChannel = async (channelId: string) => {
+    try {
+      const channel = await fetchChannel(channelId).unwrap();
+
+      await Promise.all([
+        joinChannel({ userId: userId ?? "", channelId }).unwrap(),
+        chatConnection.joinGroup({
+          groupId: channel.chatTargetId,
+          message: "",
+        }),
+      ]);
+      alert.success("You joined the channel successfully");
+    } catch (err) {
+      alert.error(
+        getErrorMessage({
+          error: err,
+          defaultErrorMessage: "Could not join a channel. Please try again",
+        }),
+      );
+      console.log(err);
+    }
   };
 
   return (

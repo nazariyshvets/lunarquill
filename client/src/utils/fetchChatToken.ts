@@ -6,7 +6,7 @@ const fetchChatToken = async (
   uid: string,
   requestConfig: AxiosRequestConfig,
 ) => {
-  if (ChatConfig.serverUrl !== "") {
+  if (ChatConfig.serverUrl !== "" && uid) {
     try {
       const { data } = await axios.get(
         `${ChatConfig.serverUrl}/api/chat/${uid}/${ChatConfig.tokenExpiryTime}`,
