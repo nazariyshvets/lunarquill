@@ -11,11 +11,13 @@ interface CallModal {
 export interface RTMState {
   isRTMClientInitialized: boolean;
   callModalState: CallModal | null;
+  callTimeout: number | null;
 }
 
 const initialState: RTMState = {
   isRTMClientInitialized: false,
   callModalState: null,
+  callTimeout: null,
 };
 
 const rtmSlice = createSlice({
@@ -31,9 +33,12 @@ const rtmSlice = createSlice({
     ) => {
       state.callModalState = payload;
     },
+    setCallTimeout: (state, { payload }: PayloadAction<number | null>) => {
+      state.callTimeout = payload;
+    },
   },
 });
 
-export const { setIsRTMClientInitialized, setCallModalState } =
+export const { setIsRTMClientInitialized, setCallModalState, setCallTimeout } =
   rtmSlice.actions;
 export default rtmSlice.reducer;

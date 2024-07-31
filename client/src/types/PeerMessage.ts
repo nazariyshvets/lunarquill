@@ -1,9 +1,11 @@
 enum PeerMessage {
   // CALLS
-  AudioCall = "audioCall",
-  AudioCallCancelled = "audioCallCancelled",
-  AudioCallAccepted = "audioCallAccepted",
-  AudioCallTimedOut = "audioCallTimedOut",
+  Call = "call",
+  CallDeclined = "callDeclined",
+  CallAccepted = "callAccepted",
+  CallRecalled = "callRecalled",
+  CallTimedOut = "callTimedOut",
+  CallEnded = "callEnded",
   // REQUESTS
   RequestCreated = "requestCreated",
   RequestRecalled = "requestRecalled",

@@ -8,7 +8,7 @@ import useRTMClient from "../hooks/useRTMClient";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useAppSelector from "../hooks/useAppSelector";
 import useAuth from "../hooks/useAuth";
-import { setCallModalState } from "../redux/rtmSlice";
+import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { useFetchContactRelationMutation } from "../services/mainService";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
@@ -19,10 +19,17 @@ const CallManager = () => {
   const { userId } = useAuth();
   const RTMClient = useRTMClient();
   const [fetchContactRelation] = useFetchContactRelationMutation();
-  const callModalState = useAppSelector((state) => state.rtm.callModalState);
+  const { callModalState, callTimeout } = useAppSelector((state) => state.rtm);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const alert = useAlert();
+
+  const clearCallTimeout = () => {
+    if (callTimeout) {
+      clearTimeout(callTimeout);
+      dispatch(setCallTimeout(null));
+    }
+  };
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -52,7 +59,7 @@ const CallManager = () => {
             contactName={callModalState.contact.username}
             onDeclineBtnClick={() => {
               RTMClient.sendMessageToPeer(
-                { text: PeerMessage.AudioCallCancelled },
+                { text: PeerMessage.CallDeclined },
                 callModalState.contact._id,
               );
               dispatch(setCallModalState(null));
@@ -65,7 +72,7 @@ const CallManager = () => {
                 }).unwrap();
 
                 RTMClient.sendMessageToPeer(
-                  { text: PeerMessage.AudioCallAccepted },
+                  { text: PeerMessage.CallAccepted },
                   callModalState.contact._id,
                 );
                 dispatch(setCallModalState(null));
@@ -88,10 +95,11 @@ const CallManager = () => {
             contactName={callModalState.contact.username}
             onRecallBtnClick={() => {
               RTMClient.sendMessageToPeer(
-                { text: PeerMessage.AudioCallCancelled },
+                { text: PeerMessage.CallRecalled },
                 callModalState.contact._id,
               );
               dispatch(setCallModalState(null));
+              clearCallTimeout();
             }}
           />
         ))}

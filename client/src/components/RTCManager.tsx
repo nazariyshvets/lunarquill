@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   useRTCClient,
@@ -39,6 +40,7 @@ import {
 } from "../redux/rtcSlice";
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
+import PeerMessage from "../types/PeerMessage";
 import type UserVolume from "../types/UserVolume";
 import { type ChatType, ChatTypeEnum } from "../types/ChatType";
 
@@ -60,8 +62,8 @@ const RTCManager = ({
 }: RTCManagerProps) => {
   const RTCClient = useRTCClient();
   const RTMClient = useRTMClient();
-  const { isLoading: isLoadingCam, localCameraTrack } = useLocalCameraTrack();
-  const { isLoading: isLoadingMic, localMicrophoneTrack } =
+  const { localCameraTrack, isLoading: isLoadingCam } = useLocalCameraTrack();
+  const { localMicrophoneTrack, isLoading: isLoadingMic } =
     useLocalMicrophoneTrack();
   const [isCameraMuted, setIsCameraMuted] = useState(
     localCameraTrack?.muted || false,
@@ -84,6 +86,7 @@ const RTCManager = ({
   const windowWidth = useWindowWidth();
   const alert = useAlert();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   // Join channel
   useJoin(
@@ -149,6 +152,24 @@ const RTCManager = ({
 
   const toggleScreen = () =>
     isLocalScreenShared ? handleScreenShareEnd() : handleScreenShareStart();
+
+  const leaveChannel = () => {
+    navigate(
+      `/${
+        chatType === ChatTypeEnum.SingleChat
+          ? `contacts/${chatTargetId}`
+          : `channels/${channelId}`
+      }/chat`,
+    );
+
+    if (chatType === ChatTypeEnum.SingleChat)
+      RTMClient.sendMessageToPeer(
+        {
+          text: PeerMessage.CallEnded,
+        },
+        chatTargetId,
+      );
+  };
 
   const handleScreenShareStart = () => {
     if (screenCasterId) {
@@ -350,14 +371,10 @@ const RTCManager = ({
         isCameraMuted={isCameraMuted}
         isMicrophoneMuted={isMicrophoneMuted}
         isLocalScreenShared={isLocalScreenShared}
-        backRoute={`/${
-          chatType === ChatTypeEnum.SingleChat
-            ? `contacts/${chatTargetId}`
-            : `channels/${channelId}`
-        }/chat`}
         onToggleCamera={toggleCamera}
         onToggleMicrophone={toggleMicrophone}
         onToggleScreen={toggleScreen}
+        onChannelLeave={leaveChannel}
       />
     </div>
   );

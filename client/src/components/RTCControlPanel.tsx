@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import {
   BiDotsHorizontalRounded,
@@ -19,25 +18,24 @@ interface RTCControlPanelProps {
   isCameraMuted: boolean;
   isMicrophoneMuted: boolean;
   isLocalScreenShared: boolean;
-  backRoute: string;
   onToggleCamera: () => void;
   onToggleMicrophone: () => void;
   onToggleScreen: () => void;
+  onChannelLeave: () => void;
 }
 
 const RTCControlPanel = ({
   isCameraMuted,
   isMicrophoneMuted,
   isLocalScreenShared,
-  backRoute,
   onToggleCamera,
   onToggleMicrophone,
   onToggleScreen,
+  onChannelLeave,
 }: RTCControlPanelProps) => {
   const [areOptionsDisplayed, setAreOptionsDisplayed] = useState(false);
-  const navigate = useNavigate();
 
-  const toggleOptions = () => setAreOptionsDisplayed((prev) => !prev);
+  const toggleOptions = () => setAreOptionsDisplayed((prevState) => !prevState);
 
   return (
     <div className="relative flex w-full items-center justify-center gap-4 text-white">
@@ -74,7 +72,7 @@ const RTCControlPanel = ({
           <BiWindowClose className="h-full w-full" />
         )}
       </RTCControlButton>
-      <RTCControlButton onClick={() => navigate(backRoute)}>
+      <RTCControlButton onClick={onChannelLeave}>
         <BiPhoneOff className="h-full w-full text-red-500" />
       </RTCControlButton>
     </div>
