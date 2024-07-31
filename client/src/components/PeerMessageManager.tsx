@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 import { Outlet, useNavigate } from "react-router-dom";
 import { RtmMessage } from "agora-rtm-react";
@@ -6,15 +6,15 @@ import { useAlert } from "react-alert";
 
 import useRTMClient from "../hooks/useRTMClient";
 import useAppDispatch from "../hooks/useAppDispatch";
+import useAppSelector from "../hooks/useAppSelector";
 import useAuth from "../hooks/useAuth";
-import { setCallModalState } from "../redux/rtmSlice";
+import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import {
+  mainApi,
   useFetchUserByIdMutation,
   useFetchContactRelationMutation,
-  useGetUserRequestsQuery,
-  useGetUserContactsQuery,
-  useGetUserChannelsQuery,
 } from "../services/mainService";
+import { QUERY_TAG_TYPES } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
 
@@ -23,26 +23,25 @@ const PeerMessageManager = () => {
 
   const [fetchUser] = useFetchUserByIdMutation();
   const [fetchContactRelation] = useFetchContactRelationMutation();
-  const { refetch: refetchUserRequests } = useGetUserRequestsQuery(
-    userId ?? "",
-  );
-  const { refetch: refetchUserContacts } = useGetUserContactsQuery(
-    userId ?? "",
-  );
-  const { refetch: refetchUserChannels } = useGetUserChannelsQuery(
-    userId ?? "",
-  );
 
   const RTMClient = useRTMClient();
   const dispatch = useAppDispatch();
+  const callTimeout = useAppSelector((state) => state.rtm.callTimeout);
   const navigate = useNavigate();
   const alert = useAlert();
+
+  const clearCallTimeout = useCallback(() => {
+    if (callTimeout) {
+      clearTimeout(callTimeout);
+      dispatch(setCallTimeout(null));
+    }
+  }, [callTimeout, dispatch]);
 
   useEffect(() => {
     const messageHandler = async (message: RtmMessage, peerId: string) => {
       if (message.messageType === "TEXT") {
         switch (message.text) {
-          case PeerMessage.AudioCall: {
+          case PeerMessage.Call: {
             try {
               const peerUser = await fetchUser(peerId).unwrap();
 
@@ -57,11 +56,12 @@ const PeerMessageManager = () => {
             }
             break;
           }
-          case PeerMessage.AudioCallCancelled:
+          case PeerMessage.CallDeclined:
             dispatch(setCallModalState(null));
-            alert.info("The call was cancelled");
+            clearCallTimeout();
+            alert.info("The call was declined");
             break;
-          case PeerMessage.AudioCallAccepted:
+          case PeerMessage.CallAccepted:
             try {
               const contact = await fetchContactRelation({
                 userId1: userId ?? "",
@@ -69,35 +69,56 @@ const PeerMessageManager = () => {
               }).unwrap();
 
               dispatch(setCallModalState(null));
+              clearCallTimeout();
               navigate(`/contacts/${contact._id}/call`);
             } catch (err) {
               console.log(err);
             }
             break;
-          case PeerMessage.AudioCallTimedOut:
+          case PeerMessage.CallRecalled:
             dispatch(setCallModalState(null));
+            break;
+          case PeerMessage.CallTimedOut:
+            dispatch(setCallModalState(null));
+            break;
+          case PeerMessage.CallEnded:
+            navigate(`/contacts/${peerId}/chat`);
             break;
           case PeerMessage.RequestCreated:
           case PeerMessage.RequestDeclined:
           case PeerMessage.RequestRecalled:
           case PeerMessage.InviteRequestAccepted:
-            refetchUserRequests();
+            dispatch(
+              mainApi.util?.invalidateTags([QUERY_TAG_TYPES.USER_REQUESTS]),
+            );
             break;
           case PeerMessage.ContactRequestAccepted:
-            refetchUserRequests();
-            refetchUserContacts();
+            dispatch(
+              mainApi.util?.invalidateTags([
+                QUERY_TAG_TYPES.USER_REQUESTS,
+                QUERY_TAG_TYPES.USER_CONTACTS,
+              ]),
+            );
             break;
           case PeerMessage.JoinRequestAccepted:
-            refetchUserRequests();
-            refetchUserChannels();
+            dispatch(
+              mainApi.util?.invalidateTags([
+                QUERY_TAG_TYPES.USER_REQUESTS,
+                QUERY_TAG_TYPES.USER_CHANNELS,
+              ]),
+            );
             break;
           case PeerMessage.UserWentOnline:
           case PeerMessage.UserWentOffline:
-            refetchUserContacts();
+            dispatch(
+              mainApi.util?.invalidateTags([QUERY_TAG_TYPES.USER_CONTACTS]),
+            );
             break;
           case PeerMessage.ContactRemoved:
             navigate("/profile");
-            refetchUserContacts();
+            dispatch(
+              mainApi.util?.invalidateTags([QUERY_TAG_TYPES.USER_CONTACTS]),
+            );
         }
       }
     };
@@ -113,11 +134,9 @@ const PeerMessageManager = () => {
     fetchContactRelation,
     fetchUser,
     navigate,
-    refetchUserRequests,
-    refetchUserContacts,
-    refetchUserChannels,
     userId,
     alert,
+    clearCallTimeout,
   ]);
 
   return <Outlet />;

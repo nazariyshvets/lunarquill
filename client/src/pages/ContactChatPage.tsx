@@ -7,7 +7,8 @@ import { useGetUserContactsQuery } from "../services/mainService";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useAuth from "../hooks/useAuth";
 import useRTMClient from "../hooks/useRTMClient";
-import { setCallModalState } from "../redux/rtmSlice";
+import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
+import { CALL_TIMEOUT_MS } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
 import { ChatTypeEnum } from "../types/ChatType";
@@ -36,24 +37,27 @@ const ContactChatPage = () => {
         }
 
         if (contact.isOnline) {
-          RTMClient.sendMessageToPeer(
-            { text: PeerMessage.AudioCall },
-            contact._id,
-          );
+          RTMClient.sendMessageToPeer({ text: PeerMessage.Call }, contact._id);
           dispatch(
             setCallModalState({
               callDirection: CallDirection.Outgoing,
               contact,
             }),
           );
-          setTimeout(() => {
-            RTMClient.sendMessageToPeer(
-              { text: PeerMessage.AudioCallTimedOut },
-              contact._id,
-            );
-            dispatch(setCallModalState(null));
-            alert.info("The recipient did not respond");
-          }, 30_000);
+
+          dispatch(
+            setCallTimeout(
+              window.setTimeout(() => {
+                RTMClient.sendMessageToPeer(
+                  { text: PeerMessage.CallTimedOut },
+                  contact._id,
+                );
+                dispatch(setCallModalState(null));
+                dispatch(setCallTimeout(null));
+                alert.info("The recipient did not respond");
+              }, CALL_TIMEOUT_MS),
+            ),
+          );
         } else
           alert.info(`${contact.username} is offline. The call cannot be sent`);
       }}

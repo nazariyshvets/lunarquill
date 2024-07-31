@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import { RootState } from "../redux/store";
-import { BASE_SERVER_URL } from "../constants/constants";
+import { BASE_SERVER_URL, QUERY_TAG_TYPES } from "../constants/constants";
 import type Request from "../types/Request";
 import type { UserWithoutPassword } from "../types/User";
 import type {
@@ -26,7 +26,7 @@ export const mainApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["user-details", "user-requests", "user-contacts", "user-channels"],
+  tagTypes: Object.values(QUERY_TAG_TYPES),
   endpoints: (builder) => ({
     // ===== AUTH =====
 
@@ -56,7 +56,7 @@ export const mainApi = createApi({
 
     getUserContacts: builder.query<UserWithoutPassword[], string>({
       query: (userId) => `/users/${userId}/contacts`,
-      providesTags: ["user-contacts"],
+      providesTags: [QUERY_TAG_TYPES.USER_CONTACTS],
     }),
     fetchUserContacts: builder.mutation<UserWithoutPassword[], string>({
       query: (userId) => ({
@@ -66,12 +66,12 @@ export const mainApi = createApi({
     }),
     getUserChannels: builder.query<IChannel[], string>({
       query: (userId) => `/users/${userId}/channels`,
-      providesTags: ["user-channels"],
+      providesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
     getUserById: builder.query<UserWithoutPassword, string>({
       query: (userId) => `/users/${userId}`,
       keepUnusedDataFor: 0,
-      providesTags: ["user-details"],
+      providesTags: [QUERY_TAG_TYPES.USER_DETAILS],
     }),
     fetchUserById: builder.mutation<UserWithoutPassword, string>({
       query: (userId) => ({
@@ -88,7 +88,7 @@ export const mainApi = createApi({
         method: "PUT",
         body: data.updateData,
       }),
-      invalidatesTags: ["user-details"],
+      invalidatesTags: [QUERY_TAG_TYPES.USER_DETAILS],
     }),
 
     // ===== REQUESTS =====
@@ -99,11 +99,14 @@ export const mainApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["user-requests", "user-channels"],
+      invalidatesTags: [
+        QUERY_TAG_TYPES.USER_REQUESTS,
+        QUERY_TAG_TYPES.USER_CHANNELS,
+      ],
     }),
     getUserRequests: builder.query<IPopulatedRequest[], string>({
       query: (uid) => `/requests/user-requests/${uid}`,
-      providesTags: ["user-requests"],
+      providesTags: [QUERY_TAG_TYPES.USER_REQUESTS],
     }),
     declineRequest: builder.mutation<
       { success: true },
@@ -114,7 +117,7 @@ export const mainApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["user-requests"],
+      invalidatesTags: [QUERY_TAG_TYPES.USER_REQUESTS],
     }),
     acceptRequest: builder.mutation<
       { success: true },
@@ -125,7 +128,11 @@ export const mainApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["user-requests", "user-contacts", "user-channels"],
+      invalidatesTags: [
+        QUERY_TAG_TYPES.USER_REQUESTS,
+        QUERY_TAG_TYPES.USER_CONTACTS,
+        QUERY_TAG_TYPES.USER_CHANNELS,
+      ],
     }),
 
     //   ===== CHANNELS =====
@@ -146,7 +153,7 @@ export const mainApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["user-channels"],
+      invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
     searchChannels: builder.mutation<IChannel[], string>({
       query: (name) => ({
@@ -163,7 +170,7 @@ export const mainApi = createApi({
         method: "PUT",
         body: data,
       }),
-      invalidatesTags: ["user-channels"],
+      invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
     leaveChannel: builder.mutation<
       { message: string },
@@ -174,7 +181,7 @@ export const mainApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["user-channels"],
+      invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
     getChannelById: builder.query<IChannel, string>({
       query: (id) => `/channels/${id}`,
@@ -209,7 +216,7 @@ export const mainApi = createApi({
         method: "DELETE",
         body: data,
       }),
-      invalidatesTags: ["user-contacts"],
+      invalidatesTags: [QUERY_TAG_TYPES.USER_CONTACTS],
     }),
 
     // WHITEBOARD
