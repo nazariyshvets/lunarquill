@@ -1,7 +1,8 @@
-import { PropsWithChildren } from "react";
-import { createPortal } from "react-dom";
+import { useState, PropsWithChildren } from "react";
 
+import BaseModal from "./BaseModal";
 import Button from "./Button";
+import useClickOutside from "../hooks/useClickOutside";
 
 interface ModalProps {
   title: string;
@@ -18,10 +19,20 @@ const Modal = ({
   children,
   onCancel,
   onSave,
-}: PropsWithChildren<ModalProps>) =>
-  createPortal(
-    <div className="fixed bottom-0 left-0 right-0 top-0 z-[9000] flex items-center justify-center bg-deep-black bg-opacity-70 p-4">
-      <div className="flex max-h-full w-full flex-col gap-8 rounded bg-black p-4 shadow-lg shadow-primary-600 sm:w-1/2 xl:w-1/3 xl:p-6">
+}: PropsWithChildren<ModalProps>) => {
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  useClickOutside({
+    element: container || undefined,
+    onClickOutside: onCancel,
+  });
+
+  return (
+    <BaseModal>
+      <div
+        ref={setContainer}
+        className="flex max-h-full w-full flex-col gap-8 rounded bg-black p-4 shadow-lg shadow-primary-600 sm:w-1/2 xl:w-1/3 xl:p-6"
+      >
         <h1 className="flex-shrink-0 truncate text-xl font-bold text-lightgrey sm:text-2xl">
           {title}
         </h1>
@@ -33,8 +44,8 @@ const Modal = ({
           <Button onClick={onSave}>{saveBtnText}</Button>
         </div>
       </div>
-    </div>,
-    document.body,
+    </BaseModal>
   );
+};
 
 export default Modal;

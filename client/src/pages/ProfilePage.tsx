@@ -21,7 +21,7 @@ import getErrorMessage from "../utils/getErrorMessage";
 import PeerMessage from "../types/PeerMessage";
 
 const ProfilePage = () => {
-  const { userId } = useAuth();
+  const { userId, username } = useAuth();
   const { data: userDetails } = useGetUserByIdQuery(userId ?? skipToken);
   const [updateUser] = useUpdateUserByIdMutation();
   const [fetchUserContacts] = useFetchUserContactsMutation();
@@ -35,40 +35,38 @@ const ProfilePage = () => {
   const handleCopyIdToClipboard = () => userId && copyToClipboard(userId, "id");
 
   const handleOnlineStatusChange = debounce(async (isOnline: boolean) => {
-    if (userId) {
-      try {
-        const updatedUser = await updateUser({
-          userId,
-          updateData: { isOnline },
-        }).unwrap();
-        const contacts = await fetchUserContacts(userId).unwrap();
+    if (!userId) return;
 
-        const onlineStatus = updatedUser.isOnline
-          ? PeerMessage.UserWentOnline
-          : PeerMessage.UserWentOffline;
+    try {
+      const updatedUser = await updateUser({
+        userId,
+        updateData: { isOnline },
+      }).unwrap();
+      const contacts = await fetchUserContacts(userId).unwrap();
+      const onlineStatus = updatedUser.isOnline
+        ? PeerMessage.UserWentOnline
+        : PeerMessage.UserWentOffline;
 
-        contacts.forEach((contact) =>
-          RTMClient.sendMessageToPeer(
-            {
-              text: onlineStatus,
-            },
-            contact._id,
-          ),
-        );
-      } catch (error) {
-        alert.error(
-          getErrorMessage({
-            error,
-            defaultErrorMessage:
-              "Could not set online status. Please try again",
-          }),
-        );
-        console.log(error);
-      }
+      contacts.forEach((contact) =>
+        RTMClient.sendMessageToPeer(
+          {
+            text: onlineStatus,
+          },
+          contact._id,
+        ),
+      );
+    } catch (error) {
+      alert.error(
+        getErrorMessage({
+          error,
+          defaultErrorMessage: "Could not set online status. Please try again",
+        }),
+      );
+      console.log("Error setting online status:", error);
     }
   }, 200);
 
-  const username = userDetails?.username ?? "You";
+  const userName = username ?? "You";
 
   return (
     <div className="flex h-full w-full flex-col items-center gap-4">
@@ -76,7 +74,7 @@ const ProfilePage = () => {
         <div className="flex flex-col gap-2">
           <div className="relative flex justify-center">
             <div className="flex h-32 w-32 cursor-default items-center justify-center rounded-full bg-primary text-5xl text-white">
-              {username.slice(0, 2).toUpperCase()}
+              {userName.slice(0, 2).toUpperCase()}
             </div>
             <div className="absolute bottom-0 right-0 flex flex-col items-end gap-8 p-2">
               <div
@@ -96,7 +94,7 @@ const ProfilePage = () => {
             </div>
           </div>
           <span className="truncate text-center text-lg font-medium text-primary">
-            {username}
+            {userName}
           </span>
         </div>
 

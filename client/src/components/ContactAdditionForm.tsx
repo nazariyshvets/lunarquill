@@ -44,7 +44,7 @@ const ContactAdditionForm = <T extends FieldValues>({
       error instanceof Error
         ? alert.error(error.message)
         : typeof error === "string" && alert.error(error);
-      console.log("Error submitting form:", error);
+      console.error("Error submitting form:", error);
     }
   };
 
@@ -64,15 +64,13 @@ const ContactAdditionForm = <T extends FieldValues>({
           required={inputField.required}
         />
         {checkboxField && (
-          <div>
-            <Input<T>
-              type="checkbox"
-              name={checkboxField.name as Path<T>}
-              register={register}
-              errors={errors[checkboxField.name] as unknown as FieldError}
-              label={checkboxField.label}
-            />
-          </div>
+          <Input<T>
+            type="checkbox"
+            name={checkboxField.name as Path<T>}
+            register={register}
+            errors={errors[checkboxField.name] as unknown as FieldError}
+            label={checkboxField.label}
+          />
         )}
       </div>
       <Button className="w-min self-end sm:self-start">{submitBtnText}</Button>

@@ -3,13 +3,11 @@ import AgoraRTC, { IAgoraRTCClient } from "agora-rtc-react";
 const createRTCClient = () => {
   let client: IAgoraRTCClient | null = null;
 
-  const useRTCClient = () => {
+  return () => {
     if (!client) client = AgoraRTC.createClient({ codec: "vp8", mode: "rtc" });
 
     return client;
   };
-
-  return useRTCClient;
 };
 
 const useRTCClient = createRTCClient();

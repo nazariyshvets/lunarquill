@@ -17,7 +17,11 @@ interface RootState {
   [mainApi.reducerPath]: ReturnType<typeof mainApi.reducer>;
 }
 
-const saveAuthSubsetFilter = createFilter("auth", ["userToken"]);
+const saveAuthSubsetFilter = createFilter("auth", [
+  "userToken",
+  "userId",
+  "username",
+]);
 const saveRtcSubsetFilter = createFilter("rtc", [
   "isVirtualBgEnabled",
   "virtualBgType",

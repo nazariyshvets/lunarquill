@@ -9,6 +9,7 @@ import LoginForm from "../components/LoginForm";
 import Button from "../components/Button";
 import { loginUserWithGoogle } from "../redux/authActions";
 import useAppDispatch from "../hooks/useAppDispatch";
+import { BASE_CLIENT_URL } from "../constants/constants";
 
 const LoginPage = () => {
   const location = useLocation();
@@ -16,7 +17,7 @@ const LoginPage = () => {
   const googleLogin = useGoogleLogin({
     flow: "auth-code",
     ux_mode: "redirect",
-    redirect_uri: "http://localhost:3000/login",
+    redirect_uri: `${BASE_CLIENT_URL}/login`,
   });
 
   useEffect(() => {
@@ -27,7 +28,8 @@ const LoginPage = () => {
     if (authCode) {
       dispatch(loginUserWithGoogle(authCode));
     }
-  }, [dispatch, location.search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
 
   return (
     <GuestPage title="login">

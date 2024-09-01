@@ -3,13 +3,13 @@ import { useState } from "react";
 import { SubmitHandler } from "react-hook-form";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
 import { useAlert } from "react-alert";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 import SimpleButton from "../components/SimpleButton";
 import Contact from "../components/Contact";
 import ContactAdditionForm from "../components/ContactAdditionForm";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAuth from "../hooks/useAuth";
-import useAuthRequestConfig from "../hooks/useAuthRequestConfig";
 import useRTMClient from "../hooks/useRTMClient";
 import useChatConnection from "../hooks/useChatConnection";
 import {
@@ -20,37 +20,37 @@ import {
   useCreateRequestMutation,
   useFetchChannelByIdMutation,
   useCreateWhiteboardRoomMutation,
+  useFetchWhiteboardSdkTokenMutation,
 } from "../services/mainService";
-import fetchWhiteboardSdkToken from "../utils/fetchWhiteboardSdkToken";
 import getErrorMessage from "../utils/getErrorMessage";
 import { RequestTypeEnum } from "../types/Request";
-import type { IChannel } from "../../../server/src/models/Channel";
+import type { Channel } from "../types/Channel";
 import PeerMessage from "../types/PeerMessage";
 
 const ChannelAdditionPage = () => {
   const { userId } = useAuth();
 
-  const [searchedChannels, setSearchedChannels] = useState<IChannel[]>([]);
+  const [searchedChannels, setSearchedChannels] = useState<Channel[]>([]);
 
-  const { data: userChannels } = useGetUserChannelsQuery(userId ?? "");
+  const { data: userChannels } = useGetUserChannelsQuery(userId ?? skipToken);
   const [createChannel] = useCreateChannelMutation();
   const [searchChannels] = useSearchChannelsMutation();
   const [joinChannel] = useJoinChannelMutation();
   const [createRequest] = useCreateRequestMutation();
   const [fetchChannel] = useFetchChannelByIdMutation();
   const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
+  const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
-  const authRequestConfig = useAuthRequestConfig();
   const alert = useAlert();
 
   useDocumentTitle("Join/Create a channel");
 
   const handlePublicSearchFormSubmit: SubmitHandler<{
     publicSearchValue: string;
-  }> = async (data) => {
+  }> = async ({ publicSearchValue }) => {
     try {
-      const response = await searchChannels(data.publicSearchValue).unwrap();
+      const response = await searchChannels(publicSearchValue).unwrap();
 
       if (response.length === 0) alert.info("No channels found");
 
@@ -68,13 +68,15 @@ const ChannelAdditionPage = () => {
 
   const handlePrivateJoiningFormSubmit: SubmitHandler<{
     privateSearchValue: string;
-  }> = async (data) => {
+  }> = async ({ privateSearchValue }) => {
+    if (!userId) return;
+
     try {
-      const channel = await fetchChannel(data.privateSearchValue).unwrap();
+      const channel = await fetchChannel(privateSearchValue).unwrap();
 
       await Promise.all([
         createRequest({
-          from: userId ?? "",
+          from: userId,
           to: null,
           type: RequestTypeEnum.Join,
           channel: channel._id,
@@ -104,9 +106,11 @@ const ChannelAdditionPage = () => {
     channelName: string;
     isPrivate: boolean;
   }> = async (data) => {
+    if (!userId) return;
+
     try {
-      const whiteboardSdkToken =
-        await fetchWhiteboardSdkToken(authRequestConfig);
+      const { token: whiteboardSdkToken } =
+        await fetchWhiteboardSdkToken().unwrap();
       const whiteboardRoomCreationResponse = await createWhiteboardRoom({
         sdkToken: whiteboardSdkToken,
       }).unwrap();
@@ -115,7 +119,7 @@ const ChannelAdditionPage = () => {
         data: {
           groupname: data.channelName,
           desc: "",
-          members: [userId ?? ""],
+          members: [userId],
           public: !data.isPrivate,
           approval: data.isPrivate,
           allowinvites: true,
@@ -127,8 +131,8 @@ const ChannelAdditionPage = () => {
       if (whiteboardRoomId && chatData?.groupid) {
         await createChannel({
           name: data.channelName,
-          admin: userId ?? "",
-          participants: [userId ?? ""],
+          admin: userId,
+          participants: [userId],
           chatTargetId: chatData.groupid,
           whiteboardRoomId,
           isPrivate: data.isPrivate,
@@ -146,11 +150,13 @@ const ChannelAdditionPage = () => {
   };
 
   const handleJoinChannel = async (channelId: string) => {
+    if (!userId) return;
+
     try {
       const channel = await fetchChannel(channelId).unwrap();
 
       await Promise.all([
-        joinChannel({ userId: userId ?? "", channelId }).unwrap(),
+        joinChannel({ userId, channelId }).unwrap(),
         chatConnection.joinGroup({
           groupId: channel.chatTargetId,
           message: "",
@@ -164,7 +170,7 @@ const ChannelAdditionPage = () => {
           defaultErrorMessage: "Could not join a channel. Please try again",
         }),
       );
-      console.log(err);
+      console.error("Error joining a channel:", err);
     }
   };
 
@@ -191,12 +197,12 @@ const ChannelAdditionPage = () => {
               <div className="flex flex-col gap-6">
                 <ContactAdditionForm
                   submitBtnText="Search"
-                  onSubmit={handlePublicSearchFormSubmit}
                   inputField={{
                     name: "publicSearchValue",
                     placeholder: "Enter name or id of the channel...",
                     required: true,
                   }}
+                  onSubmit={handlePublicSearchFormSubmit}
                 />
 
                 {searchedChannels.length > 0 && (
@@ -229,12 +235,12 @@ const ChannelAdditionPage = () => {
             <TabPanel>
               <ContactAdditionForm
                 submitBtnText="Join"
-                onSubmit={handlePrivateJoiningFormSubmit}
                 inputField={{
                   name: "privateSearchValue",
                   placeholder: "Enter id of the channel...",
                   required: true,
                 }}
+                onSubmit={handlePrivateJoiningFormSubmit}
               />
             </TabPanel>
           </Tabs>
@@ -242,7 +248,6 @@ const ChannelAdditionPage = () => {
         <TabPanel>
           <ContactAdditionForm
             submitBtnText="Create"
-            onSubmit={handleCreationFormSubmit}
             inputField={{
               name: "channelName",
               placeholder: "Enter a name for a channel...",
@@ -252,6 +257,7 @@ const ChannelAdditionPage = () => {
               name: "isPrivate",
               label: "Private",
             }}
+            onSubmit={handleCreationFormSubmit}
           />
         </TabPanel>
       </Tabs>

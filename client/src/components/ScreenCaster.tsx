@@ -1,4 +1,4 @@
-import { useEffect, useCallback, Dispatch, SetStateAction } from "react";
+import { useEffect, useCallback } from "react";
 
 import {
   useRTCScreenShareClient,
@@ -7,22 +7,20 @@ import {
   usePublish,
   useTrackEvent,
 } from "agora-rtc-react";
-import { RtmClient, RtmChannel } from "agora-rtm-react";
+import { RtmClient } from "agora-rtm-react";
 
 import RTCConfig from "../config/RTCConfig";
 
 interface ScreenCasterProps {
   RTMClient: RtmClient;
-  RTMChannel: RtmChannel;
   channelId: string;
-  setIsLocalScreenShared: Dispatch<SetStateAction<boolean>>;
+  onScreenShareEnd: () => void;
 }
 
 const ScreenCaster = ({
   RTMClient,
-  RTMChannel,
   channelId,
-  setIsLocalScreenShared,
+  onScreenShareEnd,
 }: ScreenCasterProps) => {
   const screenShareClient = useRTCScreenShareClient();
   const { screenTrack, error } = useLocalScreenTrack(
@@ -45,38 +43,34 @@ const ScreenCaster = ({
 
   usePublish([screenTrack], !!screenTrack, screenShareClient || undefined);
 
-  useTrackEvent(screenTrack, "track-ended", () => {
-    setIsLocalScreenShared(false);
-  });
+  useTrackEvent(screenTrack, "track-ended", onScreenShareEnd);
 
   const deleteChannelAttr = useCallback(() => {
-    RTMClient.deleteChannelAttributesByKeys(
-      RTMChannel.channelId,
-      ["screenCasterId"],
-      { enableNotificationToChannelMembers: true },
-    ).catch((err) => console.log("Error deleting channel attributes:", err));
-  }, [RTMClient, RTMChannel.channelId]);
+    RTMClient.deleteChannelAttributesByKeys(channelId, ["screenCasterId"], {
+      enableNotificationToChannelMembers: true,
+    }).catch((err) => console.error("Error deleting channel attributes:", err));
+  }, [RTMClient, channelId]);
 
   useEffect(() => {
     if (error) {
-      console.log("Error in ScreenCaster:", error);
-      setIsLocalScreenShared(false);
+      console.error("Error in ScreenCaster:", error);
+      onScreenShareEnd();
     }
-  }, [error, setIsLocalScreenShared]);
+  }, [error, onScreenShareEnd]);
 
   useEffect(() => {
     RTMClient.addOrUpdateChannelAttributes(
-      RTMChannel.channelId,
+      channelId,
       {
         screenCasterId: RTCConfig.uidScreen.toString(),
       },
       { enableNotificationToChannelMembers: true },
-    ).catch((err) => console.log("Error adding channel attributes:", err));
+    ).catch((err) => console.error("Error adding channel attributes:", err));
 
     return () => {
       deleteChannelAttr();
     };
-  }, [RTMClient, RTMChannel.channelId, deleteChannelAttr]);
+  }, [RTMClient, channelId, deleteChannelAttr]);
 
   useEffect(() => {
     window.addEventListener("beforeunload", deleteChannelAttr);
@@ -86,7 +80,7 @@ const ScreenCaster = ({
     };
   }, [deleteChannelAttr]);
 
-  return <></>;
+  return null;
 };
 
 export default ScreenCaster;

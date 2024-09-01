@@ -6,13 +6,13 @@ import SimpleButton from "./SimpleButton";
 import Contact from "./Contact";
 import NoDataBox from "./NoDataBox";
 import type { UserWithoutPassword } from "../types/User";
-import type { IChannel } from "../../../server/src/models/Channel";
+import type { Channel } from "../types/Channel";
 
 interface SidebarProps {
   user?: UserWithoutPassword;
   inboxRequestsCount: number;
   contacts: UserWithoutPassword[];
-  channels: IChannel[];
+  channels: Channel[];
   onClose?: () => void;
 }
 

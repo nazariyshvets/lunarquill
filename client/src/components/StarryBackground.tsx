@@ -3,8 +3,7 @@ import { useEffect } from "react";
 import { useWindowSize } from "@react-hook/window-size";
 
 import ShootingStar from "./ShootingStar";
-
-const numberOfShootingStars = 10;
+import { SHOOTING_STARS_COUNT } from "../constants/constants";
 
 const StarryBackground = () => {
   const [width, height] = useWindowSize();
@@ -21,7 +20,7 @@ const StarryBackground = () => {
     return () => cancelAnimationFrame(animationId);
   }, []);
 
-  const stars = Array.from({ length: numberOfShootingStars }, (_, i) => (
+  const stars = Array.from({ length: SHOOTING_STARS_COUNT }, (_, i) => (
     <ShootingStar
       key={i}
       style={{
@@ -34,8 +33,8 @@ const StarryBackground = () => {
 
   return (
     <div className="absolute left-0 top-0 h-full w-full overflow-hidden">
-      <div className="absolute left-0 top-0 h-full w-full bg-[#000000] bg-stars bg-repeat"></div>
-      <div className="absolute right-0 top-0 h-full w-[10000px] animate-twinkling bg-transparent bg-twinkling bg-repeat"></div>
+      <div className="absolute left-0 top-0 h-full w-full bg-[#000000] bg-stars bg-repeat" />
+      <div className="absolute right-0 top-0 h-full w-[10000px] animate-twinkling bg-transparent bg-twinkling bg-repeat" />
       {stars}
     </div>
   );

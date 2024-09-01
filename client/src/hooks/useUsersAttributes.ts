@@ -34,7 +34,7 @@ const fetchUsersAttributes = async (
 
     return Object.fromEntries(attributes);
   } catch (err) {
-    console.log("Error fetching users attributes:", err);
+    console.error("Error fetching users attributes:", err);
     return {};
   }
 };

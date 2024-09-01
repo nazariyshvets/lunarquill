@@ -21,16 +21,14 @@ const FeaturedUser = ({
       }
     } catch (err) {
       setIsFullScreen(false);
-      console.log(err);
+      console.error("Error toggling full screen:", err);
     }
   };
 
   // Exit full screen mode when a user clicks the "Esc" button
   useEffect(() => {
     const handleFullScreenChange = () => {
-      if (!document.fullscreenElement) {
-        setIsFullScreen(false);
-      }
+      if (!document.fullscreenElement) setIsFullScreen(false);
     };
 
     document.addEventListener("fullscreenchange", handleFullScreenChange);

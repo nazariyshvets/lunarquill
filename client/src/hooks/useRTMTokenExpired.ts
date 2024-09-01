@@ -1,30 +1,28 @@
 import { useEffect } from "react";
 
 import { RtmClient } from "agora-rtm-react";
+import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
-import useAuthRequestConfig from "./useAuthRequestConfig";
-import fetchRTMToken from "../utils/fetchRTMToken";
-import RTMConfig from "../config/RTMConfig";
+import { useFetchRTMTokenMutation } from "../services/mainService";
 
 const useRTMTokenExpired = (client: RtmClient) => {
   const { userId } = useAuth();
-  const requestConfig = useAuthRequestConfig();
+  const [fetchRTMToken] = useFetchRTMTokenMutation();
+  const alert = useAlert();
 
   useEffect(() => {
-    const renewToken = async () => {
-      if (RTMConfig.serverUrl !== "" && userId) {
-        try {
-          const token = await fetchRTMToken(userId, requestConfig);
+    if (!userId) return;
 
-          if (token) await client.renewToken(token);
-        } catch (err) {
-          console.log(err);
-        }
-      } else
-        console.log(
-          "Please make sure you specified the RTM token server URL in the configuration file and user id is not empty",
-        );
+    const renewToken = async () => {
+      try {
+        const token = await fetchRTMToken(userId).unwrap();
+
+        await client.renewToken(token);
+      } catch (err) {
+        alert.error("Could not renew RTM token");
+        console.error("Error renewing RTM token:", err);
+      }
     };
 
     client.on("TokenExpired", renewToken);
@@ -32,7 +30,8 @@ const useRTMTokenExpired = (client: RtmClient) => {
     return () => {
       client.off("TokenExpired", renewToken);
     };
-  }, [client, requestConfig, userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 };
 
 export default useRTMTokenExpired;

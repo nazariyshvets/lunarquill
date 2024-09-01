@@ -1,47 +1,41 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+
+import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
-import useAuthRequestConfig from "./useAuthRequestConfig";
-import fetchRTCToken from "../utils/fetchRTCToken";
+import { useFetchRTCTokenMutation } from "../services/mainService";
 import RTCConfig from "../config/RTCConfig";
 
 const useInitRTC = (channelId: string) => {
-  // Whether RTC is initialized
   const [isInitialized, setIsInitialized] = useState(false);
-  // Whether the process of initialization is happening
-  const isLoadingRef = useRef(false);
+  const [fetchRTCToken] = useFetchRTCTokenMutation();
   const { userId } = useAuth();
-  const requestConfig = useAuthRequestConfig();
+  const alert = useAlert();
 
   useEffect(() => {
-    if (!RTCConfig.serverUrl || !channelId || !userId) {
-      console.warn(
-        "Please make sure you specified the RTC token server URL and channel name in the configuration file",
-      );
-      return;
-    }
+    if (!channelId || !userId) return;
 
-    if (!isInitialized && !isLoadingRef.current)
-      (async () => {
-        isLoadingRef.current = true;
+    (async () => {
+      try {
+        const [rtcToken, rtcTokenScreen] = await Promise.all([
+          fetchRTCToken({ channelName: channelId, uid: userId }).unwrap(),
+          fetchRTCToken({
+            channelName: channelId,
+            uid: RTCConfig.uidScreen,
+          }).unwrap(),
+        ]);
 
-        try {
-          const [rtcToken, rtcTokenScreen] = await Promise.all([
-            fetchRTCToken(channelId, userId, requestConfig),
-            fetchRTCToken(channelId, RTCConfig.uidScreen, requestConfig),
-          ]);
-
-          RTCConfig.rtcToken = rtcToken;
-          RTCConfig.rtcTokenScreen = rtcTokenScreen;
-          setIsInitialized(true);
-        } catch (err) {
-          setIsInitialized(false);
-          console.log(err);
-        } finally {
-          isLoadingRef.current = false;
-        }
-      })();
-  }, [channelId, isInitialized, requestConfig, userId]);
+        RTCConfig.rtcToken = rtcToken;
+        RTCConfig.rtcTokenScreen = rtcTokenScreen;
+        setIsInitialized(true);
+      } catch (err) {
+        setIsInitialized(false);
+        alert.error("Could not initialize RTC client");
+        console.error("Error initializing RTC client:", err);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, userId]);
 
   return isInitialized;
 };

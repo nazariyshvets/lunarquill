@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
 import { BiPhone, BiUserPlus, BiUserX, BiLogOut, BiCopy } from "react-icons/bi";
+import { Tooltip } from "react-tooltip";
 
 import Chat from "../components/Chat";
 import Contact from "../components/Contact";
@@ -15,7 +16,6 @@ import useAppSelector from "../hooks/useAppSelector";
 import useRTMClient from "../hooks/useRTMClient";
 import useAuth from "../hooks/useAuth";
 import useCopyToClipboard from "../hooks/useCopyToClipboard";
-import useAuthRequestConfig from "../hooks/useAuthRequestConfig";
 import useChatConnection from "../hooks/useChatConnection";
 import {
   useCreateRequestMutation,
@@ -23,9 +23,9 @@ import {
   useDisableWhiteboardRoomMutation,
   useFetchContactRelationMutation,
   useRemoveContactMutation,
+  useFetchWhiteboardSdkTokenMutation,
 } from "../services/mainService";
 import getErrorMessage from "../utils/getErrorMessage";
-import fetchWhiteboardSdkToken from "../utils/fetchWhiteboardSdkToken";
 import { ChatTypeEnum } from "../types/ChatType";
 import { RequestTypeEnum } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
@@ -39,7 +39,16 @@ interface ChatLayoutProps {
   onCallBtnClick: () => void;
 }
 
-type ModalAction = "inviteUser" | "leaveChannel" | "removeContact";
+enum ModalAction {
+  InviteUser = "inviteUser",
+  LeaveChannel = "leaveChannel",
+  RemoveContact = "removeContact",
+}
+
+interface ModalState {
+  isOpen: boolean;
+  action?: ModalAction;
+}
 
 const ChatLayout = ({
   contactName,
@@ -51,10 +60,7 @@ const ChatLayout = ({
 }: ChatLayoutProps) => {
   const { userId } = useAuth();
 
-  const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    action: ModalAction;
-  }>();
+  const [modalState, setModalState] = useState<ModalState>({ isOpen: false });
 
   const {
     register,
@@ -67,109 +73,130 @@ const ChatLayout = ({
   );
   const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
-  const authRequestConfig = useAuthRequestConfig();
   const [disableWhiteboardRoom] = useDisableWhiteboardRoomMutation();
   const [fetchContactRelation] = useFetchContactRelationMutation();
   const [createRequest] = useCreateRequestMutation();
   const [leaveChannel] = useLeaveChannelMutation();
   const [removeContact] = useRemoveContactMutation();
+  const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const copyToClipboard = useCopyToClipboard();
   const alert = useAlert();
   const navigate = useNavigate();
 
-  const handleModalCancel = () => setModalState(undefined);
+  const handleModalClose = () => setModalState({ isOpen: false });
 
   const handleModalSave = async (action: ModalAction) => {
     switch (action) {
-      case "inviteUser":
+      case ModalAction.InviteUser:
         inviteFormRef.current?.dispatchEvent(
           new Event("submit", { cancelable: true, bubbles: true }),
         );
         break;
-      case "leaveChannel":
-        try {
-          await Promise.all([
-            chatConnection.leaveGroup({
-              groupId: chatTargetId ?? "",
-            }),
-            leaveChannel({
-              userId: userId ?? "",
-              channelId: channelId ?? "",
-            }),
-          ]);
-          navigate("/profile");
-          alert.success("You left the channel successfully");
-        } catch (err) {
-          alert.error(
-            getErrorMessage({
-              error: err,
-              defaultErrorMessage:
-                "Could not leave the channel. Please try again",
-            }),
-          );
-          console.log(err);
-        }
+      case ModalAction.LeaveChannel:
+        await handleChannelLeave();
         break;
-      case "removeContact":
-        try {
-          const contactRelation = await fetchContactRelation({
-            userId1: userId ?? "",
-            userId2: chatTargetId ?? "",
-          }).unwrap();
-          const whiteboardSdkToken =
-            await fetchWhiteboardSdkToken(authRequestConfig);
-
-          await Promise.all([
-            disableWhiteboardRoom({
-              roomUuid: contactRelation.whiteboardRoomId,
-              sdkToken: whiteboardSdkToken,
-            }).unwrap(),
-            removeContact({
-              user1Id: userId ?? "",
-              user2Id: chatTargetId ?? "",
-            }).unwrap(),
-          ]);
-          await RTMClient.sendMessageToPeer(
-            { text: PeerMessage.ContactRemoved },
-            chatTargetId ?? "",
-          );
-          navigate("/profile");
-          alert.success("The contact was deleted successfully");
-        } catch (err) {
-          alert.error(
-            getErrorMessage({
-              error: err,
-              defaultErrorMessage:
-                "Could not delete the contact. Please try again",
-            }),
-          );
-          console.log(err);
-        }
+      case ModalAction.RemoveContact:
+        await handleContactRemove();
     }
   };
 
-  const handleFormSubmit: SubmitHandler<{ contactId: string }> = async (
-    data,
-  ) => {
+  const handleChannelLeave = async () => {
+    if (!userId || !chatTargetId || !channelId) {
+      alert.error("Could not leave the channel. Please try again");
+      return;
+    }
+
+    try {
+      await Promise.all([
+        chatConnection.leaveGroup({ groupId: chatTargetId }),
+        leaveChannel({ userId, channelId }),
+      ]);
+      navigate("/profile");
+      alert.success("You left the channel successfully");
+    } catch (err) {
+      alert.error(
+        getErrorMessage({
+          error: err,
+          defaultErrorMessage: "Could not leave the channel. Please try again",
+        }),
+      );
+      console.error("Could not leave the channel:", err);
+    }
+  };
+
+  const handleContactRemove = async () => {
+    if (!userId || !chatTargetId) {
+      alert.error("Could not remove the contact. Please try again");
+      return;
+    }
+
+    try {
+      const contactRelation = await fetchContactRelation({
+        userId1: userId,
+        userId2: chatTargetId,
+      }).unwrap();
+      const { token: whiteboardSdkToken } =
+        await fetchWhiteboardSdkToken().unwrap();
+
+      await Promise.all([
+        disableWhiteboardRoom({
+          roomUuid: contactRelation.whiteboardRoomId,
+          sdkToken: whiteboardSdkToken,
+        }).unwrap(),
+        removeContact({
+          user1Id: userId,
+          user2Id: chatTargetId,
+        }).unwrap(),
+        chatConnection.deleteConversation({
+          channel: chatTargetId,
+          chatType: ChatTypeEnum.SingleChat,
+          deleteRoam: true,
+        }),
+      ]);
+      await RTMClient.sendMessageToPeer(
+        { text: PeerMessage.ContactRemoved },
+        chatTargetId,
+      );
+      navigate("/profile");
+      alert.success("The contact was deleted successfully");
+    } catch (err) {
+      alert.error(
+        getErrorMessage({
+          error: err,
+          defaultErrorMessage: "Could not delete the contact. Please try again",
+        }),
+      );
+      console.error("Could not delete the contact:", err);
+    }
+  };
+
+  const handleInviteFormSubmit: SubmitHandler<{ contactId: string }> = async ({
+    contactId,
+  }) => {
+    if (!userId || !chatTargetId || !channelId) {
+      alert.error("Could not send an invite request. Please try again");
+      return;
+    }
+
     try {
       await Promise.all([
         createRequest({
-          from: userId ?? "",
-          to: data.contactId,
+          from: userId,
+          to: contactId,
           type: RequestTypeEnum.Invite,
-          channel: channelId ?? "",
+          channel: channelId,
         }).unwrap(),
         chatConnection.inviteUsersToGroup({
-          groupId: chatTargetId ?? "",
-          users: [data.contactId],
+          groupId: chatTargetId,
+          users: [contactId],
         }),
       ]);
       await RTMClient.sendMessageToPeer(
         { text: PeerMessage.RequestCreated },
-        data.contactId,
+        contactId,
       );
       alert.success("Request created successfully!");
-      setModalState(undefined);
+      handleModalClose();
     } catch (err) {
       alert.error(
         getErrorMessage({
@@ -178,14 +205,41 @@ const ChatLayout = ({
             "Could not send an invite request. Please try again",
         }),
       );
-      console.log(err);
+      console.error("Could not send an invite request:", err);
     }
   };
 
+  const handleRemoveContactBtnClick = () =>
+    setModalState({
+      isOpen: true,
+      action: ModalAction.RemoveContact,
+    });
+
+  const handleCopyChannelIdBtnClick = () => {
+    const errorMessage = "Could not copy the channel id. Please try again";
+
+    if (channelId)
+      copyToClipboard(channelId, "channel id").catch(() =>
+        alert.error(errorMessage),
+      );
+    else alert.error(errorMessage);
+  };
+
+  const handleInviteUserBtnClick = () =>
+    setModalState({
+      isOpen: true,
+      action: ModalAction.InviteUser,
+    });
+
+  const handleLeaveChannelBtnClick = () =>
+    setModalState({
+      isOpen: true,
+      action: ModalAction.LeaveChannel,
+    });
+
   if (!isChatInitialized) return <Loading />;
 
-  const isModalOpen = modalState?.isOpen;
-  const modalAction = modalState?.action;
+  const modalAction = modalState.action;
 
   return (
     chatTargetId && (
@@ -194,38 +248,44 @@ const ChatLayout = ({
           <Contact name={contactName} isOnline={isContactOnline} size="sm" />
 
           <div className="flex items-center gap-4 text-xl">
-            <SimpleButton onClick={onCallBtnClick}>
+            <SimpleButton
+              data-tooltip-id="call"
+              data-tooltip-content="Call"
+              onClick={onCallBtnClick}
+            >
               <BiPhone />
             </SimpleButton>
 
             {chatType === ChatTypeEnum.SingleChat ? (
               <SimpleButton
                 isDanger
-                onClick={() =>
-                  setModalState({ isOpen: true, action: "removeContact" })
-                }
+                data-tooltip-id="removeContact"
+                data-tooltip-content="Remove the contact"
+                onClick={handleRemoveContactBtnClick}
               >
                 <BiUserX />
               </SimpleButton>
             ) : (
               <>
                 <SimpleButton
-                  onClick={() => copyToClipboard(channelId ?? "", "channel id")}
+                  data-tooltip-id="copyChannelId"
+                  data-tooltip-content="Copy the channel id"
+                  onClick={handleCopyChannelIdBtnClick}
                 >
                   <BiCopy />
                 </SimpleButton>
                 <SimpleButton
-                  onClick={() =>
-                    setModalState({ isOpen: true, action: "inviteUser" })
-                  }
+                  data-tooltip-id="inviteUser"
+                  data-tooltip-content="Invite a user"
+                  onClick={handleInviteUserBtnClick}
                 >
                   <BiUserPlus />
                 </SimpleButton>
                 <SimpleButton
                   isDanger
-                  onClick={() =>
-                    setModalState({ isOpen: true, action: "leaveChannel" })
-                  }
+                  data-tooltip-id="leaveChannel"
+                  data-tooltip-content="Leave the channel"
+                  onClick={handleLeaveChannelBtnClick}
                 >
                   <BiLogOut />
                 </SimpleButton>
@@ -236,24 +296,24 @@ const ChatLayout = ({
 
         <Chat chatType={chatType} targetId={chatTargetId} />
 
-        {isModalOpen && modalAction && (
+        {modalState.isOpen && modalAction && (
           <Modal
             title={
-              modalAction === "inviteUser"
+              modalAction === ModalAction.InviteUser
                 ? "Enter user's id"
-                : modalAction === "leaveChannel"
+                : modalAction === ModalAction.LeaveChannel
                   ? "Are you sure you want to leave this channel"
                   : "Are you sure you want to delete this contact"
             }
-            onCancel={handleModalCancel}
+            onCancel={handleModalClose}
             onSave={() => handleModalSave(modalAction)}
           >
-            {modalAction === "inviteUser" && (
+            {modalAction === ModalAction.InviteUser && (
               <form
                 ref={inviteFormRef}
                 method="POST"
                 autoComplete="off"
-                onSubmit={handleSubmit(handleFormSubmit)}
+                onSubmit={handleSubmit(handleInviteFormSubmit)}
               >
                 <Input
                   name="contactId"
@@ -265,6 +325,12 @@ const ChatLayout = ({
             )}
           </Modal>
         )}
+
+        <Tooltip id="call" />
+        <Tooltip id="removeContact" />
+        <Tooltip id="copyChannelId" />
+        <Tooltip id="inviteUser" />
+        <Tooltip id="leaveChannel" />
       </div>
     )
   );

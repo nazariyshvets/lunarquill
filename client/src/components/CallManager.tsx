@@ -24,11 +24,84 @@ const CallManager = () => {
   const navigate = useNavigate();
   const alert = useAlert();
 
+  const handleDeclineBtnClick = async () => {
+    if (!callModalState) return;
+
+    try {
+      await RTMClient.sendMessageToPeer(
+        { text: PeerMessage.CallDeclined },
+        callModalState.contact._id,
+      );
+      dispatch(setCallModalState(null));
+    } catch (err) {
+      alert.error(
+        getErrorMessage({
+          error: err,
+          defaultErrorMessage: "Could not decline the call. Please try again",
+        }),
+      );
+      console.error("Error declining the call:", err);
+    }
+  };
+
+  const handleAcceptBtnClick = async () => {
+    if (!callModalState || !userId) return;
+
+    try {
+      const peerId = callModalState.contact._id;
+      const contact = await fetchContactRelation({
+        userId1: userId,
+        userId2: peerId,
+      }).unwrap();
+
+      await RTMClient.sendMessageToPeer(
+        { text: PeerMessage.CallAccepted },
+        peerId,
+      );
+      dispatch(setCallModalState(null));
+      navigate(`/contacts/${contact._id}/call`);
+    } catch (err) {
+      alert.error(
+        getErrorMessage({
+          error: err,
+          defaultErrorMessage: "Could not accept the call. Please try again",
+        }),
+      );
+      console.error("Error accepting the call:", err);
+    }
+  };
+
+  const handleRecallBtnClick = async () => {
+    if (!callModalState) return;
+
+    try {
+      await RTMClient.sendMessageToPeer(
+        { text: PeerMessage.CallRecalled },
+        callModalState.contact._id,
+      );
+      dispatch(setCallModalState(null));
+      clearCallTimeout();
+    } catch (err) {
+      alert.error(
+        getErrorMessage({
+          error: err,
+          defaultErrorMessage: "Could not recall the call. Please try again",
+        }),
+      );
+      console.error("Error recalling the call:", err);
+    }
+  };
+
   const clearCallTimeout = () => {
     if (callTimeout) {
       clearTimeout(callTimeout);
       dispatch(setCallTimeout(null));
     }
+  };
+
+  const resetAudio = (audio: HTMLAudioElement) => {
+    audio.pause();
+    audio.currentTime = 0;
   };
 
   useEffect(() => {
@@ -37,15 +110,9 @@ const CallManager = () => {
     if (callModalState) {
       audio.loop = true;
       audio.play();
-    } else {
-      audio.pause();
-      audio.currentTime = 0;
-    }
+    } else resetAudio(audio);
 
-    return () => {
-      audio.pause();
-      audio.currentTime = 0;
-    };
+    return () => resetAudio(audio);
   }, [callModalState]);
 
   return (
@@ -57,50 +124,14 @@ const CallManager = () => {
           <CallModal
             callDirection={CallDirection.Incoming}
             contactName={callModalState.contact.username}
-            onDeclineBtnClick={() => {
-              RTMClient.sendMessageToPeer(
-                { text: PeerMessage.CallDeclined },
-                callModalState.contact._id,
-              );
-              dispatch(setCallModalState(null));
-            }}
-            onAcceptBtnClick={async () => {
-              try {
-                const contact = await fetchContactRelation({
-                  userId1: userId ?? "",
-                  userId2: callModalState.contact._id,
-                }).unwrap();
-
-                RTMClient.sendMessageToPeer(
-                  { text: PeerMessage.CallAccepted },
-                  callModalState.contact._id,
-                );
-                dispatch(setCallModalState(null));
-                navigate(`/contacts/${contact._id}/call`);
-              } catch (err) {
-                alert.error(
-                  getErrorMessage({
-                    error: err,
-                    defaultErrorMessage:
-                      "Could not accept the call. Please try again",
-                  }),
-                );
-                console.log(err);
-              }
-            }}
+            onDeclineBtnClick={handleDeclineBtnClick}
+            onAcceptBtnClick={handleAcceptBtnClick}
           />
         ) : (
           <CallModal
             callDirection={CallDirection.Outgoing}
             contactName={callModalState.contact.username}
-            onRecallBtnClick={() => {
-              RTMClient.sendMessageToPeer(
-                { text: PeerMessage.CallRecalled },
-                callModalState.contact._id,
-              );
-              dispatch(setCallModalState(null));
-              clearCallTimeout();
-            }}
+            onRecallBtnClick={handleRecallBtnClick}
           />
         ))}
     </>

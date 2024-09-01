@@ -1,38 +1,36 @@
 import { useState, useEffect } from "react";
 import { useAlert } from "react-alert";
 
-import useAuthRequestConfig from "../hooks/useAuthRequestConfig";
 import useAuth from "./useAuth";
-import fetchWhiteboardRoomToken from "../utils/fetchWhiteboardRoomToken";
+import { useFetchWhiteboardRoomTokenMutation } from "../services/mainService";
 import type WhiteboardRoomCredentials from "../types/WhiteboardRoomCredentials";
 
 const useWhiteboardRoom = (roomId: string) => {
   const [roomCredentials, setRoomCredentials] =
     useState<WhiteboardRoomCredentials>();
+  const [fetchWhiteboardRoomToken] = useFetchWhiteboardRoomTokenMutation();
   const { userId } = useAuth();
-  const authRequestConfig = useAuthRequestConfig();
   const alert = useAlert();
 
   useEffect(() => {
-    if (!roomCredentials && userId && roomId)
+    if (userId && roomId)
       (async () => {
         try {
-          const roomToken = await fetchWhiteboardRoomToken(
-            roomId,
-            authRequestConfig,
-          );
+          const { token: roomToken } =
+            await fetchWhiteboardRoomToken(roomId).unwrap();
 
           setRoomCredentials({
-            uid: userId ?? "",
+            uid: userId,
             uuid: roomId,
             roomToken,
           });
         } catch (err) {
           alert.error("Could not initialize whiteboard");
-          console.log(err);
+          console.error("Error initializing whiteboard:", err);
         }
       })();
-  }, [roomCredentials, alert, authRequestConfig, userId, roomId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, roomId]);
 
   return roomCredentials;
 };

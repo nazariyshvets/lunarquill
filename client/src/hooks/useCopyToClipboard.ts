@@ -9,7 +9,7 @@ const useCopyToClipboard = () => {
       alert.success(`The ${type} is copied successfully`);
     } catch (err) {
       alert.error(`Could not copy the ${type}. Please try again`);
-      console.log(err);
+      console.error(`Error copying the ${type}:`, err);
     }
   };
 };

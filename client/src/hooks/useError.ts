@@ -11,13 +11,16 @@ const useError = (message: ErrorMessage) => {
     if (!message) return;
 
     if (typeof message === "string") {
-      // If the message is a string, show it as is
       alert.error(message);
+      console.error(message);
     } else {
-      // If the message is an object, iterate over its properties and show each one
-      Object.values(message).forEach((errorMsg) => alert.error(errorMsg));
+      Object.values(message).forEach((errorMsg) => {
+        alert.error(errorMsg);
+        console.error(errorMsg);
+      });
     }
-  }, [alert, message]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message]);
 };
 
 export default useError;

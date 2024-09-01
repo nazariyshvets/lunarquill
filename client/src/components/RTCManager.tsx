@@ -41,7 +41,7 @@ import {
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
-import type UserVolume from "../types/UserVolume";
+import type { UserVolume } from "../types/User";
 import { type ChatType, ChatTypeEnum } from "../types/ChatType";
 
 interface RTCManagerProps {
@@ -66,10 +66,10 @@ const RTCManager = ({
   const { localMicrophoneTrack, isLoading: isLoadingMic } =
     useLocalMicrophoneTrack();
   const [isCameraMuted, setIsCameraMuted] = useState(
-    localCameraTrack?.muted || false,
+    localCameraTrack?.muted ?? true,
   );
   const [isMicrophoneMuted, setIsMicrophoneMuted] = useState(
-    localMicrophoneTrack?.muted || false,
+    localMicrophoneTrack?.muted ?? true,
   );
   const [isLocalScreenShared, setIsLocalScreenShared] = useState(false);
   const remoteUsers = useRemoteUsers();
@@ -118,13 +118,15 @@ const RTCManager = ({
 
   // Set local tracks to the redux store
   useEffect(() => {
-    localCameraTrack && dispatch(setLocalCameraTrack(localCameraTrack));
-  }, [dispatch, localCameraTrack]);
+    if (localCameraTrack) dispatch(setLocalCameraTrack(localCameraTrack));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localCameraTrack]);
 
   useEffect(() => {
-    localMicrophoneTrack &&
+    if (localMicrophoneTrack)
       dispatch(setLocalMicrophoneTrack(localMicrophoneTrack));
-  }, [dispatch, localMicrophoneTrack]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localMicrophoneTrack]);
 
   const toggleCamera = async () => {
     try {
@@ -134,7 +136,8 @@ const RTCManager = ({
       });
       setIsCameraMuted(!isCameraMuted);
     } catch (err) {
-      console.log(err);
+      alert.error("Could not turn camera on/off. Please try again");
+      console.error("Error toggling camera:", err);
     }
   };
 
@@ -146,7 +149,8 @@ const RTCManager = ({
       });
       setIsMicrophoneMuted(!isMicrophoneMuted);
     } catch (err) {
-      console.log(err);
+      alert.error("Could not turn microphone on/off. Please try again");
+      console.error("Error toggling microphone:", err);
     }
   };
 
@@ -154,14 +158,6 @@ const RTCManager = ({
     isLocalScreenShared ? handleScreenShareEnd() : handleScreenShareStart();
 
   const leaveChannel = () => {
-    navigate(
-      `/${
-        chatType === ChatTypeEnum.SingleChat
-          ? `contacts/${chatTargetId}`
-          : `channels/${channelId}`
-      }/chat`,
-    );
-
     if (chatType === ChatTypeEnum.SingleChat)
       RTMClient.sendMessageToPeer(
         {
@@ -169,6 +165,14 @@ const RTCManager = ({
         },
         chatTargetId,
       );
+
+    navigate(
+      `/${
+        chatType === ChatTypeEnum.SingleChat
+          ? `contacts/${chatTargetId}`
+          : `channels/${channelId}`
+      }/chat`,
+    );
   };
 
   const handleScreenShareStart = () => {
@@ -182,7 +186,7 @@ const RTCManager = ({
   const handleScreenShareEnd = () => setIsLocalScreenShared(false);
 
   const isUserActive = (uid: UID) =>
-    !!activeUsers.find((user) => user.uid === uid);
+    activeUsers.some((user) => user.uid === uid);
 
   const isUserRemote = (uid: UID) => !!getRemoteUser(uid);
 
@@ -195,6 +199,9 @@ const RTCManager = ({
       : activeUsers.reduce((res, user) => (user.level > res.level ? user : res))
           .uid;
 
+  const isMediaEnabled = (userId: UID, media: "camera" | "microphone") =>
+    !(remoteUsersTracksState[userId]?.[media]?.muted ?? true);
+
   const renderMobileView = () => (
     <div className="h-full w-full overflow-auto">
       <div
@@ -204,7 +211,7 @@ const RTCManager = ({
       >
         <VideoTracksContainer>
           {(screenCasterId || localUserId !== mostActiveUserId) && (
-            <VideoTrack isActive={isUserActive(localUserId ?? "")}>
+            <VideoTrack isActive={!!localUserId && isUserActive(localUserId)}>
               <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
             </VideoTrack>
           )}
@@ -220,10 +227,8 @@ const RTCManager = ({
                 <RemoteUser
                   username={remoteUsersAttrs[user.uid]?.username}
                   user={user}
-                  playVideo={!remoteUsersTracksState[user.uid]?.camera?.muted}
-                  playAudio={
-                    !remoteUsersTracksState[user.uid]?.microphone?.muted
-                  }
+                  playVideo={isMediaEnabled(user.uid, "camera")}
+                  playAudio={isMediaEnabled(user.uid, "microphone")}
                 />
               </VideoTrack>
             ))}
@@ -240,12 +245,8 @@ const RTCManager = ({
             <RemoteUser
               username={remoteUsersAttrs[mostActiveUserId]?.username}
               user={getRemoteUser(mostActiveUserId)}
-              playVideo={
-                !remoteUsersTracksState[mostActiveUserId]?.camera?.muted
-              }
-              playAudio={
-                !remoteUsersTracksState[mostActiveUserId]?.microphone?.muted
-              }
+              playVideo={isMediaEnabled(mostActiveUserId, "camera")}
+              playAudio={isMediaEnabled(mostActiveUserId, "microphone")}
             />
           ) : mostActiveUserId && !isUserRemote(mostActiveUserId) ? (
             <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
@@ -283,7 +284,7 @@ const RTCManager = ({
         <VideoTracksContainer isScreenShared={!!screenCasterId}>
           <VideoTrack
             size={screenCasterId ? "fixed" : "auto"}
-            isActive={isUserActive(localUserId ?? "")}
+            isActive={!!localUserId && isUserActive(localUserId)}
           >
             <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
           </VideoTrack>
@@ -299,10 +300,8 @@ const RTCManager = ({
                 <RemoteUser
                   username={remoteUsersAttrs[user.uid]?.username}
                   user={user}
-                  playVideo={!remoteUsersTracksState[user.uid]?.camera?.muted}
-                  playAudio={
-                    !remoteUsersTracksState[user.uid]?.microphone?.muted
-                  }
+                  playVideo={isMediaEnabled(user.uid, "camera")}
+                  playAudio={isMediaEnabled(user.uid, "microphone")}
                 />
               </VideoTrack>
             ))}
@@ -343,9 +342,8 @@ const RTCManager = ({
     isLocalScreenShared && (
       <ScreenCaster
         RTMClient={RTMClient}
-        RTMChannel={RTMChannel}
         channelId={channelId}
-        setIsLocalScreenShared={setIsLocalScreenShared}
+        onScreenShareEnd={handleScreenShareEnd}
       />
     );
 

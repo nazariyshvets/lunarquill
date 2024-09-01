@@ -24,10 +24,14 @@ const NoiseSuppression = () => {
   const alert = useAlert();
 
   useEffect(() => {
-    const init = async () => {
-      AgoraRTC.registerExtensions([extension.current]);
+    (async () => {
+      if (!extension.current.checkCompatibility()) {
+        alert.error("Noise suppression is not supported on this platform");
+        console.error("Noise suppression is not supported on this platform");
+        return;
+      }
 
-      checkCompatibility();
+      AgoraRTC.registerExtensions([extension.current]);
 
       if (localMicrophoneTrack) {
         try {
@@ -43,19 +47,10 @@ const NoiseSuppression = () => {
           console.error("Error applying noise reduction:", err);
         }
       }
-    };
-
-    const checkCompatibility = () => {
-      if (!extension.current.checkCompatibility()) {
-        alert.error("Noise suppression is not supported on this platform");
-        console.error("Noise suppression is not supported on this platform");
-      }
-    };
-
-    init();
+    })();
 
     return () => {
-      const uninit = async () => {
+      (async () => {
         try {
           processor.current?.unpipe();
           localMicrophoneTrack?.unpipe();
@@ -63,23 +58,41 @@ const NoiseSuppression = () => {
         } catch (err) {
           console.error("Error uninitializing noise suppression:", err);
         }
-      };
-      uninit();
+      })();
     };
-  }, [localMicrophoneTrack, alert]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localMicrophoneTrack]);
 
   useEffect(() => {
-    if (isInitialized && processor.current) {
-      processor.current.setMode(AIDenoiserProcessorMode[noiseSuppressionMode]);
-    }
+    (async () => {
+      if (!isInitialized || !processor.current) return;
+
+      try {
+        await processor.current.setMode(
+          AIDenoiserProcessorMode[noiseSuppressionMode],
+        );
+      } catch (err) {
+        alert.error("Could not set noise suppression mode. Please try again");
+        console.error("Error setting noise suppression mode:", err);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialized, noiseSuppressionMode]);
 
   useEffect(() => {
-    if (isInitialized && processor.current) {
-      processor.current.setLevel(
-        AIDenoiserProcessorLevel[noiseSuppressionLevel],
-      );
-    }
+    (async () => {
+      if (!isInitialized || !processor.current) return;
+
+      try {
+        await processor.current.setLevel(
+          AIDenoiserProcessorLevel[noiseSuppressionLevel],
+        );
+      } catch (err) {
+        alert.error("Could not set noise suppression level. Please try again");
+        console.error("Error setting noise suppression level:", err);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInitialized, noiseSuppressionLevel]);
 
   return <></>;

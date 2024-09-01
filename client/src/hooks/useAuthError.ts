@@ -15,7 +15,8 @@ const useAuthError = () => {
     return () => {
       dispatch(clearError());
     };
-  }, [dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 };
 
 export default useAuthError;

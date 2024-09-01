@@ -20,9 +20,9 @@ const SidebarLayout = () => {
 
   const { userId } = useAuth();
   const { data: userDetails } = useGetUserByIdQuery(userId ?? skipToken);
-  const { data: requests } = useGetUserRequestsQuery(userId ?? skipToken);
-  const { data: contacts } = useGetUserContactsQuery(userId ?? skipToken);
-  const { data: channels } = useGetUserChannelsQuery(userId ?? skipToken);
+  const { data: requests = [] } = useGetUserRequestsQuery(userId ?? skipToken);
+  const { data: contacts = [] } = useGetUserContactsQuery(userId ?? skipToken);
+  const { data: channels = [] } = useGetUserChannelsQuery(userId ?? skipToken);
 
   return (
     <div className="relative flex h-screen max-h-screen min-h-screen flex-col gap-2 bg-deep-black p-4 xl:flex-row">
@@ -40,10 +40,10 @@ const SidebarLayout = () => {
         <Sidebar
           user={userDetails}
           inboxRequestsCount={
-            requests?.filter((request) => request.to._id === userId).length ?? 0
+            requests.filter((request) => request.to._id === userId).length
           }
-          contacts={contacts ?? []}
-          channels={channels ?? []}
+          contacts={contacts}
+          channels={channels}
           onClose={() => setIsOpen(false)}
         />
       </div>

@@ -31,25 +31,25 @@ const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
       } catch (err) {
         setIsPlayingBack(false);
         setPlaybackTime(0);
-        console.log(err);
+        alert.error("Could not playback the audio. Please try again");
+        console.error("Error playing back the audio:", err);
       }
     }
   };
 
   useEffect(() => {
-    const fetchAudio = async () => {
+    (async () => {
       try {
         const audioFile = await fetchFile(url, "audio/mp3", fileName);
 
         setAudio(audioFile);
       } catch (err) {
         alert.error("An error occurred while fetching audio message");
-        console.log("Error fetching audio message:", err);
+        console.error("Error fetching audio message:", err);
       }
-    };
-
-    fetchAudio();
-  }, [url, alert, fileName]);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url, fileName]);
 
   useEffect(() => {
     const handleTimeUpdate = () =>

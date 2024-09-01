@@ -1,6 +1,8 @@
 import { useDropzone, DropzoneOptions } from "react-dropzone";
 import { BiCloudUpload } from "react-icons/bi";
 
+import formatBytes from "../utils/formatBytes";
+
 interface FileUploaderProps extends DropzoneOptions {
   type: "image" | "video";
 }
@@ -23,7 +25,7 @@ const FileUploader = ({ type, ...dropzoneOptions }: FileUploaderProps) => {
           <div key={`${name}-${size}`} className="flex gap-1">
             <span className="truncate">{name}</span>
             <span>&ndash;</span>
-            <span className="flex-shrink-0">{(size / 1000).toFixed(2)} KB</span>
+            <span className="flex-shrink-0">{formatBytes(size)}</span>
           </div>
         ))}
       </div>

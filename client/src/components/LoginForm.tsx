@@ -11,7 +11,7 @@ import useAuthSuccess from "../hooks/useAuthSuccess";
 import useAuthError from "../hooks/useAuthError";
 import useAppDispatch from "../hooks/useAppDispatch";
 import { EMAIL_PATTERN } from "../constants/constants";
-import type LoginFormValues from "../types/LoginFormValues";
+import type { LoginFormValues } from "../types/Auth";
 
 const LoginForm = () => {
   const { loading } = useAuth();
