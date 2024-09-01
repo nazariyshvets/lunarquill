@@ -1,48 +1,40 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 import { RtmClient } from "agora-rtm-react";
+import { useAlert } from "react-alert";
 
-import useAuthRequestConfig from "./useAuthRequestConfig";
-import useAppSelector from "./useAppSelector";
 import useAppDispatch from "./useAppDispatch";
 import useAuth from "./useAuth";
+import { useFetchRTMTokenMutation } from "../services/mainService";
 import { setIsRTMClientInitialized } from "../redux/rtmSlice";
-import fetchRTMToken from "../utils/fetchRTMToken";
-import RTMConfig from "../config/RTMConfig";
 
 const useInitRTMClient = (RTMClient: RtmClient) => {
-  const isInitialized = useAppSelector(
-    (state) => state.rtm.isRTMClientInitialized,
-  );
-  const isLoadingRef = useRef(false);
   const { userId } = useAuth();
-  const requestConfig = useAuthRequestConfig();
+  const [fetchRTMToken] = useFetchRTMTokenMutation();
   const dispatch = useAppDispatch();
+  const alert = useAlert();
 
   useEffect(() => {
-    if (!RTMConfig.serverUrl || !userId) {
-      console.warn("RTMConfig.serverUrl or userId is empty");
-      return;
-    }
+    if (!userId) return;
 
-    if (!isInitialized && !isLoadingRef.current)
-      (async () => {
-        isLoadingRef.current = true;
+    (async () => {
+      try {
+        const token = await fetchRTMToken(userId).unwrap();
 
-        try {
-          const token = await fetchRTMToken(userId, requestConfig);
+        await RTMClient.login({ uid: userId, token });
+        dispatch(setIsRTMClientInitialized(true));
+      } catch (err) {
+        dispatch(setIsRTMClientInitialized(false));
+        alert.error("Could not initialize RTM client");
+        console.error("RTM client initialization failed:", err);
+      }
+    })();
 
-          RTMConfig.rtmToken = token;
-          await RTMClient.login({ uid: userId, token });
-          dispatch(setIsRTMClientInitialized(true));
-        } catch (err) {
-          dispatch(setIsRTMClientInitialized(false));
-          console.log("RTM Client initialization failed:", err);
-        } finally {
-          isLoadingRef.current = false;
-        }
-      })();
-  }, [RTMClient, requestConfig, isInitialized, dispatch, userId]);
+    return () => {
+      RTMClient.logout().then(() => dispatch(setIsRTMClientInitialized(false)));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 };
 
 export default useInitRTMClient;

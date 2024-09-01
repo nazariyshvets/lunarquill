@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 
 import AgoraRTC from "agora-rtc-react";
 import VirtualBackgroundExtension, {
@@ -8,9 +8,9 @@ import { useAlert } from "react-alert";
 import { useIndexedDB } from "react-indexed-db-hook";
 
 import useRTC from "../hooks/useRTC";
-import type VirtualBgMediaSource from "../types/VirtualBgMediaSource";
+import type { VirtualBgMediaSource } from "../types/VirtualBg";
 
-const VirtualBackground = () => {
+const VirtualBackground = (): React.ReactNode => {
   const [isInitialized, setIsInitialized] = useState(false);
   const {
     localCameraTrack,
@@ -33,9 +33,8 @@ const VirtualBackground = () => {
       try {
         if (!imgSrcUrlsRef.current[imgId]) {
           const file: VirtualBgMediaSource = await getImgById(imgId);
-          const url = URL.createObjectURL(file.source);
 
-          imgSrcUrlsRef.current[imgId] = url;
+          imgSrcUrlsRef.current[imgId] = URL.createObjectURL(file.source);
         }
 
         const imgSrcUrl = imgSrcUrlsRef.current[imgId];
@@ -55,7 +54,8 @@ const VirtualBackground = () => {
         console.error("Error retrieving an image by id:", err);
       }
     },
-    [alert, getImgById],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getImgById],
   );
 
   const handleVideoVirtualBg = useCallback(
@@ -63,9 +63,8 @@ const VirtualBackground = () => {
       try {
         if (!videoSrcUrlsRef.current[videoId]) {
           const file: VirtualBgMediaSource = await getVideoById(videoId);
-          const url = URL.createObjectURL(file.source);
 
-          videoSrcUrlsRef.current[videoId] = url;
+          videoSrcUrlsRef.current[videoId] = URL.createObjectURL(file.source);
         }
 
         const videoSrcUrl = videoSrcUrlsRef.current[videoId];
@@ -86,14 +85,19 @@ const VirtualBackground = () => {
         console.error("Error retrieving a video by id:", err);
       }
     },
-    [alert, getVideoById],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getVideoById],
   );
 
   useEffect(() => {
-    const init = async () => {
-      AgoraRTC.registerExtensions([extension.current]);
+    (async () => {
+      if (!extension.current.checkCompatibility()) {
+        alert.error("Virtual background not supported on this platform");
+        console.error("Virtual background not supported on this platform");
+        return;
+      }
 
-      checkCompatibility();
+      AgoraRTC.registerExtensions([extension.current]);
 
       if (localCameraTrack) {
         try {
@@ -110,19 +114,10 @@ const VirtualBackground = () => {
           console.error(`Error initializing virtual background: ${err}`);
         }
       }
-    };
-
-    const checkCompatibility = () => {
-      if (!extension.current.checkCompatibility()) {
-        alert.error("Virtual background not supported on this platform");
-        console.error("Virtual background not supported on this platform");
-      }
-    };
-
-    init();
+    })();
 
     return () => {
-      const uninit = async () => {
+      (async () => {
         try {
           processor.current?.unpipe();
           localCameraTrack?.unpipe();
@@ -131,33 +126,34 @@ const VirtualBackground = () => {
         } catch (err) {
           console.error("Error uninitializing virtual background:", err);
         }
-      };
-      uninit();
+      })();
     };
-  }, [localCameraTrack, alert]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localCameraTrack]);
 
   useEffect(() => {
-    if (isInitialized) {
-      switch (virtualBgType) {
-        case "blur":
-          processor.current?.setOptions({
-            type: "blur",
-            blurDegree: virtualBgBlurDegree,
-          });
-          break;
-        case "color":
-          processor.current?.setOptions({
-            type: "color",
-            color: virtualBgColor,
-          });
-          break;
-        case "img":
-          virtualBgImgId && handleImageVirtualBg(virtualBgImgId);
-          break;
-        case "video":
-          virtualBgVideoId && handleVideoVirtualBg(virtualBgVideoId);
-      }
+    if (!isInitialized) return;
+
+    switch (virtualBgType) {
+      case "blur":
+        processor.current?.setOptions({
+          type: "blur",
+          blurDegree: virtualBgBlurDegree,
+        });
+        break;
+      case "color":
+        processor.current?.setOptions({
+          type: "color",
+          color: virtualBgColor,
+        });
+        break;
+      case "img":
+        virtualBgImgId && handleImageVirtualBg(virtualBgImgId);
+        break;
+      case "video":
+        virtualBgVideoId && handleVideoVirtualBg(virtualBgVideoId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isInitialized,
     virtualBgType,
@@ -165,9 +161,6 @@ const VirtualBackground = () => {
     virtualBgColor,
     virtualBgImgId,
     virtualBgVideoId,
-    alert,
-    getImgById,
-    getVideoById,
     handleImageVirtualBg,
     handleVideoVirtualBg,
   ]);
@@ -178,12 +171,13 @@ const VirtualBackground = () => {
 
     // Clean up previously created urls
     return () => {
-      Object.values(imgSrcUrls).forEach((url) => URL.revokeObjectURL(url));
-      Object.values(videoSrcUrls).forEach((url) => URL.revokeObjectURL(url));
+      Object.values({ ...imgSrcUrls, ...videoSrcUrls }).forEach(
+        URL.revokeObjectURL,
+      );
     };
   }, []);
 
-  return <></>;
+  return null;
 };
 
 export default VirtualBackground;

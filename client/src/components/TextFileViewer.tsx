@@ -15,7 +15,7 @@ const TextFileViewer = ({ url }: TextFileViewerProps) => {
   const alert = useAlert();
 
   useEffect(() => {
-    const fetchTextFile = async () => {
+    (async () => {
       try {
         const file = await fetchFile(url, "txt", "");
         const text = await file.text();
@@ -23,16 +23,15 @@ const TextFileViewer = ({ url }: TextFileViewerProps) => {
         setTextLines(text.split("\n"));
       } catch (err) {
         alert.error(
-          `An error occurred while fetching the text file. Please try again`,
+          "An error occurred while fetching the text file. Please try again",
         );
-        console.log(err);
+        console.error("Error fetching the text file:", err);
       } finally {
         setIsLoading(false);
       }
-    };
-
-    fetchTextFile();
-  }, [url, alert]);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]);
 
   return (
     <div className="flex w-[9999px] max-w-full flex-col gap-1 rounded border border-white bg-black p-2 text-sm text-white sm:p-4 sm:text-base">
@@ -40,7 +39,7 @@ const TextFileViewer = ({ url }: TextFileViewerProps) => {
         <div className="flex items-center justify-center">
           <ReactLoading type="spinningBubbles" />
         </div>
-      ) : textLines && textLines.length ? (
+      ) : textLines && textLines.length > 0 ? (
         textLines.map((text, i) => (
           <span key={i} className="min-h-[0.875rem] break-all sm:min-h-[1rem]">
             {text}

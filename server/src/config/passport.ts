@@ -14,7 +14,7 @@ export default (passport: PassportStatic) => {
       User.findOne({ email: jwt_payload.email })
         .then((user) => done(null, user ?? false))
         .catch((err) => {
-          console.log(err);
+          console.error(err);
 
           return done(err, false);
         });

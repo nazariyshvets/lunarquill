@@ -10,31 +10,40 @@ import isErrorWithMessage from "../utils/isErrorWithMessage";
 
 const AccountVerificationPage = () => {
   const [verifyAccount] = useVerifyAccountMutation();
-  const urlSearchParams = new URLSearchParams(window.location.search);
-  const userId = urlSearchParams.get("id");
-  const token = urlSearchParams.get("token");
   const navigate = useNavigate();
   const alert = useAlert();
 
   useEffect(() => {
-    const verify = async () => {
+    (async () => {
+      const urlSearchParams = new URLSearchParams(window.location.search);
+      const userId = urlSearchParams.get("id");
+      const token = urlSearchParams.get("token");
+
+      if (!userId || !token) {
+        alert.error("User id or token was not present in the url");
+        navigate("/login");
+        return;
+      }
+
       try {
         await verifyAccount({ userId, token }).unwrap();
         alert.success("Account is verified successfully");
-        navigate("/login");
       } catch (err) {
-        console.log(err);
+        console.error("Error verifying an account:", err);
 
         if (isFetchBaseQueryError(err)) {
           alert.error(err.data as string);
         } else if (isErrorWithMessage(err)) {
           alert.error(err.message);
+        } else {
+          alert.error("Could not verify an account");
         }
+      } finally {
+        navigate("/login");
       }
-    };
-
-    verify();
-  }, [alert, navigate, token, userId, verifyAccount]);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <GuestPage title="account verification" />;
 };

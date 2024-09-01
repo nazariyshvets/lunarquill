@@ -1,6 +1,7 @@
 import { FieldError, FieldValues } from "react-hook-form";
+
 import InputError from "./InputError";
-import type InputProps from "../types/InputProps";
+import type { InputProps } from "../types/InputProps";
 
 const Input = <T extends FieldValues>({
   name,

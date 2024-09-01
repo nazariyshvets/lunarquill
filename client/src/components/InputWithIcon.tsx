@@ -1,7 +1,7 @@
 import { FieldValues } from "react-hook-form";
 
 import Input from "../components/Input";
-import type InputWithIconProps from "../types/InputWithIconProps";
+import type { InputWithIconProps } from "../types/InputProps";
 
 const InputWithIcon = <T extends FieldValues>({
   icon,

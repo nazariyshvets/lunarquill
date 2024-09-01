@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, memo } from "react";
 
 import { BiSend } from "react-icons/bi";
 
@@ -29,4 +29,6 @@ const ChatForm = forwardRef<HTMLTextAreaElement, ChatFormProps>(
   ),
 );
 
-export default ChatForm;
+const MemoizedChatForm = memo(ChatForm);
+
+export default MemoizedChatForm;

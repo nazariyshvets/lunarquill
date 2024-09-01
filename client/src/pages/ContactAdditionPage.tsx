@@ -4,9 +4,9 @@ import { useAlert } from "react-alert";
 import ContactAdditionForm from "../components/ContactAdditionForm";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAuth from "../hooks/useAuth";
+import useRTMClient from "../hooks/useRTMClient";
 import { useCreateRequestMutation } from "../services/mainService";
 import getErrorMessage from "../utils/getErrorMessage";
-import useRTMClient from "../hooks/useRTMClient";
 import { RequestTypeEnum } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
 
@@ -18,16 +18,20 @@ const ContactAdditionPage = () => {
 
   useDocumentTitle("Add a contact");
 
-  const handleSubmit: SubmitHandler<{ contactId: string }> = async (data) => {
+  const handleSubmit: SubmitHandler<{ contactId: string }> = async ({
+    contactId,
+  }) => {
+    if (!userId) return;
+
     try {
       await createRequest({
-        from: userId ?? "",
-        to: data.contactId,
+        from: userId,
+        to: contactId,
         type: RequestTypeEnum.Contact,
       }).unwrap();
       await RTMClient.sendMessageToPeer(
         { text: PeerMessage.RequestCreated },
-        data.contactId,
+        contactId,
       );
       alert.success("Request created successfully!");
     } catch (err) {

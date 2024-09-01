@@ -8,8 +8,10 @@ import {
 } from "../redux/rtcSlice";
 import useRTC from "../hooks/useRTC";
 import useAppDispatch from "../hooks/useAppDispatch";
-import type NoiseSuppressionMode from "../types/NoiseSuppressionMode";
-import type NoiseSuppressionLevel from "../types/NoiseSuppressionLevel";
+import type {
+  NoiseSuppressionMode,
+  NoiseSuppressionLevel,
+} from "../types/NoiseSuppression";
 import type Configurator from "../types/Configurator";
 
 const modeOptions: SelectOption[] = [
@@ -17,20 +19,18 @@ const modeOptions: SelectOption[] = [
   { value: "NSNG", label: "Normal noise reduction" },
 ];
 
-const modeOptionsMap = modeOptions.reduce(
-  (res, option) => ({ ...res, [option.value]: option }),
-  {} as Record<NoiseSuppressionMode, SelectOption>,
-);
+const modeOptionsMap = modeOptions.reduce<
+  Partial<Record<NoiseSuppressionMode, SelectOption>>
+>((res, option) => ({ ...res, [option.value]: option }), {});
 
 const levelOptions: SelectOption[] = [
   { value: "AGGRESSIVE", label: "Aggressive" },
   { value: "SOFT", label: "Soft" },
 ];
 
-const levelOptionsMap = levelOptions.reduce(
-  (res, option) => ({ ...res, [option.value]: option }),
-  {} as Record<NoiseSuppressionLevel, SelectOption>,
-);
+const levelOptionsMap = levelOptions.reduce<
+  Partial<Record<NoiseSuppressionLevel, SelectOption>>
+>((res, option) => ({ ...res, [option.value]: option }), {});
 
 const NoiseSuppressionConfigurator = ({ onClose }: Configurator) => {
   const { noiseSuppressionMode, noiseSuppressionLevel } = useRTC();

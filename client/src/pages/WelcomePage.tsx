@@ -1,10 +1,22 @@
-import { Navigate, Link } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 import { TypeAnimation } from "react-type-animation";
 
 import StarryBackground from "../components/StarryBackground";
+import WelcomePageActionButton from "../components/WelcomePageActionButton";
 import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
+
+const typeAnimationSequence = [
+  "LunarQuill is the app where you can elevate your conversations with seamless 1-to-1 and room-based text, audio, and video chat",
+  1000,
+  "Enjoy rich media sharing, screen sharing, and personalized avatars",
+  1000,
+  "Engage in voice-changing calls, schedule virtual events, and collaborate on a persistent drawing board",
+  1000,
+  "Set your custom status and presence for a personalized touch",
+  1000,
+];
 
 const WelcomePage = () => {
   const { userToken } = useAuth();
@@ -30,34 +42,15 @@ const WelcomePage = () => {
             Welcome
           </h1>
           <TypeAnimation
-            sequence={[
-              "LunarQuill is the app where you can elevate your conversations with seamless 1-to-1 and room-based text, audio, and video chat",
-              1000,
-              "Enjoy rich media sharing, screen sharing, and personalized avatars",
-              1000,
-              "Engage in voice-changing calls, schedule virtual events, and collaborate on a persistent drawing board",
-              1000,
-              "Set your custom status and presence for a personalized touch",
-              1000,
-            ]}
+            sequence={typeAnimationSequence}
             wrapper="p"
             speed={50}
             repeat={Infinity}
             className="text-center text-shadow sm:text-lg xl:text-xl"
           />
           <div className="mt-4 flex w-full gap-4">
-            <Link
-              to="/login"
-              className="w-1/2 animate-input truncate rounded border-2 px-4 py-2 text-center font-medium sm:text-lg xl:text-xl"
-            >
-              Log In
-            </Link>
-            <Link
-              to="/signup"
-              className="w-1/2 animate-input truncate rounded border-2 px-4 py-2 text-center font-medium sm:text-lg xl:text-xl"
-            >
-              Sign Up
-            </Link>
+            <WelcomePageActionButton isLogin />
+            <WelcomePageActionButton isLogin={false} />
           </div>
         </div>
       </div>

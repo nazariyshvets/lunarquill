@@ -1,7 +1,9 @@
-import { useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
+
+import BaseModal from "./BaseModal";
 import PdfViewer from "./PdfViewer";
 import TextFileViewer from "./TextFileViewer";
+import useClickOutside from "../hooks/useClickOutside";
 import type SupportedFileType from "../types/SupportedFileType";
 
 interface MediaModalProps {
@@ -11,7 +13,12 @@ interface MediaModalProps {
 }
 
 const MediaModal = ({ type, url, onClose }: MediaModalProps) => {
-  const mediaWrapperRef = useRef<HTMLDivElement>(null);
+  const [container, setContainer] = useState<HTMLDivElement | null>(null);
+
+  useClickOutside({
+    element: container || undefined,
+    onClickOutside: onClose,
+  });
 
   const getMediaWidget = () => {
     switch (type) {
@@ -37,38 +44,18 @@ const MediaModal = ({ type, url, onClose }: MediaModalProps) => {
         return url && <PdfViewer url={url} />;
       case "txt":
         return url && <TextFileViewer url={url} />;
-      default:
-        return;
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        mediaWrapperRef.current &&
-        !mediaWrapperRef.current.contains(event.target as Node)
-      ) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onClose]);
-
-  return createPortal(
-    <div className="fixed bottom-0 left-0 right-0 top-0 z-[9000] flex items-center justify-center bg-deep-black bg-opacity-70 p-4">
+  return (
+    <BaseModal>
       <div
-        ref={mediaWrapperRef}
+        ref={setContainer}
         className="max-h-full max-w-[256px] overflow-auto sm:max-w-[512px] xl:max-w-[1024px]"
       >
         {getMediaWidget()}
       </div>
-    </div>,
-    document.body,
+    </BaseModal>
   );
 };
 

@@ -1,15 +1,8 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  Dispatch,
-  SetStateAction,
-  PropsWithChildren,
-} from "react";
+import React, { useState, useRef, useEffect, PropsWithChildren } from "react";
 
 import { HexColorPicker } from "react-colorful";
 import { useAlert } from "react-alert";
-import { FileRejection } from "react-dropzone";
+import { FileRejection, ErrorCode } from "react-dropzone";
 import { useIndexedDB } from "react-indexed-db-hook";
 import { nanoid } from "@reduxjs/toolkit";
 import { BiTrash } from "react-icons/bi";
@@ -19,6 +12,7 @@ import Select, { SelectOption } from "./Select";
 import FileUploader from "./FileUploader";
 import useRTC from "../hooks/useRTC";
 import useAppDispatch from "../hooks/useAppDispatch";
+import formatBytes from "../utils/formatBytes";
 import {
   setVirtualBgType,
   setVirtualBgBlurDegree,
@@ -32,16 +26,18 @@ import {
   IMAGES_IN_STORAGE_LIMIT,
   VIDEOS_IN_STORAGE_LIMIT,
 } from "../constants/constants";
-import type VirtualBgType from "../types/VirtualBgType";
-import type VirtualBgBlurDegree from "../types/VirtualBgBlurDegree";
-import type { VirtualBgBlurDegreeString } from "../types/VirtualBgBlurDegree";
-import type VirtualBgMediaSource from "../types/VirtualBgMediaSource";
+import type {
+  VirtualBgType,
+  VirtualBgMediaSource,
+  VirtualBgBlurDegree,
+  VirtualBgBlurDegreeString,
+} from "../types/VirtualBg";
 import type Configurator from "../types/Configurator";
 
 interface MediaSourcePickerProps {
   type: "image" | "video";
   selectedFileId: string | null;
-  setSelectedFileId: Dispatch<SetStateAction<string | null>>;
+  setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 interface SelectableItemProps {
@@ -57,10 +53,9 @@ const virtualBgTypeOptions: SelectOption[] = [
   { value: "video", label: "Video" },
 ];
 
-const virtualBgTypeOptionsMap = virtualBgTypeOptions.reduce(
-  (res, option) => ({ ...res, [option.value]: option }),
-  {} as Record<VirtualBgType, SelectOption>,
-);
+const virtualBgTypeOptionsMap = virtualBgTypeOptions.reduce<
+  Partial<Record<VirtualBgType, SelectOption>>
+>((res, option) => ({ ...res, [option.value]: option }), {});
 
 const virtualBgBlurDegreeOptions: SelectOption[] = [
   { value: "1", label: "Low" },
@@ -68,10 +63,9 @@ const virtualBgBlurDegreeOptions: SelectOption[] = [
   { value: "3", label: "High" },
 ];
 
-const virtualBgBlurDegreeOptionsMap = virtualBgBlurDegreeOptions.reduce(
-  (res, option) => ({ ...res, [option.value]: option }),
-  {} as Record<VirtualBgBlurDegreeString, SelectOption>,
-);
+const virtualBgBlurDegreeOptionsMap = virtualBgBlurDegreeOptions.reduce<
+  Partial<Record<VirtualBgBlurDegreeString, SelectOption>>
+>((res, option) => ({ ...res, [option.value]: option }), {});
 
 const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
   const {
@@ -125,7 +119,7 @@ const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
           />
         );
       default:
-        return <></>;
+        return;
     }
   };
 
@@ -216,14 +210,23 @@ const MediaSourcePicker = ({
         setFiles((prev) => [...prev, newFile]);
         setSelectedFileId(newFile.id);
       } catch (err) {
-        console.log(err);
+        console.error("Error adding a new file to IndexedDB:", err);
       }
     }
   };
 
   const handleReject = (rejections: FileRejection[]) => {
     rejections.forEach((rejection) =>
-      rejection.errors.forEach(({ message }) => alert.info(message)),
+      rejection.errors.forEach((error) =>
+        alert.info(
+          error.code === ErrorCode.FileTooSmall ||
+            error.code === ErrorCode.FileTooLarge
+            ? error.message.replace(/(\d+)\s*bytes/, (match) =>
+                formatBytes(parseInt(match, 10)),
+              )
+            : error.message,
+        ),
+      ),
     );
     console.error(rejections);
   };
@@ -261,15 +264,15 @@ const MediaSourcePicker = ({
 
   useEffect(() => {
     getAll()
-      .then((files) => setFiles(files))
-      .catch((err) => console.log("Error retrieving files:", err));
+      .then(setFiles)
+      .catch((err) => console.error("Error retrieving files:", err));
   }, [getAll]);
 
   useEffect(() => {
     const fileSrcUrls = fileSrcUrlsRef.current;
 
     return () => {
-      Object.values(fileSrcUrls).forEach((url) => URL.revokeObjectURL(url));
+      Object.values(fileSrcUrls).forEach(URL.revokeObjectURL);
     };
   }, []);
 
@@ -302,9 +305,9 @@ const MediaSourcePicker = ({
           <div className="flex gap-2 overflow-auto p-1">{fileWidgets}</div>
 
           <div className="flex items-center gap-2">
-            <span className="h-px w-full bg-white"></span>
+            <span className="h-px w-full bg-white" />
             <span className="text-white">or</span>
-            <span className="h-px w-full bg-white"></span>
+            <span className="h-px w-full bg-white" />
           </div>
         </>
       )}

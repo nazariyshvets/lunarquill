@@ -1,29 +1,24 @@
 import { useClientEvent, IAgoraRTCClient, UID } from "agora-rtc-react";
+import { useAlert } from "react-alert";
 
-import useAuthRequestConfig from "./useAuthRequestConfig";
-import fetchRTCToken from "../utils/fetchRTCToken";
-import RTCConfig from "../config/RTCConfig";
+import { useFetchRTCTokenMutation } from "../services/mainService";
 
 const useRTCTokenWillExpire = (
   client: IAgoraRTCClient,
   channelName: string,
   uid: UID,
 ) => {
-  const requestConfig = useAuthRequestConfig();
+  const [fetchRTCToken] = useFetchRTCTokenMutation();
+  const alert = useAlert();
 
   useClientEvent(client, "token-privilege-will-expire", async () => {
-    if (RTCConfig.serverUrl !== "") {
-      try {
-        const token = await fetchRTCToken(channelName, uid, requestConfig);
+    try {
+      const token = await fetchRTCToken({ channelName, uid }).unwrap();
 
-        if (token) return client.renewToken(token);
-      } catch (err) {
-        console.log(err);
-      }
-    } else {
-      console.log(
-        "Please make sure you specified the RTC token server URL in the configuration file",
-      );
+      if (token) await client.renewToken(token);
+    } catch (err) {
+      alert.error("Could not renew RTC token");
+      console.error("Error renewing RTC token:", err);
     }
   });
 };

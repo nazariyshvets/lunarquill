@@ -2,10 +2,11 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { ICameraVideoTrack, IMicrophoneAudioTrack } from "agora-rtc-react";
 
 import isValidHexColorCode from "../utils/isValidHexColorCode";
-import type VirtualBgType from "../types/VirtualBgType";
-import type VirtualBgBlurDegree from "../types/VirtualBgBlurDegree";
-import type NoiseSuppressionMode from "../types/NoiseSuppressionMode";
-import type NoiseSuppressionLevel from "../types/NoiseSuppressionLevel";
+import type { VirtualBgBlurDegree, VirtualBgType } from "../types/VirtualBg";
+import type {
+  NoiseSuppressionMode,
+  NoiseSuppressionLevel,
+} from "../types/NoiseSuppression";
 
 export interface RTCState {
   localCameraTrack: ICameraVideoTrack | null;

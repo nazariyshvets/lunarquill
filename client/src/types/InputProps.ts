@@ -1,4 +1,4 @@
-import { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, ReactNode } from "react";
 
 import {
   Path,
@@ -21,4 +21,10 @@ interface InputProps<TFormValues extends FieldValues>
   label?: string;
 }
 
-export default InputProps;
+interface InputWithIconProps<TFormValues extends FieldValues>
+  extends InputProps<TFormValues> {
+  icon: ReactNode;
+  containerClassName?: string;
+}
+
+export type { InputProps, InputWithIconProps };

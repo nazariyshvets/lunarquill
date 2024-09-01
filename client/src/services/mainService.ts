@@ -1,16 +1,15 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { UID } from "agora-rtc-react";
 
 import { RootState } from "../redux/store";
-import { BASE_SERVER_URL, QUERY_TAG_TYPES } from "../constants/constants";
-import type Request from "../types/Request";
-import type { UserWithoutPassword } from "../types/User";
-import type {
-  IUser,
-  IUserWithoutPassword,
-} from "../../../server/src/models/User";
-import type { IPopulatedRequest } from "../../../server/src/models/Request";
-import type { IChannel } from "../../../server/src/models/Channel";
-import type { IPopulatedContact } from "../../../server/src/models/Contact";
+import {
+  BASE_SERVER_URL,
+  QUERY_TAG_TYPES,
+  TOKEN_EXPIRY_TIME,
+} from "../constants/constants";
+import { RequestDto, PopulatedRequest } from "../types/Request";
+import { User, UserWithoutPassword, PopulatedContact } from "../types/User";
+import { Channel } from "../types/Channel";
 
 export const mainApi = createApi({
   reducerPath: "mainApi",
@@ -30,21 +29,24 @@ export const mainApi = createApi({
   endpoints: (builder) => ({
     // ===== AUTH =====
 
-    verifyAccount: builder.mutation({
+    verifyAccount: builder.mutation<void, { userId: string; token: string }>({
       query: (data) => ({
         url: "/auth/account-verification",
         method: "POST",
         body: data,
       }),
     }),
-    requestPasswordReset: builder.mutation({
+    requestPasswordReset: builder.mutation<void, { email: string }>({
       query: (data) => ({
         url: "/auth/request-password-reset",
         method: "POST",
         body: data,
       }),
     }),
-    resetPassword: builder.mutation({
+    resetPassword: builder.mutation<
+      void,
+      { userId: string; token: string; password: string; password2: string }
+    >({
       query: (data) => ({
         url: "/auth/password-reset",
         method: "POST",
@@ -64,7 +66,7 @@ export const mainApi = createApi({
         method: "GET",
       }),
     }),
-    getUserChannels: builder.query<IChannel[], string>({
+    getUserChannels: builder.query<Channel[], string>({
       query: (userId) => `/users/${userId}/channels`,
       providesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
@@ -80,8 +82,8 @@ export const mainApi = createApi({
       }),
     }),
     updateUserById: builder.mutation<
-      IUserWithoutPassword,
-      { userId: string; updateData: Partial<IUser> }
+      UserWithoutPassword,
+      { userId: string; updateData: Partial<User> }
     >({
       query: (data) => ({
         url: `/users/${data.userId}`,
@@ -93,7 +95,7 @@ export const mainApi = createApi({
 
     // ===== REQUESTS =====
 
-    createRequest: builder.mutation<IPopulatedRequest, Request>({
+    createRequest: builder.mutation<PopulatedRequest, RequestDto>({
       query: (data) => ({
         url: "/requests",
         method: "POST",
@@ -104,7 +106,7 @@ export const mainApi = createApi({
         QUERY_TAG_TYPES.USER_CHANNELS,
       ],
     }),
-    getUserRequests: builder.query<IPopulatedRequest[], string>({
+    getUserRequests: builder.query<PopulatedRequest[], string>({
       query: (uid) => `/requests/user-requests/${uid}`,
       providesTags: [QUERY_TAG_TYPES.USER_REQUESTS],
     }),
@@ -138,7 +140,7 @@ export const mainApi = createApi({
     //   ===== CHANNELS =====
 
     createChannel: builder.mutation<
-      IChannel,
+      Channel,
       {
         name: string;
         admin: string;
@@ -155,14 +157,14 @@ export const mainApi = createApi({
       }),
       invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
-    searchChannels: builder.mutation<IChannel[], string>({
+    searchChannels: builder.mutation<Channel[], string>({
       query: (name) => ({
         url: `/channels/search?name=${name}`,
         method: "GET",
       }),
     }),
     joinChannel: builder.mutation<
-      IChannel,
+      Channel,
       { userId: string; channelId: string }
     >({
       query: (data) => ({
@@ -183,10 +185,10 @@ export const mainApi = createApi({
       }),
       invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
-    getChannelById: builder.query<IChannel, string>({
+    getChannelById: builder.query<Channel, string>({
       query: (id) => `/channels/${id}`,
     }),
-    fetchChannelById: builder.mutation<IChannel, string>({
+    fetchChannelById: builder.mutation<Channel, string>({
       query: (id) => ({
         url: `/channels/${id}`,
         method: "GET",
@@ -195,8 +197,18 @@ export const mainApi = createApi({
 
     //   ===== CONTACTS =====
 
+    getContactRelation: builder.query<
+      PopulatedContact,
+      { userId1: string; userId2: string }
+    >({
+      query: ({ userId1, userId2 }) => ({
+        url: `/contacts/${userId1}/${userId2}`,
+        method: "GET",
+      }),
+      keepUnusedDataFor: 0,
+    }),
     fetchContactRelation: builder.mutation<
-      IPopulatedContact,
+      PopulatedContact,
       { userId1: string; userId2: string }
     >({
       query: ({ userId1, userId2 }) => ({
@@ -204,7 +216,7 @@ export const mainApi = createApi({
         method: "GET",
       }),
     }),
-    getContactById: builder.query<IPopulatedContact, string>({
+    getContactById: builder.query<PopulatedContact, string>({
       query: (id) => `/contacts/${id}`,
     }),
     removeContact: builder.mutation<
@@ -219,7 +231,7 @@ export const mainApi = createApi({
       invalidatesTags: [QUERY_TAG_TYPES.USER_CONTACTS],
     }),
 
-    // WHITEBOARD
+    // ===== WHITEBOARD =====
     createWhiteboardRoom: builder.mutation<string, { sdkToken: string }>({
       query: (data) => ({
         url: "/whiteboard/rooms",
@@ -240,6 +252,38 @@ export const mainApi = createApi({
     getWhiteboardRooms: builder.mutation<string, string>({
       query: (sdkToken) => ({
         url: `/whiteboard/rooms/${sdkToken}`,
+        method: "GET",
+      }),
+    }),
+
+    //   ===== TOKENS =====
+    fetchRTCToken: builder.mutation<string, { channelName: string; uid: UID }>({
+      query: ({ channelName, uid }) => ({
+        url: `/rtc/${channelName}/publisher/userAccount/${uid}/?expiry=${TOKEN_EXPIRY_TIME}`,
+        method: "GET",
+      }),
+    }),
+    fetchRTMToken: builder.mutation<string, string>({
+      query: (uid) => ({
+        url: `/rtm/${uid}/?expiry=${TOKEN_EXPIRY_TIME}`,
+        method: "GET",
+      }),
+    }),
+    fetchChatToken: builder.mutation<string, string>({
+      query: (uid) => ({
+        url: `/chat/${uid}/${TOKEN_EXPIRY_TIME}`,
+        method: "GET",
+      }),
+    }),
+    fetchWhiteboardSdkToken: builder.mutation<{ token: string }, void>({
+      query: () => ({
+        url: "/whiteboard/sdk-token",
+        method: "GET",
+      }),
+    }),
+    fetchWhiteboardRoomToken: builder.mutation<{ token: string }, string>({
+      query: (roomId) => ({
+        url: `/whiteboard/room-token/${roomId}`,
         method: "GET",
       }),
     }),
@@ -271,6 +315,7 @@ export const {
   useGetChannelByIdQuery,
   useFetchChannelByIdMutation,
   // CONTACTS
+  useGetContactRelationQuery,
   useFetchContactRelationMutation,
   useGetContactByIdQuery,
   useRemoveContactMutation,
@@ -278,4 +323,10 @@ export const {
   useCreateWhiteboardRoomMutation,
   useDisableWhiteboardRoomMutation,
   useGetWhiteboardRoomsMutation,
+  // TOKENS
+  useFetchRTCTokenMutation,
+  useFetchRTMTokenMutation,
+  useFetchChatTokenMutation,
+  useFetchWhiteboardSdkTokenMutation,
+  useFetchWhiteboardRoomTokenMutation,
 } = mainApi;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { RtmChannel, RtmClient } from "agora-rtm-react";
+import { useAlert } from "react-alert";
 
 import useAppSelector from "./useAppSelector";
 
@@ -11,34 +12,36 @@ const useJoinRTMChannel = (RTMClient: RtmClient, RTMChannel?: RtmChannel) => {
     (state) => state.rtm.isRTMClientInitialized,
   );
   const isLoadingRef = useRef(false);
+  const alert = useAlert();
 
   useEffect(() => {
-    if (!RTMChannel || !isRTMClientInitialized) {
-      console.warn(
-        "RTMChannel is absent or RTM Client is not initialized. Cannot join channel.",
-      );
+    if (
+      !RTMChannel ||
+      !isRTMClientInitialized ||
+      isJoined ||
+      isLoadingRef.current
+    )
       return;
-    }
 
-    if (!isJoined && !isLoadingRef.current)
-      (async () => {
-        isLoadingRef.current = true;
+    (async () => {
+      isLoadingRef.current = true;
 
-        try {
-          await RTMClient.addOrUpdateLocalUserAttributes({
-            username: username ?? "unknown",
-            isCameraMuted: "false",
-            isMicrophoneMuted: "false",
-          });
-          await RTMChannel.join();
-          setIsJoined(true);
-        } catch (err) {
-          console.log("RTM Channel joining failed:", err);
-          setIsJoined(false);
-        } finally {
-          isLoadingRef.current = false;
-        }
-      })();
+      try {
+        await RTMClient.addOrUpdateLocalUserAttributes({
+          username: username ?? "unknown",
+          isCameraMuted: "true",
+          isMicrophoneMuted: "true",
+        });
+        await RTMChannel.join();
+        setIsJoined(true);
+      } catch (err) {
+        alert.error("Could not join RTM channel");
+        console.error("RTM channel joining failed:", err);
+        setIsJoined(false);
+      } finally {
+        isLoadingRef.current = false;
+      }
+    })();
 
     return () => {
       if (isJoined) {
@@ -47,7 +50,8 @@ const useJoinRTMChannel = (RTMClient: RtmClient, RTMChannel?: RtmChannel) => {
         );
       }
     };
-  }, [RTMClient, RTMChannel, isJoined, isRTMClientInitialized, username]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [RTMClient, RTMChannel, isRTMClientInitialized, username]);
 
   return isJoined;
 };

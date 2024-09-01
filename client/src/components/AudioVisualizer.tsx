@@ -4,6 +4,7 @@ import {
   AudioVisualizer as ReactAudioVisualizer,
   LiveAudioVisualizer as ReactLiveAudioVisualizer,
 } from "react-audio-visualize";
+import _ from "lodash";
 
 interface AudioVisualizerProps {
   blob?: Blob;
@@ -22,13 +23,13 @@ const AudioVisualizer = ({
   const visualizerWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleResize = () => {
+    const handleResize = _.debounce(() => {
       if (visualizerWrapperRef.current) {
         const { width, height } =
           visualizerWrapperRef.current.getBoundingClientRect();
         setVisualizerSize({ width, height });
       }
-    };
+    }, 200);
 
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -42,23 +43,25 @@ const AudioVisualizer = ({
 
   return (
     <div ref={visualizerWrapperRef} className="h-full w-full">
-      {isLive ? (
-        <ReactLiveAudioVisualizer
-          mediaRecorder={mediaRecorder}
-          width={visualizerSize.width}
-          height={visualizerSize.height}
-          barColor="#86C232"
-        />
-      ) : (
-        <ReactAudioVisualizer
-          blob={blob}
-          currentTime={currentTime}
-          width={visualizerSize.width}
-          height={visualizerSize.height}
-          barColor="#339933"
-          barPlayedColor="#86C232"
-        />
-      )}
+      {Boolean(visualizerSize.width) &&
+        Boolean(visualizerSize.height) &&
+        (isLive ? (
+          <ReactLiveAudioVisualizer
+            mediaRecorder={mediaRecorder}
+            width={visualizerSize.width}
+            height={visualizerSize.height}
+            barColor="#86C232"
+          />
+        ) : (
+          <ReactAudioVisualizer
+            blob={blob}
+            currentTime={currentTime}
+            width={visualizerSize.width}
+            height={visualizerSize.height}
+            barColor="#339933"
+            barPlayedColor="#86C232"
+          />
+        ))}
     </div>
   );
 };

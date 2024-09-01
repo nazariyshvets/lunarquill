@@ -1,13 +1,14 @@
 import { useEffect, useCallback } from "react";
 
-import { Outlet, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { RtmMessage } from "agora-rtm-react";
 import { useAlert } from "react-alert";
 
-import useRTMClient from "../hooks/useRTMClient";
-import useAppDispatch from "../hooks/useAppDispatch";
-import useAppSelector from "../hooks/useAppSelector";
-import useAuth from "../hooks/useAuth";
+import useRTMClient from "./useRTMClient";
+import useAppDispatch from "./useAppDispatch";
+import useAppSelector from "./useAppSelector";
+import useAuth from "./useAuth";
+import useChatConnection from "./useChatConnection";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import {
   mainApi,
@@ -17,14 +18,16 @@ import {
 import { QUERY_TAG_TYPES } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
+import { ChatTypeEnum } from "../types/ChatType";
 
-const PeerMessageManager = () => {
+const usePeerMessageManager = () => {
   const { userId } = useAuth();
 
   const [fetchUser] = useFetchUserByIdMutation();
   const [fetchContactRelation] = useFetchContactRelationMutation();
 
   const RTMClient = useRTMClient();
+  const chatConnection = useChatConnection();
   const dispatch = useAppDispatch();
   const callTimeout = useAppSelector((state) => state.rtm.callTimeout);
   const navigate = useNavigate();
@@ -35,7 +38,8 @@ const PeerMessageManager = () => {
       clearTimeout(callTimeout);
       dispatch(setCallTimeout(null));
     }
-  }, [callTimeout, dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callTimeout]);
 
   useEffect(() => {
     const messageHandler = async (message: RtmMessage, peerId: string) => {
@@ -52,7 +56,7 @@ const PeerMessageManager = () => {
                 }),
               );
             } catch (err) {
-              console.log(err);
+              console.error("Error fetching peer user data:", err);
             }
             break;
           }
@@ -72,7 +76,7 @@ const PeerMessageManager = () => {
               clearCallTimeout();
               navigate(`/contacts/${contact._id}/call`);
             } catch (err) {
-              console.log(err);
+              console.error("Error fetching contact relation data:", err);
             }
             break;
           case PeerMessage.CallRecalled:
@@ -115,6 +119,11 @@ const PeerMessageManager = () => {
             );
             break;
           case PeerMessage.ContactRemoved:
+            chatConnection.deleteConversation({
+              channel: peerId,
+              chatType: ChatTypeEnum.SingleChat,
+              deleteRoam: true,
+            });
             navigate("/profile");
             dispatch(
               mainApi.util?.invalidateTags([QUERY_TAG_TYPES.USER_CONTACTS]),
@@ -128,18 +137,8 @@ const PeerMessageManager = () => {
     return () => {
       RTMClient.off("MessageFromPeer", messageHandler);
     };
-  }, [
-    RTMClient,
-    dispatch,
-    fetchContactRelation,
-    fetchUser,
-    navigate,
-    userId,
-    alert,
-    clearCallTimeout,
-  ]);
-
-  return <Outlet />;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [RTMClient, userId, clearCallTimeout]);
 };
 
-export default PeerMessageManager;
+export default usePeerMessageManager;

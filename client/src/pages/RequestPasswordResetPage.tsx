@@ -28,35 +28,31 @@ const RequestPasswordResetPage = () => {
   } = useForm<FormValues>();
   const alert = useAlert();
 
-  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+  const onSubmit: SubmitHandler<FormValues> = async ({ email }) => {
     if (countdown > 0 || isLoading) return;
-    if (countdown === 0) setCountdown(60);
 
     try {
-      data.email = data.email.toLowerCase();
-      await requestResetPassword(data).unwrap();
-      alert.success("Email with a reset password link is sent");
+      email = email.toLowerCase();
+      await requestResetPassword({ email }).unwrap();
+      alert.success("Email with a password reset link is sent");
+      setCountdown(60);
     } catch (err) {
-      console.log(err);
+      console.error("Error requesting password reset link:", err);
 
       if (isFetchBaseQueryError(err)) {
         alert.error(err.data as string);
       } else if (isErrorWithMessage(err)) {
         alert.error(err.message);
       }
-
-      setCountdown(0);
     }
   };
 
   useEffect(() => {
-    // Update the countdown every second
-    const intervalId = setInterval(() => {
-      setCountdown(countdown > 0 ? countdown - 1 : 0);
-    }, 1000);
-
-    return () => clearInterval(intervalId);
+    if (countdown > 0)
+      window.setTimeout(() => setCountdown(countdown - 1), 1000);
   }, [countdown]);
+
+  const isInputDisabled = countdown > 0 || isLoading;
 
   return (
     <GuestPage title="request password reset">
@@ -72,7 +68,7 @@ const RequestPasswordResetPage = () => {
           type="text"
           errors={errors["email"]}
           placeholder="Email"
-          disabled={countdown > 0 || isLoading}
+          disabled={isInputDisabled}
           required={true}
           minLength={3}
           maxLength={254}
@@ -80,12 +76,8 @@ const RequestPasswordResetPage = () => {
           autoComplete="on"
           icon={<FaEnvelope />}
         />
-        <Button
-          type="submit"
-          disabled={countdown > 0 || isLoading}
-          className="mt-3"
-        >
-          {countdown > 0 ? `SEND (${countdown}s)` : "SEND"}
+        <Button type="submit" disabled={isInputDisabled} className="mt-3">
+          SEND {countdown > 0 && `(${countdown}s)`}
         </Button>
         <div className="text-sm text-lightgrey sm:text-base">
           Back to{" "}

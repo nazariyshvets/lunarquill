@@ -15,7 +15,10 @@ import {
   setIsWhiteboardDisplayed,
 } from "../redux/rtcSlice";
 
-type ActiveConfigurator = "virtual-background" | "noise-suppression";
+enum ActiveConfigurator {
+  VirtualBackground = "virtualBackground",
+  NoiseSuppression = "noiseSuppression",
+}
 
 interface OptionRowProps {
   title: string;
@@ -43,14 +46,16 @@ const RTCControlPanelOptions = () => {
       isEnabled: isVirtualBgEnabled ?? false,
       onSwitchChange: () =>
         dispatch(setIsVirtualBgEnabled(!isVirtualBgEnabled)),
-      onConfigure: () => setActiveConfigurator("virtual-background"),
+      onConfigure: () =>
+        setActiveConfigurator(ActiveConfigurator.VirtualBackground),
     },
     {
       title: "Noise suppression",
       isEnabled: isNoiseSuppressionEnabled ?? false,
       onSwitchChange: () =>
         dispatch(setIsNoiseSuppressionEnabled(!isNoiseSuppressionEnabled)),
-      onConfigure: () => setActiveConfigurator("noise-suppression"),
+      onConfigure: () =>
+        setActiveConfigurator(ActiveConfigurator.NoiseSuppression),
     },
     {
       title: "Chat",
@@ -71,9 +76,9 @@ const RTCControlPanelOptions = () => {
         <OptionRow key={i} {...config} />
       ))}
 
-      {activeConfigurator === "virtual-background" ? (
+      {activeConfigurator === ActiveConfigurator.VirtualBackground ? (
         <VirtualBackgroundConfigurator onClose={resetActiveConfigurator} />
-      ) : activeConfigurator === "noise-suppression" ? (
+      ) : activeConfigurator === ActiveConfigurator.NoiseSuppression ? (
         <NoiseSuppressionConfigurator onClose={resetActiveConfigurator} />
       ) : (
         <></>

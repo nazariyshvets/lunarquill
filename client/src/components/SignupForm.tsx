@@ -17,7 +17,7 @@ import {
   NO_CONSECUTIVE_HYPHEN_UNDERSCORE_PATTERN,
   EMAIL_PATTERN,
 } from "../constants/constants";
-import type SignupFormValues from "../types/SignupFormValues";
+import type { SignupFormValues } from "../types/Auth";
 
 const SignupForm = () => {
   const { loading, success } = useAuth();
@@ -45,7 +45,8 @@ const SignupForm = () => {
 
   useEffect(() => {
     if (success) alert.info("Verification email is sent");
-  }, [alert, success]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [success]);
 
   const usernameValidation = {
     username: (value: string) =>

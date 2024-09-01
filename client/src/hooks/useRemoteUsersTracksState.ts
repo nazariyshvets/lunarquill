@@ -78,13 +78,15 @@ const useRemoteUsersTracksState = (
 
   useEffect(() => {
     // remove local user
-    delete usersAttributes[userId ?? ""];
+    if (userId) delete usersAttributes[userId];
+
     const tracksState = Object.entries(usersAttributes).reduce(
       (acc, [uid, attributes]) => {
         acc[uid] = {
-          camera: { muted: attributes?.isCameraMuted || false },
-          microphone: { muted: attributes?.isMicrophoneMuted || false },
+          camera: { muted: attributes?.isCameraMuted ?? true },
+          microphone: { muted: attributes?.isMicrophoneMuted ?? true },
         };
+
         return acc;
       },
       {} as RemoteUsersTracksState,

@@ -1,3 +1,6 @@
+import type { User } from "./User";
+import type { Channel } from "./Channel";
+
 type RequestType = "contact" | "invite" | "join";
 
 enum RequestTypeEnum {
@@ -6,13 +9,24 @@ enum RequestTypeEnum {
   Join = "join",
 }
 
-interface Request {
+interface RequestDto {
   from: string;
   to: string | null;
   type: RequestType;
   channel?: string;
 }
 
-export default Request;
+interface Request extends RequestDto {
+  _id: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface PopulatedRequest extends Omit<Request, "from" | "to" | "channel"> {
+  from: User;
+  to: User;
+  channel: Channel;
+}
+
 export { RequestTypeEnum };
-export type { RequestType };
+export type { RequestDto, Request, RequestType, PopulatedRequest };
