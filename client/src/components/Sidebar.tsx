@@ -5,13 +5,13 @@ import { BiX, BiUserPlus, BiGroup, BiBell } from "react-icons/bi";
 import SimpleButton from "./SimpleButton";
 import Contact from "./Contact";
 import NoDataBox from "./NoDataBox";
-import type { UserWithoutPassword } from "../types/User";
+import type { PopulatedUserWithoutPassword } from "../types/User";
 import type { Channel } from "../types/Channel";
 
 interface SidebarProps {
-  user?: UserWithoutPassword;
+  user?: PopulatedUserWithoutPassword;
   inboxRequestsCount: number;
-  contacts: UserWithoutPassword[];
+  contacts: PopulatedUserWithoutPassword[];
   channels: Channel[];
   onClose?: () => void;
 }
@@ -33,6 +33,7 @@ const Sidebar = ({
             <Contact
               name={user?.username ?? "You"}
               isOnline={user?.isOnline ?? false}
+              avatarId={user?.selectedAvatar?._id}
               size="lg"
             />
           </Link>
@@ -83,6 +84,7 @@ const Sidebar = ({
                     key={contact._id}
                     name={contact.username}
                     isOnline={contact.isOnline}
+                    avatarId={contact.selectedAvatar?._id}
                     onClick={() => {
                       navigate(`/contacts/${contact._id}/chat`);
                       onClose?.();

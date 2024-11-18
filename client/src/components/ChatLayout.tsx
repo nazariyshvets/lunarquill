@@ -33,6 +33,7 @@ import PeerMessage from "../types/PeerMessage";
 interface ChatLayoutProps {
   contactName: string;
   isContactOnline: boolean;
+  contactAvatarId?: string;
   chatType: ChatTypeEnum;
   chatTargetId: string | null;
   channelId?: string;
@@ -53,6 +54,7 @@ interface ModalState {
 const ChatLayout = ({
   contactName,
   isContactOnline,
+  contactAvatarId,
   chatType,
   chatTargetId,
   channelId,
@@ -245,7 +247,12 @@ const ChatLayout = ({
     chatTargetId && (
       <div className="flex h-full w-full flex-col">
         <div className="flex items-center justify-between border-b border-white p-2">
-          <Contact name={contactName} isOnline={isContactOnline} size="sm" />
+          <Contact
+            name={contactName}
+            isOnline={isContactOnline}
+            avatarId={contactAvatarId}
+            size="sm"
+          />
 
           <div className="flex items-center gap-4 text-xl">
             <SimpleButton

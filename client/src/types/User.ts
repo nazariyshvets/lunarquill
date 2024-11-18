@@ -1,17 +1,26 @@
 import { UID } from "agora-rtc-react";
 import { JwtPayload } from "jwt-decode";
 
+import type { File as CustomFile } from "./File";
+
 interface UserWithoutPassword {
   _id: string;
   username: string;
   email: string;
   active: boolean;
   isOnline: boolean;
+  selectedAvatar?: string;
+  avatars?: string[];
   createdAt: number;
   updatedAt: number;
 }
 
-interface User extends UserWithoutPassword {
+interface PopulatedUserWithoutPassword
+  extends Omit<UserWithoutPassword, "selectedAvatar"> {
+  selectedAvatar: CustomFile;
+}
+
+interface User extends PopulatedUserWithoutPassword {
   password: string;
 }
 
@@ -28,15 +37,26 @@ interface DecodedUserToken extends JwtPayload {
 
 interface PopulatedContact {
   _id: string;
-  user1: UserWithoutPassword;
-  user2: UserWithoutPassword;
+  user1: PopulatedUserWithoutPassword;
+  user2: PopulatedUserWithoutPassword;
   whiteboardRoomId: string;
+}
+
+interface ProfileAvatarsUpdateRequestPayload {
+  removedAvatarIds: string[];
+  newAvatars: {
+    id: string;
+    src: File;
+  }[];
+  selectedAvatarId?: string;
 }
 
 export type {
   User,
   UserWithoutPassword,
+  PopulatedUserWithoutPassword,
   UserVolume,
   DecodedUserToken,
   PopulatedContact,
+  ProfileAvatarsUpdateRequestPayload,
 };

@@ -8,6 +8,7 @@ interface RequestItemProps {
   type: RequestType;
   context: "inbox" | "outbox";
   username: string;
+  userAvatarId?: string;
   channelName?: string;
   onDecline?: () => void;
   onAccept?: () => void;
@@ -18,6 +19,7 @@ const RequestItem = ({
   type,
   context,
   username,
+  userAvatarId,
   channelName = "unknown",
   onDecline,
   onAccept,
@@ -46,7 +48,7 @@ const RequestItem = ({
     <div className="flex flex-col gap-2 rounded bg-black p-2">
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="flex items-center gap-1">
-          <Contact name={username} isOnline={false} />
+          <Contact name={username} isOnline={false} avatarId={userAvatarId} />
           <span className="text-sm text-lightgrey">{renderMessage()}</span>
         </div>
 

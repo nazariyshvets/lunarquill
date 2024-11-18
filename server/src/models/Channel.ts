@@ -1,5 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 
+import User from "./User";
+
 interface IChannel extends Document {
   name: string;
   admin: Types.ObjectId;
@@ -16,7 +18,7 @@ const ChannelSchema = new Schema<IChannel>(
     },
     admin: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: User,
       required: true,
     },
     isPrivate: {

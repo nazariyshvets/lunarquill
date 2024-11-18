@@ -238,6 +238,7 @@ const RequestsPage = () => {
                   type={request.type}
                   context="inbox"
                   username={request.from.username}
+                  userAvatarId={request.from.selectedAvatar}
                   channelName={request.channel?.name}
                   onDecline={() =>
                     handleRequestItemBtnClick(RequestAction.Decline, request)
@@ -264,6 +265,11 @@ const RequestsPage = () => {
                     request.type === RequestTypeEnum.Join
                       ? request.channel?.name ?? "Unknown"
                       : request.to.username
+                  }
+                  userAvatarId={
+                    request.type === RequestTypeEnum.Join
+                      ? undefined
+                      : request.to.selectedAvatar
                   }
                   channelName={request.channel?.name}
                   onRecall={() =>

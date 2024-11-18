@@ -1,14 +1,19 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
-interface IUser extends Document {
+import File from "./File";
+
+interface IUserWithoutPassword extends Document {
   username: string;
   email: string;
-  password: string;
   active: boolean;
   isOnline: boolean;
+  selectedAvatar?: Types.ObjectId;
+  avatars: Types.ObjectId[];
 }
 
-interface IUserWithoutPassword extends Omit<IUser, "password"> {}
+interface IUser extends IUserWithoutPassword {
+  password: string;
+}
 
 const UserSchema = new Schema<IUser>(
   {
@@ -32,6 +37,16 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    selectedAvatar: {
+      type: Schema.Types.ObjectId,
+      ref: File,
+    },
+    avatars: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: File,
+      },
+    ],
   },
   {
     timestamps: true,

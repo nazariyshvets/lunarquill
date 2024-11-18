@@ -8,8 +8,14 @@ import {
   TOKEN_EXPIRY_TIME,
 } from "../constants/constants";
 import { RequestDto, PopulatedRequest } from "../types/Request";
-import { User, UserWithoutPassword, PopulatedContact } from "../types/User";
+import {
+  UserWithoutPassword,
+  PopulatedUserWithoutPassword,
+  PopulatedContact,
+  ProfileAvatarsUpdateRequestPayload,
+} from "../types/User";
 import { Channel } from "../types/Channel";
+import { File as CustomFile } from "../types/File";
 
 export const mainApi = createApi({
   reducerPath: "mainApi",
@@ -56,26 +62,28 @@ export const mainApi = createApi({
 
     // ===== USERS =====
 
-    getUserContacts: builder.query<UserWithoutPassword[], string>({
+    getUserContacts: builder.query<PopulatedUserWithoutPassword[], string>({
       query: (userId) => `/users/${userId}/contacts`,
       providesTags: [QUERY_TAG_TYPES.USER_CONTACTS],
     }),
-    fetchUserContacts: builder.mutation<UserWithoutPassword[], string>({
-      query: (userId) => ({
-        url: `/users/${userId}/contacts`,
-        method: "GET",
-      }),
-    }),
+    fetchUserContacts: builder.mutation<PopulatedUserWithoutPassword[], string>(
+      {
+        query: (userId) => ({
+          url: `/users/${userId}/contacts`,
+          method: "GET",
+        }),
+      },
+    ),
     getUserChannels: builder.query<Channel[], string>({
       query: (userId) => `/users/${userId}/channels`,
       providesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
-    getUserById: builder.query<UserWithoutPassword, string>({
+    getUserById: builder.query<PopulatedUserWithoutPassword, string>({
       query: (userId) => `/users/${userId}`,
       keepUnusedDataFor: 0,
       providesTags: [QUERY_TAG_TYPES.USER_DETAILS],
     }),
-    fetchUserById: builder.mutation<UserWithoutPassword, string>({
+    fetchUserById: builder.mutation<PopulatedUserWithoutPassword, string>({
       query: (userId) => ({
         url: `/users/${userId}`,
         method: "GET",
@@ -83,7 +91,7 @@ export const mainApi = createApi({
     }),
     updateUserById: builder.mutation<
       UserWithoutPassword,
-      { userId: string; updateData: Partial<User> }
+      { userId: string; updateData: Partial<UserWithoutPassword> }
     >({
       query: (data) => ({
         url: `/users/${data.userId}`,
@@ -232,6 +240,7 @@ export const mainApi = createApi({
     }),
 
     // ===== WHITEBOARD =====
+
     createWhiteboardRoom: builder.mutation<string, { sdkToken: string }>({
       query: (data) => ({
         url: "/whiteboard/rooms",
@@ -257,6 +266,7 @@ export const mainApi = createApi({
     }),
 
     //   ===== TOKENS =====
+
     fetchRTCToken: builder.mutation<string, { channelName: string; uid: UID }>({
       query: ({ channelName, uid }) => ({
         url: `/rtc/${channelName}/publisher/userAccount/${uid}/?expiry=${TOKEN_EXPIRY_TIME}`,
@@ -286,6 +296,76 @@ export const mainApi = createApi({
         url: `/whiteboard/room-token/${roomId}`,
         method: "GET",
       }),
+    }),
+
+    // ===== FILES =====
+
+    uploadFile: builder.mutation<CustomFile, File>({
+      query: (file) => {
+        const formData = new FormData();
+
+        formData.append("file", file);
+
+        return {
+          url: "/files",
+          method: "POST",
+          body: formData,
+        };
+      },
+    }),
+    downloadFile: builder.query<Blob, string>({
+      query: (fileId) => ({
+        url: `/files/${fileId}/download`,
+        method: "GET",
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
+    downloadFiles: builder.mutation<Blob, string[]>({
+      query: (fileIds) => ({
+        url: "/files/download",
+        method: "POST",
+        body: { fileIds },
+        responseHandler: (response) =>
+          response.ok ? response.blob() : response.json(),
+      }),
+    }),
+    removeFile: builder.mutation<void, string>({
+      query: (fileId) => ({
+        url: `/files/${fileId}`,
+        method: "DELETE",
+      }),
+    }),
+    updateUserAvatarsCollection: builder.mutation<
+      {
+        message: string;
+        avatars: string[];
+        selectedAvatar?: string;
+        frontendIdToObjectIdMap: Record<string, string>;
+      },
+      { userId: string; updateData: ProfileAvatarsUpdateRequestPayload }
+    >({
+      query: ({ userId, updateData }) => {
+        const formData = new FormData();
+
+        updateData.removedAvatarIds.forEach((id) => {
+          formData.append("removedAvatarIds[]", id);
+        });
+        updateData.newAvatars.forEach((avatar) => {
+          formData.append("files", avatar.src);
+          formData.append("newAvatarIds[]", avatar.id);
+        });
+
+        if (updateData.selectedAvatarId) {
+          formData.append("selectedAvatarId", updateData.selectedAvatarId);
+        }
+
+        return {
+          url: `/users/${userId}/avatars-collection`,
+          method: "PUT",
+          body: formData,
+        };
+      },
+      invalidatesTags: [QUERY_TAG_TYPES.USER_DETAILS],
     }),
   }),
 });
@@ -329,4 +409,10 @@ export const {
   useFetchChatTokenMutation,
   useFetchWhiteboardSdkTokenMutation,
   useFetchWhiteboardRoomTokenMutation,
+  // FILES
+  useUploadFileMutation,
+  useDownloadFileQuery,
+  useDownloadFilesMutation,
+  useRemoveFileMutation,
+  useUpdateUserAvatarsCollectionMutation,
 } = mainApi;
