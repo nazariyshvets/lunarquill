@@ -11,6 +11,7 @@ interface Message {
   url?: string;
   senderId?: string;
   senderUsername?: string;
+  senderAvatarId?: string;
   recipientId: string;
   time: number;
   reactions?: AgoraChat.Reaction[];

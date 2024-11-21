@@ -47,7 +47,7 @@ const downloadFileController = async (req: Request, res: Response) => {
     );
   });
   downloadStream.on("error", () => {
-    throw new Error("File not found");
+    res.end();
   });
   downloadStream.pipe(res).on("finish", () => {
     res.end();

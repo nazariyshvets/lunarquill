@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react";
-
-import { skipToken } from "@reduxjs/toolkit/query";
 import { BiEdit } from "react-icons/bi";
 
 import SimpleButton from "./SimpleButton";
-import { useDownloadFileQuery } from "../services/mainService";
+import useAvatarSource from "../hooks/useAvatarSource";
 import type Size from "../types/Size";
 
 interface ContactProps {
@@ -12,6 +9,7 @@ interface ContactProps {
   isOnline: boolean;
   avatarId?: string;
   size?: Size;
+  displayName?: boolean;
   layout?: "horizontal" | "vertical";
   withOverlay?: boolean;
   onClick?: () => void;
@@ -30,35 +28,13 @@ const Contact = ({
   isOnline,
   avatarId,
   size = "md",
+  displayName = true,
   layout = "horizontal",
   withOverlay = false,
   onClick,
   onEditAvatarBtnClick,
 }: ContactProps) => {
-  const [avatarSrc, setAvatarSrc] = useState<string>();
-
-  const { data: avatarBlob } = useDownloadFileQuery(avatarId ?? skipToken);
-
-  useEffect(() => {
-    if (avatarBlob) {
-      const reader = new FileReader();
-
-      reader.onloadend = () => {
-        const base64Data = reader.result as string;
-        const mimeType =
-          base64Data.match(/^data:(.*?);base64/)?.[1] || "image/jpeg";
-
-        setAvatarSrc(`data:${mimeType};base64,${base64Data.split(",")[1]}`);
-      };
-      reader.readAsDataURL(avatarBlob);
-    }
-  }, [avatarBlob]);
-
-  useEffect(() => {
-    if (!avatarId) {
-      setAvatarSrc(undefined);
-    }
-  }, [avatarId]);
+  const avatarSrc = useAvatarSource(avatarId);
 
   return (
     <div
@@ -90,9 +66,12 @@ const Contact = ({
           <span className="absolute bottom-0 right-0 h-1/4 w-1/4 rounded-full bg-primary" />
         )}
       </div>
-      <span className="max-w-full truncate text-sm font-medium text-white">
-        {name}
-      </span>
+
+      {displayName && (
+        <span className="max-w-full truncate text-sm font-medium text-white">
+          {name}
+        </span>
+      )}
     </div>
   );
 };

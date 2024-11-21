@@ -5,6 +5,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
 import { BiPhone, BiUserPlus, BiUserX, BiLogOut, BiCopy } from "react-icons/bi";
 import { Tooltip } from "react-tooltip";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 import Chat from "../components/Chat";
 import Contact from "../components/Contact";
@@ -24,6 +25,7 @@ import {
   useFetchContactRelationMutation,
   useRemoveContactMutation,
   useFetchWhiteboardSdkTokenMutation,
+  useGetUserByIdQuery,
 } from "../services/mainService";
 import getErrorMessage from "../utils/getErrorMessage";
 import { ChatTypeEnum } from "../types/ChatType";
@@ -75,6 +77,7 @@ const ChatLayout = ({
   );
   const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
+  const { data: localUser } = useGetUserByIdQuery(userId ?? skipToken);
   const [disableWhiteboardRoom] = useDisableWhiteboardRoomMutation();
   const [fetchContactRelation] = useFetchContactRelationMutation();
   const [createRequest] = useCreateRequestMutation();
@@ -301,7 +304,11 @@ const ChatLayout = ({
           </div>
         </div>
 
-        <Chat chatType={chatType} targetId={chatTargetId} />
+        <Chat
+          chatType={chatType}
+          targetId={chatTargetId}
+          localUser={localUser}
+        />
 
         {modalState.isOpen && modalAction && (
           <Modal

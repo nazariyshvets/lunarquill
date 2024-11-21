@@ -41,10 +41,11 @@ import {
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
-import type { UserVolume } from "../types/User";
+import type { PopulatedUserWithoutPassword, UserVolume } from "../types/User";
 import { type ChatType, ChatTypeEnum } from "../types/ChatType";
 
 interface RTCManagerProps {
+  localUser: PopulatedUserWithoutPassword | undefined;
   channelId: string;
   RTMChannel: RtmChannel;
   chatType: ChatType;
@@ -54,6 +55,7 @@ interface RTCManagerProps {
 
 // RTCManager component responsible for handling RTC-related logic and rendering UI
 const RTCManager = ({
+  localUser,
   channelId,
   RTMChannel,
   chatType,
@@ -212,7 +214,12 @@ const RTCManager = ({
         <VideoTracksContainer>
           {(screenCasterId || localUserId !== mostActiveUserId) && (
             <VideoTrack isActive={!!localUserId && isUserActive(localUserId)}>
-              <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
+              <LocalVideoTrack
+                avatarId={localUser?.selectedAvatar?._id}
+                avatarSize="lg"
+                track={localCameraTrack}
+                play={!isCameraMuted}
+              />
             </VideoTrack>
           )}
 
@@ -226,6 +233,8 @@ const RTCManager = ({
               <VideoTrack key={user.uid} isActive={isUserActive(user.uid)}>
                 <RemoteUser
                   username={remoteUsersAttrs[user.uid]?.username}
+                  avatarId={remoteUsersAttrs[user.uid]?.avatarId}
+                  avatarSize="lg"
                   user={user}
                   playVideo={isMediaEnabled(user.uid, "camera")}
                   playAudio={isMediaEnabled(user.uid, "microphone")}
@@ -244,12 +253,19 @@ const RTCManager = ({
           ) : mostActiveUserId && isUserRemote(mostActiveUserId) ? (
             <RemoteUser
               username={remoteUsersAttrs[mostActiveUserId]?.username}
+              avatarId={remoteUsersAttrs[mostActiveUserId]?.avatarId}
+              avatarSize="xl"
               user={getRemoteUser(mostActiveUserId)}
               playVideo={isMediaEnabled(mostActiveUserId, "camera")}
               playAudio={isMediaEnabled(mostActiveUserId, "microphone")}
             />
           ) : mostActiveUserId && !isUserRemote(mostActiveUserId) ? (
-            <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
+            <LocalVideoTrack
+              avatarId={localUser?.selectedAvatar?._id}
+              avatarSize="xl"
+              track={localCameraTrack}
+              play={!isCameraMuted}
+            />
           ) : (
             <></>
           )}
@@ -261,7 +277,11 @@ const RTCManager = ({
           isChatDisplayed && !isWhiteboardDisplayed ? "" : "hidden"
         }`}
       >
-        <Chat chatType={chatType} targetId={chatTargetId} />
+        <Chat
+          chatType={chatType}
+          targetId={chatTargetId}
+          localUser={localUser}
+        />
       </div>
 
       {whiteboardRoomCredentials && (
@@ -286,7 +306,12 @@ const RTCManager = ({
             size={screenCasterId ? "fixed" : "auto"}
             isActive={!!localUserId && isUserActive(localUserId)}
           >
-            <LocalVideoTrack track={localCameraTrack} play={!isCameraMuted} />
+            <LocalVideoTrack
+              avatarId={localUser?.selectedAvatar?._id}
+              avatarSize={screenCasterId ? "lg" : "xl"}
+              track={localCameraTrack}
+              play={!isCameraMuted}
+            />
           </VideoTrack>
 
           {remoteUsers
@@ -299,6 +324,8 @@ const RTCManager = ({
               >
                 <RemoteUser
                   username={remoteUsersAttrs[user.uid]?.username}
+                  avatarId={remoteUsersAttrs[user.uid]?.avatarId}
+                  avatarSize={screenCasterId ? "lg" : "xl"}
                   user={user}
                   playVideo={isMediaEnabled(user.uid, "camera")}
                   playAudio={isMediaEnabled(user.uid, "microphone")}
@@ -325,7 +352,11 @@ const RTCManager = ({
             : "hidden"
         }`}
       >
-        <Chat chatType={chatType} targetId={chatTargetId} />
+        <Chat
+          chatType={chatType}
+          targetId={chatTargetId}
+          localUser={localUser}
+        />
       </div>
 
       {whiteboardRoomCredentials && (
