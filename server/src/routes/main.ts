@@ -9,6 +9,7 @@ import request from "./request";
 import channel from "./channel";
 import user from "./user";
 import contact from "./contact";
+import file from "./file";
 import authenticateJWT from "../middleware/authenticateJWT";
 
 const router = Router();
@@ -22,5 +23,6 @@ router.use("/requests", authenticateJWT, request);
 router.use("/channels", authenticateJWT, channel);
 router.use("/users", authenticateJWT, user);
 router.use("/contacts", authenticateJWT, contact);
+router.use("/files", authenticateJWT, file);
 
 export default router;

@@ -1,4 +1,4 @@
-import type { User } from "./User";
+import type { UserWithoutPassword } from "./User";
 import type { Channel } from "./Channel";
 
 type RequestType = "contact" | "invite" | "join";
@@ -23,8 +23,8 @@ interface Request extends RequestDto {
 }
 
 interface PopulatedRequest extends Omit<Request, "from" | "to" | "channel"> {
-  from: User;
-  to: User;
+  from: UserWithoutPassword;
+  to: UserWithoutPassword;
   channel: Channel;
 }
 

@@ -31,7 +31,7 @@ const Modal = ({
     <BaseModal>
       <div
         ref={setContainer}
-        className="flex max-h-full w-full flex-col gap-8 rounded bg-black p-4 shadow-lg shadow-primary-600 sm:w-1/2 xl:w-1/3 xl:p-6"
+        className="flex max-h-screen w-full flex-col gap-8 rounded bg-black p-4 shadow-lg shadow-primary-600 sm:w-1/2 xl:w-1/3 xl:p-6"
       >
         <h1 className="flex-shrink-0 truncate text-xl font-bold text-lightgrey sm:text-2xl">
           {title}

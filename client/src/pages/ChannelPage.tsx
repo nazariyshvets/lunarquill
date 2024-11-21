@@ -17,6 +17,7 @@ import useJoinRTMChannel from "../hooks/useJoinRTMChannel";
 import useAuth from "../hooks/useAuth";
 import useAppSelector from "../hooks/useAppSelector";
 import {
+  useGetUserByIdQuery,
   useGetChannelByIdQuery,
   useGetContactByIdQuery,
 } from "../services/mainService";
@@ -56,12 +57,17 @@ const ChannelPageComponent = ({
   const isRTMClientInitialized = useAppSelector(
     (state) => state.rtm.isRTMClientInitialized,
   );
-  const isRTMChannelJoined = useJoinRTMChannel(RTMClient, RTMChannel);
+  const { userId } = useAuth();
+  const { data: localUser } = useGetUserByIdQuery(userId ?? skipToken);
+  const isRTMChannelJoined = useJoinRTMChannel(
+    RTMClient,
+    RTMChannel,
+    localUser?.selectedAvatar?._id,
+  );
   const isChatInitialized = useAppSelector(
     (state) => state.chat.isChatInitialized,
   );
   const { isVirtualBgEnabled, isNoiseSuppressionEnabled } = useRTC();
-  const { userId } = useAuth();
   const { data: contact, isFetching: isContactFetching } =
     useGetContactByIdQuery(
       chatType === ChatTypeEnum.SingleChat ? channelId : skipToken,
@@ -87,6 +93,7 @@ const ChannelPageComponent = ({
     <AgoraRTCProvider client={RTCClient}>
       <AgoraRTCScreenShareProvider client={RTCScreenSharingClient}>
         <RTCManager
+          localUser={localUser}
           RTMChannel={RTMChannel}
           channelId={channelId}
           chatType={chatType}

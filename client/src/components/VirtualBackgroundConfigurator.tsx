@@ -1,18 +1,17 @@
-import React, { useState, useRef, useEffect, PropsWithChildren } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import { HexColorPicker } from "react-colorful";
 import { useAlert } from "react-alert";
-import { FileRejection, ErrorCode } from "react-dropzone";
 import { useIndexedDB } from "react-indexed-db-hook";
 import { nanoid } from "@reduxjs/toolkit";
-import { BiTrash } from "react-icons/bi";
 
 import Modal from "./Modal";
 import Select, { SelectOption } from "./Select";
+import SelectableItem from "./SelectableItem";
 import FileUploader from "./FileUploader";
+import NoDataBox from "./NoDataBox";
 import useRTC from "../hooks/useRTC";
 import useAppDispatch from "../hooks/useAppDispatch";
-import formatBytes from "../utils/formatBytes";
 import {
   setVirtualBgType,
   setVirtualBgBlurDegree,
@@ -21,8 +20,6 @@ import {
   setVirtualBgVideoId,
 } from "../redux/rtcSlice";
 import {
-  MAX_IMAGE_SIZE,
-  MAX_VIDEO_SIZE,
   IMAGES_IN_STORAGE_LIMIT,
   VIDEOS_IN_STORAGE_LIMIT,
 } from "../constants/constants";
@@ -38,12 +35,6 @@ interface MediaSourcePickerProps {
   type: "image" | "video";
   selectedFileId: string | null;
   setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
-}
-
-interface SelectableItemProps {
-  isSelected: boolean;
-  onSelect: () => void;
-  onRemove: () => void;
 }
 
 const virtualBgTypeOptions: SelectOption[] = [
@@ -192,15 +183,6 @@ const MediaSourcePicker = ({
   const dispatch = useAppDispatch();
 
   const handleUpload = async (sources: File[]) => {
-    const filesNumLimit =
-      type === "image" ? IMAGES_IN_STORAGE_LIMIT : VIDEOS_IN_STORAGE_LIMIT;
-
-    if (files.length >= filesNumLimit) {
-      alert.info(`You can have up to ${filesNumLimit} ${type}s`);
-      console.error(`A user can have up to ${filesNumLimit} ${type}s`);
-      return;
-    }
-
     const file = sources?.[0];
 
     if (file) {
@@ -213,22 +195,6 @@ const MediaSourcePicker = ({
         console.error("Error adding a new file to IndexedDB:", err);
       }
     }
-  };
-
-  const handleReject = (rejections: FileRejection[]) => {
-    rejections.forEach((rejection) =>
-      rejection.errors.forEach((error) =>
-        alert.info(
-          error.code === ErrorCode.FileTooSmall ||
-            error.code === ErrorCode.FileTooLarge
-            ? error.message.replace(/(\d+)\s*bytes/, (match) =>
-                formatBytes(parseInt(match, 10)),
-              )
-            : error.message,
-        ),
-      ),
-    );
-    console.error(rejections);
   };
 
   const handleRemoveFile = async (fileId: string) => {
@@ -297,6 +263,8 @@ const MediaSourcePicker = ({
       )}
     </SelectableItem>
   ));
+  const filesNumLimit =
+    type === "image" ? IMAGES_IN_STORAGE_LIMIT : VIDEOS_IN_STORAGE_LIMIT;
 
   return (
     <div className="flex w-full flex-col gap-1">
@@ -312,44 +280,15 @@ const MediaSourcePicker = ({
         </>
       )}
 
-      <FileUploader
-        type={type}
-        multiple={false}
-        maxSize={type === "image" ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE}
-        onDropAccepted={handleUpload}
-        onDropRejected={handleReject}
-      />
-    </div>
-  );
-};
-
-const SelectableItem = ({
-  isSelected,
-  children,
-  onSelect,
-  onRemove,
-}: PropsWithChildren<SelectableItemProps>) => {
-  const handleRemove = (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-  ) => {
-    event.stopPropagation();
-    onRemove();
-  };
-
-  return (
-    <div
-      className={`relative h-24 w-24 flex-shrink-0 cursor-pointer rounded sm:h-28 sm:w-28 ${
-        isSelected ? "outline outline-2 outline-offset-2 outline-primary" : ""
-      }`}
-      onClick={onSelect}
-    >
-      {children}
-      <button
-        className="absolute right-1 top-2 h-5 w-5 text-white transition-colors hover:text-primary sm:h-6 sm:w-6"
-        onClick={handleRemove}
-      >
-        <BiTrash className="h-full w-full" />
-      </button>
+      {files.length < filesNumLimit ? (
+        <FileUploader
+          type={type}
+          multiple={false}
+          onDropAccepted={handleUpload}
+        />
+      ) : (
+        <NoDataBox text={`You can have up to ${filesNumLimit} ${type}s`} />
+      )}
     </div>
   );
 };

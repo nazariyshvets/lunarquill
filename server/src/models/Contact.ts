@@ -1,6 +1,6 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-import type { IUserWithoutPassword } from "./User";
+import User, { IUserWithoutPassword } from "./User";
 
 interface IContact extends Document {
   user1: Types.ObjectId;
@@ -17,12 +17,12 @@ const ContactSchema = new Schema<IContact>(
   {
     user1: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: User,
       required: true,
     },
     user2: {
       type: Schema.Types.ObjectId,
-      ref: "User",
+      ref: User,
       required: true,
     },
     whiteboardRoomId: {

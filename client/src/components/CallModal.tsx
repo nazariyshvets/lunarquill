@@ -1,12 +1,14 @@
 import { BiPhone, BiPhoneOff } from "react-icons/bi";
 
+import Contact from "./Contact";
 import BaseModal from "./BaseModal";
 import RTCControlButton from "./RTCControlButton";
 import CallDirection from "../types/CallDirection";
+import { PopulatedUserWithoutPassword } from "../types/User";
 
 interface CallModalProps {
   callDirection: CallDirection;
-  contactName: string;
+  contact: PopulatedUserWithoutPassword;
   onDeclineBtnClick?: () => void;
   onAcceptBtnClick?: () => void;
   onRecallBtnClick?: () => void;
@@ -14,16 +16,20 @@ interface CallModalProps {
 
 const CallModal = ({
   callDirection,
-  contactName,
+  contact,
   onDeclineBtnClick,
   onAcceptBtnClick,
   onRecallBtnClick,
 }: CallModalProps) => (
   <BaseModal>
     <div className="flex max-h-full w-full flex-col items-center gap-8 rounded bg-black p-4 shadow-lg shadow-primary-600 sm:w-1/2 xl:w-1/3 xl:p-6">
-      <div className="flex h-32 w-32 cursor-default items-center justify-center rounded-full bg-primary text-5xl text-white">
-        {contactName.slice(0, 2).toUpperCase()}
-      </div>
+      <Contact
+        name={contact.username}
+        isOnline={false}
+        avatarId={contact.selectedAvatar?._id}
+        size="xl"
+        layout="vertical"
+      />
 
       {callDirection === CallDirection.Outgoing ? (
         <RTCControlButton onClick={onRecallBtnClick}>

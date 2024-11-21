@@ -19,8 +19,16 @@ const getContactRelation = async (userId1: string, userId2: string) => {
     user1: { $in: [userId1, userId2] },
     user2: { $in: [userId1, userId2] },
   })
-    .populate("user1", "-password")
-    .populate("user2", "-password");
+    .populate({
+      path: "user1",
+      select: "-password",
+      populate: "selectedAvatar",
+    })
+    .populate({
+      path: "user2",
+      select: "-password",
+      populate: "selectedAvatar",
+    });
 
   if (!contact)
     throw new Error("No contact relationship found between the two users");
@@ -33,8 +41,16 @@ const getContactById = async (contactId: string) => {
     throw new Error("Invalid contact id");
 
   const contact = await Contact.findById(contactId)
-    .populate("user1", "-password")
-    .populate("user2", "-password");
+    .populate({
+      path: "user1",
+      select: "-password",
+      populate: "selectedAvatar",
+    })
+    .populate({
+      path: "user2",
+      select: "-password",
+      populate: "selectedAvatar",
+    });
 
   if (!contact) throw new Error("Contact not found");
 
@@ -53,7 +69,6 @@ const removeContactRelation = async (user1Id: string, user2Id: string) => {
   )
     throw new Error("Invalid user ids");
 
-  // Find and remove the contact document
   const contact = await Contact.findOneAndDelete({
     $or: [
       { user1: user1Id, user2: user2Id },

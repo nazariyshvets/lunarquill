@@ -5,7 +5,11 @@ import { useAlert } from "react-alert";
 
 import useAppSelector from "./useAppSelector";
 
-const useJoinRTMChannel = (RTMClient: RtmClient, RTMChannel?: RtmChannel) => {
+const useJoinRTMChannel = (
+  RTMClient: RtmClient,
+  RTMChannel?: RtmChannel,
+  avatarId?: string,
+) => {
   const [isJoined, setIsJoined] = useState(false);
   const username = useAppSelector((state) => state.auth.username);
   const isRTMClientInitialized = useAppSelector(
@@ -20,8 +24,9 @@ const useJoinRTMChannel = (RTMClient: RtmClient, RTMChannel?: RtmChannel) => {
       !isRTMClientInitialized ||
       isJoined ||
       isLoadingRef.current
-    )
+    ) {
       return;
+    }
 
     (async () => {
       isLoadingRef.current = true;
@@ -31,6 +36,7 @@ const useJoinRTMChannel = (RTMClient: RtmClient, RTMChannel?: RtmChannel) => {
           username: username ?? "unknown",
           isCameraMuted: "true",
           isMicrophoneMuted: "true",
+          ...(avatarId ? { avatarId } : {}),
         });
         await RTMChannel.join();
         setIsJoined(true);
@@ -51,7 +57,7 @@ const useJoinRTMChannel = (RTMClient: RtmClient, RTMChannel?: RtmChannel) => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [RTMClient, RTMChannel, isRTMClientInitialized, username]);
+  }, [RTMClient, RTMChannel, isRTMClientInitialized, username, avatarId]);
 
   return isJoined;
 };

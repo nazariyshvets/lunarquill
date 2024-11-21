@@ -19,22 +19,22 @@ const formatDate = (timestamp: number) => {
     messageDate.getMonth() === today.getMonth() &&
     messageDate.getFullYear() === today.getFullYear()
   ) {
-    return "today";
+    return "Today";
   } else if (
     messageDate.getDate() === yesterday.getDate() &&
     messageDate.getMonth() === yesterday.getMonth() &&
     messageDate.getFullYear() === yesterday.getFullYear()
   ) {
-    return "yesterday";
+    return "Yesterday";
   } else if (
     messageDate.getFullYear() === today.getFullYear() &&
     getWeek(messageDate) === getWeek(today)
   ) {
-    return messageDate.toLocaleDateString(undefined, optionsSameWeek);
+    return messageDate.toLocaleDateString("en-US", optionsSameWeek);
   } else if (messageDate.getFullYear() === today.getFullYear()) {
-    return messageDate.toLocaleDateString(undefined, optionsSameYear);
+    return messageDate.toLocaleDateString("en-US", optionsSameYear);
   } else {
-    return messageDate.toLocaleDateString(undefined, optionsDifferentYear);
+    return messageDate.toLocaleDateString("en-US", optionsDifferentYear);
   }
 };
 

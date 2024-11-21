@@ -12,7 +12,7 @@ import { CALL_TIMEOUT_MS } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
 import { ChatTypeEnum } from "../types/ChatType";
-import type { UserWithoutPassword } from "../types/User";
+import type { PopulatedUserWithoutPassword } from "../types/User";
 
 const ContactChatPage = () => {
   const { id: contactId } = useParams();
@@ -30,7 +30,7 @@ const ContactChatPage = () => {
   if (isContactRelationLoading) return <Loading />;
   if (!contactRelation) return <Navigate to="/profile" replace={true} />;
 
-  const handleCallBtnClick = async (contact: UserWithoutPassword) => {
+  const handleCallBtnClick = async (contact: PopulatedUserWithoutPassword) => {
     if (contact.isOnline) {
       try {
         await RTMClient.sendMessageToPeer(
@@ -73,6 +73,7 @@ const ContactChatPage = () => {
     <ChatLayout
       contactName={contact.username ?? "Unknown"}
       isContactOnline={contact.isOnline ?? false}
+      contactAvatarId={contact.selectedAvatar?._id}
       chatType={ChatTypeEnum.SingleChat}
       chatTargetId={contactId ?? null}
       onCallBtnClick={() => handleCallBtnClick(contact)}

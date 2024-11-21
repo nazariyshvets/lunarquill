@@ -1,16 +1,44 @@
-import { useDropzone, DropzoneOptions } from "react-dropzone";
+import {
+  useDropzone,
+  DropzoneOptions,
+  FileRejection,
+  ErrorCode,
+} from "react-dropzone";
+import { useAlert } from "react-alert";
 import { BiCloudUpload } from "react-icons/bi";
 
 import formatBytes from "../utils/formatBytes";
+import { MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from "../constants/constants";
 
-interface FileUploaderProps extends DropzoneOptions {
+interface FileUploaderProps
+  extends Omit<DropzoneOptions, "accept" | "maxSize" | "onDropRejected"> {
   type: "image" | "video";
 }
 
 const FileUploader = ({ type, ...dropzoneOptions }: FileUploaderProps) => {
+  const alert = useAlert();
+
+  const handleDropRejected = (rejections: FileRejection[]) => {
+    rejections.forEach((rejection) =>
+      rejection.errors.forEach((error) =>
+        alert.info(
+          error.code === ErrorCode.FileTooSmall ||
+            error.code === ErrorCode.FileTooLarge
+            ? error.message.replace(/(\d+)\s*bytes/, (match) =>
+                formatBytes(parseInt(match, 10)),
+              )
+            : error.message,
+        ),
+      ),
+    );
+    console.error(rejections);
+  };
+
   const { getRootProps, getInputProps, acceptedFiles } = useDropzone({
-    accept: { [`${type}/*`]: [] },
     ...dropzoneOptions,
+    accept: { [`${type}/*`]: [] },
+    maxSize: type === "image" ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE,
+    onDropRejected: handleDropRejected,
   });
 
   return (

@@ -123,14 +123,14 @@ const CallManager = () => {
         (callModalState.callDirection === CallDirection.Incoming ? (
           <CallModal
             callDirection={CallDirection.Incoming}
-            contactName={callModalState.contact.username}
+            contact={callModalState.contact}
             onDeclineBtnClick={handleDeclineBtnClick}
             onAcceptBtnClick={handleAcceptBtnClick}
           />
         ) : (
           <CallModal
             callDirection={CallDirection.Outgoing}
-            contactName={callModalState.contact.username}
+            contact={callModalState.contact}
             onRecallBtnClick={handleRecallBtnClick}
           />
         ))}

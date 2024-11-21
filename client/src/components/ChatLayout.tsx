@@ -5,6 +5,7 @@ import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
 import { BiPhone, BiUserPlus, BiUserX, BiLogOut, BiCopy } from "react-icons/bi";
 import { Tooltip } from "react-tooltip";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 import Chat from "../components/Chat";
 import Contact from "../components/Contact";
@@ -24,6 +25,7 @@ import {
   useFetchContactRelationMutation,
   useRemoveContactMutation,
   useFetchWhiteboardSdkTokenMutation,
+  useGetUserByIdQuery,
 } from "../services/mainService";
 import getErrorMessage from "../utils/getErrorMessage";
 import { ChatTypeEnum } from "../types/ChatType";
@@ -33,6 +35,7 @@ import PeerMessage from "../types/PeerMessage";
 interface ChatLayoutProps {
   contactName: string;
   isContactOnline: boolean;
+  contactAvatarId?: string;
   chatType: ChatTypeEnum;
   chatTargetId: string | null;
   channelId?: string;
@@ -53,6 +56,7 @@ interface ModalState {
 const ChatLayout = ({
   contactName,
   isContactOnline,
+  contactAvatarId,
   chatType,
   chatTargetId,
   channelId,
@@ -73,6 +77,7 @@ const ChatLayout = ({
   );
   const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
+  const { data: localUser } = useGetUserByIdQuery(userId ?? skipToken);
   const [disableWhiteboardRoom] = useDisableWhiteboardRoomMutation();
   const [fetchContactRelation] = useFetchContactRelationMutation();
   const [createRequest] = useCreateRequestMutation();
@@ -245,7 +250,12 @@ const ChatLayout = ({
     chatTargetId && (
       <div className="flex h-full w-full flex-col">
         <div className="flex items-center justify-between border-b border-white p-2">
-          <Contact name={contactName} isOnline={isContactOnline} size="sm" />
+          <Contact
+            name={contactName}
+            isOnline={isContactOnline}
+            avatarId={contactAvatarId}
+            size="sm"
+          />
 
           <div className="flex items-center gap-4 text-xl">
             <SimpleButton
@@ -294,7 +304,11 @@ const ChatLayout = ({
           </div>
         </div>
 
-        <Chat chatType={chatType} targetId={chatTargetId} />
+        <Chat
+          chatType={chatType}
+          targetId={chatTargetId}
+          localUser={localUser}
+        />
 
         {modalState.isOpen && modalAction && (
           <Modal

@@ -5,14 +5,19 @@ import {
 import { BiMicrophoneOff } from "react-icons/bi";
 
 import MutedVideoPlaceholder from "./MutedVideoPlaceholder";
+import type Size from "../types/Size";
 
 interface RemoteUserProps extends AgoraRemoteUserProps {
   username?: string;
+  avatarId?: string;
+  avatarSize?: Size;
   isScreenCaster?: boolean;
 }
 
 const RemoteUser = ({
   username = "User",
+  avatarId,
+  avatarSize,
   isScreenCaster = false,
   playAudio,
   ...rest
@@ -23,7 +28,13 @@ const RemoteUser = ({
     <div className="relative h-full w-full">
       <AgoraRemoteUser
         playAudio={playAudio}
-        cover={() => <MutedVideoPlaceholder text={username} />}
+        cover={() => (
+          <MutedVideoPlaceholder
+            username={username}
+            avatarId={avatarId}
+            avatarSize={avatarSize}
+          />
+        )}
         {...rest}
       />
       {!playAudio && (

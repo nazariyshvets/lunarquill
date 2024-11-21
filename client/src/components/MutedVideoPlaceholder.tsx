@@ -1,10 +1,31 @@
+import Contact from "./Contact";
+import type Size from "../types/Size";
+
 interface MutedVideoPlaceholderProps {
-  text: string;
+  username: string;
+  avatarId?: string;
+  avatarSize?: Size;
 }
 
-const MutedVideoPlaceholder = ({ text }: MutedVideoPlaceholderProps) => (
-  <div className="flex h-full w-full items-center justify-center bg-charcoal p-2 font-medium text-white sm:text-xl">
-    <div className="line-clamp-2 break-words text-center">{text}</div>
+const MutedVideoPlaceholder = ({
+  username,
+  avatarId,
+  avatarSize,
+}: MutedVideoPlaceholderProps) => (
+  <div className="flex h-full w-full items-center justify-center bg-charcoal p-2">
+    {avatarId ? (
+      <Contact
+        name={username}
+        isOnline={false}
+        avatarId={avatarId}
+        size={avatarSize}
+        displayName={false}
+      />
+    ) : (
+      <span className="line-clamp-2 break-words text-center font-medium text-white sm:text-xl">
+        {username}
+      </span>
+    )}
   </div>
 );
 

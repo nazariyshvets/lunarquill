@@ -1,37 +1,79 @@
+import { BiEdit } from "react-icons/bi";
+
+import SimpleButton from "./SimpleButton";
+import useAvatarSource from "../hooks/useAvatarSource";
 import type Size from "../types/Size";
 
 interface ContactProps {
   name: string;
   isOnline: boolean;
+  avatarId?: string;
   size?: Size;
+  displayName?: boolean;
+  layout?: "horizontal" | "vertical";
+  withOverlay?: boolean;
   onClick?: () => void;
+  onEditAvatarBtnClick?: () => void;
 }
 
 const SIZE_STYLES_MAP: Record<Size, string> = {
   sm: "h-8 w-8 text-sm sm:h-9 sm:w-9 xl:h-10 xl:w-10",
   md: "h-10 w-10 text-base sm:h-11 sm:w-11 xl:h-12 xl:w-12",
   lg: "h-12 w-12 text-lg sm:h-[52px] sm:w-[52px] xl:h-14 xl:w-14",
+  xl: "h-24 w-24 text-3xl sm:h-28 sm:w-28 sm:text-4xl xl:h-32 xl:w-32 xl:text-5xl",
 };
 
-const Contact = ({ name, isOnline, size = "md", onClick }: ContactProps) => (
-  <div
-    className={`flex max-w-full items-center gap-1 overflow-hidden ${
-      onClick ? "cursor-pointer" : ""
-    }`}
-    onClick={onClick}
-  >
+const Contact = ({
+  name,
+  isOnline,
+  avatarId,
+  size = "md",
+  displayName = true,
+  layout = "horizontal",
+  withOverlay = false,
+  onClick,
+  onEditAvatarBtnClick,
+}: ContactProps) => {
+  const avatarSrc = useAvatarSource(avatarId);
+
+  return (
     <div
-      className={`relative flex flex-shrink-0 items-center justify-center rounded-full bg-charcoal text-white ${SIZE_STYLES_MAP[size]}`}
+      className={`flex max-w-full items-center gap-1 overflow-hidden ${
+        layout === "vertical" ? "flex-col" : ""
+      } ${onClick ? "cursor-pointer" : ""}`}
+      onClick={onClick}
     >
-      {name.slice(0, 2).toUpperCase()}
-      {isOnline && (
-        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-primary" />
+      <div
+        className={`relative flex flex-shrink-0 items-center justify-center rounded-full bg-charcoal text-white ${SIZE_STYLES_MAP[size]}`}
+      >
+        {avatarSrc ? (
+          <img
+            src={avatarSrc}
+            className="h-full w-full rounded-full object-cover"
+            draggable={false}
+          />
+        ) : (
+          name.slice(0, 2).toUpperCase()
+        )}
+        {withOverlay && (
+          <div className="absolute flex h-full w-full items-center justify-center rounded-full bg-deep-black bg-opacity-70 opacity-0 hover:opacity-100">
+            <SimpleButton onClick={onEditAvatarBtnClick}>
+              <BiEdit className="text-[0.8em]" />
+            </SimpleButton>
+          </div>
+        )}
+        {isOnline && (
+          <span className="absolute bottom-0 right-0 h-1/4 w-1/4 rounded-full bg-primary" />
+        )}
+      </div>
+
+      {displayName && (
+        <span className="max-w-full truncate text-sm font-medium text-white">
+          {name}
+        </span>
       )}
     </div>
-    <span className="max-w-full truncate text-sm font-medium text-white">
-      {name}
-    </span>
-  </div>
-);
+  );
+};
 
 export default Contact;

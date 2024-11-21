@@ -9,8 +9,11 @@ const getErrorMessage = ({
 }) => {
   const queryError = error as FetchBaseQueryError;
 
-  if (queryError && "status" in queryError && "data" in queryError)
-    return queryError.data as string;
+  if (queryError && "status" in queryError && "data" in queryError) {
+    return typeof queryError.data === "string"
+      ? queryError.data
+      : defaultErrorMessage;
+  }
 
   return defaultErrorMessage;
 };

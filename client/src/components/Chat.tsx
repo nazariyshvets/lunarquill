@@ -26,13 +26,15 @@ import parseMessage from "../utils/parseMessage";
 import { ERROR_CODES } from "../constants/constants";
 import type { ChatType } from "../types/ChatType";
 import type Message from "../types/Message";
+import { PopulatedUserWithoutPassword } from "../types/User";
 
 interface ChatProps {
   chatType: ChatType;
   targetId: string;
+  localUser: PopulatedUserWithoutPassword | undefined;
 }
 
-const Chat = ({ chatType, targetId }: ChatProps) => {
+const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [emojiPickerState, setEmojiPickerState] = useState<{
@@ -121,6 +123,7 @@ const Chat = ({ chatType, targetId }: ChatProps) => {
         chatType,
         ext: {
           senderUsername: username,
+          senderAvatarId: localUser?.selectedAvatar?._id,
         },
       };
 
@@ -134,6 +137,7 @@ const Chat = ({ chatType, targetId }: ChatProps) => {
           msg: message,
           senderId: userId ?? "",
           senderUsername: username ?? "unknown",
+          senderAvatarId: localUser?.selectedAvatar?._id,
           recipientId: msg.to,
           time: Date.now(),
         };
@@ -165,6 +169,7 @@ const Chat = ({ chatType, targetId }: ChatProps) => {
         chatType,
         ext: {
           senderUsername: username ?? "unknown",
+          senderAvatarId: localUser?.selectedAvatar?._id,
           fileType: file.filetype,
           fileName: file.filename,
           fileSize: file.data.size,
@@ -190,6 +195,7 @@ const Chat = ({ chatType, targetId }: ChatProps) => {
             url: file.url,
             senderId: userId ?? "",
             senderUsername: username ?? "unknown",
+            senderAvatarId: localUser?.selectedAvatar?._id,
             recipientId: msg.to,
             time: Date.now(),
           },

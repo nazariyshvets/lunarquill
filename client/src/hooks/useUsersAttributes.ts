@@ -5,6 +5,7 @@ import { RtmClient, RtmChannel } from "agora-rtm-react";
 interface UsersAttributes {
   [uid: string]: {
     username?: string;
+    avatarId?: string;
     isCameraMuted?: boolean;
     isMicrophoneMuted?: boolean;
   };

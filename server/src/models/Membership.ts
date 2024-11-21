@@ -1,5 +1,8 @@
 import { Schema, model, Document, Types } from "mongoose";
 
+import User from "./User";
+import Channel from "./Channel";
+
 interface IMembership extends Document {
   user: Types.ObjectId;
   channel: Types.ObjectId;
@@ -7,8 +10,8 @@ interface IMembership extends Document {
 
 const MembershipSchema = new Schema<IMembership>(
   {
-    user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    channel: { type: Schema.Types.ObjectId, ref: "Channel", required: true },
+    user: { type: Schema.Types.ObjectId, ref: User, required: true },
+    channel: { type: Schema.Types.ObjectId, ref: Channel, required: true },
   },
   {
     timestamps: true,

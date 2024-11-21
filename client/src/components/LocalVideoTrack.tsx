@@ -4,12 +4,27 @@ import {
 } from "agora-rtc-react";
 
 import MutedVideoPlaceholder from "./MutedVideoPlaceholder";
+import type Size from "../types/Size";
 
-const LocalVideoTrack = ({ play, ...rest }: AgoraLocalVideoTrackProps) =>
+interface LocalVideoTrackProps extends AgoraLocalVideoTrackProps {
+  avatarId?: string;
+  avatarSize?: Size;
+}
+
+const LocalVideoTrack = ({
+  avatarId,
+  avatarSize,
+  play,
+  ...rest
+}: LocalVideoTrackProps) =>
   play ? (
     <AgoraLocalVideoTrack play {...rest} />
   ) : (
-    <MutedVideoPlaceholder text="You" />
+    <MutedVideoPlaceholder
+      username="You"
+      avatarId={avatarId}
+      avatarSize={avatarSize}
+    />
   );
 
 export default LocalVideoTrack;

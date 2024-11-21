@@ -1,7 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 
-import type { IUser } from "./User";
-import type { IChannel } from "./Channel";
+import User, { IUser } from "./User";
+import Channel, { IChannel } from "./Channel";
 import { RequestType, RequestTypeEnum } from "../types/RequestType";
 
 interface IRequest extends Document {
@@ -20,14 +20,14 @@ interface IPopulatedRequest extends Omit<IRequest, "from" | "to" | "channel"> {
 }
 
 const requestSchema = new Schema<IRequest>({
-  from: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  to: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  from: { type: Schema.Types.ObjectId, ref: User, required: true },
+  to: { type: Schema.Types.ObjectId, ref: User, required: true },
   type: {
     type: String,
     enum: RequestTypeEnum,
     required: true,
   },
-  channel: { type: Schema.Types.ObjectId, ref: "Channel" },
+  channel: { type: Schema.Types.ObjectId, ref: Channel },
 });
 
 // Pre-save hook to handle the conditional requirement for `channel`

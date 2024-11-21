@@ -1,5 +1,3 @@
-import { nanoid } from "@reduxjs/toolkit";
-
 import formatDate from "./formatDate";
 import type Message from "../types/Message";
 
@@ -13,12 +11,14 @@ const groupMessages = (messages: Message[]) => {
   if (messages.length === 0) return [];
 
   const groups: GroupedMessage[] = [];
+  const firstMessage = messages[0];
+  const displayDate = formatDate(firstMessage.time);
   let currentGroup: GroupedMessage = {
-    id: nanoid(),
-    messages: [messages[0]],
-    displayDate: formatDate(messages[0].time),
+    id: firstMessage.id,
+    messages: [firstMessage],
+    displayDate,
   };
-  const seenDates: Set<string> = new Set([formatDate(messages[0].time)]);
+  const seenDates = new Set([displayDate]);
 
   for (let i = 1; i < messages.length; i++) {
     const currentMessage = messages[i];
@@ -28,8 +28,8 @@ const groupMessages = (messages: Message[]) => {
     const prevDate = formatDate(prevMessage.time);
 
     const isSameUser =
-      currentMessage.senderId &&
-      prevMessage.senderId &&
+      !!currentMessage.senderId &&
+      !!prevMessage.senderId &&
       currentMessage.senderId === prevMessage.senderId;
     const isSameDay = currentDate === prevDate;
 
@@ -38,7 +38,7 @@ const groupMessages = (messages: Message[]) => {
     } else {
       groups.push(currentGroup);
       currentGroup = {
-        id: nanoid(),
+        id: currentMessage.id,
         messages: [currentMessage],
         displayDate: seenDates.has(currentDate) ? undefined : currentDate,
       };

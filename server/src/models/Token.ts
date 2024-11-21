@@ -1,5 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
+import User from "./User";
+
 interface IToken extends Document {
   userId: Schema.Types.ObjectId;
   token: string;
@@ -10,7 +12,7 @@ const TokenSchema = new Schema<IToken>({
   userId: {
     type: Schema.Types.ObjectId,
     required: true,
-    ref: "User",
+    ref: User,
   },
   token: {
     type: String,
