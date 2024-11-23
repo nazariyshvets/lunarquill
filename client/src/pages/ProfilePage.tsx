@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { nanoid } from "@reduxjs/toolkit";
 import { skipToken } from "@reduxjs/toolkit/query";
 import { debounce } from "lodash";
-import { useAlert } from "react-alert";
 import { BiBell, BiCopy, BiExit, BiGroup, BiUserPlus } from "react-icons/bi";
 
 import Modal from "../components/Modal";
@@ -27,7 +26,7 @@ import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useRTMClient from "../hooks/useRTMClient";
 import useCopyToClipboard from "../hooks/useCopyToClipboard";
-import getErrorMessage from "../utils/getErrorMessage";
+import useHandleError from "../hooks/useHandleError";
 import extractFilesFromBlob from "../utils/extractFilesFromBlob";
 import getFileDataUrls from "../utils/getFileDataUrls";
 import getBlobFromFile from "../utils/getBlobFromFile";
@@ -70,7 +69,7 @@ const ProfilePage = () => {
   const RTMClient = useRTMClient();
   const dispatch = useAppDispatch();
   const copyToClipboard = useCopyToClipboard();
-  const alert = useAlert();
+  const handleError = useHandleError();
 
   useDocumentTitle("Profile");
 
@@ -98,13 +97,11 @@ const ProfilePage = () => {
         ),
       );
     } catch (error) {
-      alert.error(
-        getErrorMessage({
-          error,
-          defaultErrorMessage: "Could not set online status. Please try again",
-        }),
+      handleError(
+        error,
+        "Could not set online status. Please try again",
+        "Error setting online status:",
       );
-      console.error("Error setting online status:", error);
     }
   }, 200);
 
@@ -143,14 +140,11 @@ const ProfilePage = () => {
           removedAvatarIds: [],
         });
       } catch (error) {
-        alert.error(
-          getErrorMessage({
-            error,
-            defaultErrorMessage:
-              "Could not set avatars collection. Please reopen the modal window",
-          }),
+        handleError(
+          error,
+          "Could not set avatars collection. Please reopen the modal window",
+          "Error setting avatars:",
         );
-        console.error("Error setting avatars:", error);
       }
     }
   };
@@ -225,14 +219,11 @@ const ProfilePage = () => {
         ),
       );
     } catch (error) {
-      alert.error(
-        getErrorMessage({
-          error,
-          defaultErrorMessage:
-            "Could not update avatars collection. Please try again",
-        }),
+      handleError(
+        error,
+        "Could not update avatars collection. Please try again",
+        "Error updating avatars collection:",
       );
-      console.error("Error updating avatars collection:", error);
     } finally {
       handleEditAvatarModalClose();
     }

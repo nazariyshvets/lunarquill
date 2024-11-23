@@ -103,11 +103,8 @@ const RTCManager = ({
   );
 
   // Publish local tracks
-  usePublish(
-    [localMicrophoneTrack, localCameraTrack],
-    !!localCameraTrack && !!localMicrophoneTrack,
-    RTCClient,
-  );
+  usePublish([localMicrophoneTrack], !isMicrophoneMuted, RTCClient);
+  usePublish([localCameraTrack], !isCameraMuted, RTCClient);
 
   // Check for active users
   useClientEvent(RTCClient, "volume-indicator", (volumes) => {
@@ -120,15 +117,21 @@ const RTCManager = ({
 
   // Set local tracks to the redux store
   useEffect(() => {
-    if (localCameraTrack) dispatch(setLocalCameraTrack(localCameraTrack));
+    if (localCameraTrack) {
+      dispatch(setLocalCameraTrack(localCameraTrack));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localCameraTrack]);
 
   useEffect(() => {
-    if (localMicrophoneTrack)
+    if (localMicrophoneTrack) {
       dispatch(setLocalMicrophoneTrack(localMicrophoneTrack));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localMicrophoneTrack]);
+
+  useEffect(() => () => localMicrophoneTrack?.close(), [localMicrophoneTrack]);
+  useEffect(() => () => localCameraTrack?.close(), [localCameraTrack]);
 
   const toggleCamera = async () => {
     try {
@@ -160,13 +163,14 @@ const RTCManager = ({
     isLocalScreenShared ? handleScreenShareEnd() : handleScreenShareStart();
 
   const leaveChannel = () => {
-    if (chatType === ChatTypeEnum.SingleChat)
+    if (chatType === ChatTypeEnum.SingleChat) {
       RTMClient.sendMessageToPeer(
         {
           text: PeerMessage.CallEnded,
         },
         chatTargetId,
       );
+    }
 
     navigate(
       `/${

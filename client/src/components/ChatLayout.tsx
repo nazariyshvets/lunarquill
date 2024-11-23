@@ -27,7 +27,7 @@ import {
   useFetchWhiteboardSdkTokenMutation,
   useGetUserByIdQuery,
 } from "../services/mainService";
-import getErrorMessage from "../utils/getErrorMessage";
+import useHandleError from "../hooks/useHandleError";
 import { ChatTypeEnum } from "../types/ChatType";
 import { RequestTypeEnum } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
@@ -85,6 +85,7 @@ const ChatLayout = ({
   const [removeContact] = useRemoveContactMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const copyToClipboard = useCopyToClipboard();
+  const handleError = useHandleError();
   const alert = useAlert();
   const navigate = useNavigate();
 
@@ -119,13 +120,11 @@ const ChatLayout = ({
       navigate("/profile");
       alert.success("You left the channel successfully");
     } catch (err) {
-      alert.error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage: "Could not leave the channel. Please try again",
-        }),
+      handleError(
+        err,
+        "Could not leave the channel. Please try again",
+        "Error leaving the channel:",
       );
-      console.error("Could not leave the channel:", err);
     }
   };
 
@@ -165,13 +164,11 @@ const ChatLayout = ({
       navigate("/profile");
       alert.success("The contact was deleted successfully");
     } catch (err) {
-      alert.error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage: "Could not delete the contact. Please try again",
-        }),
+      handleError(
+        err,
+        "Could not delete the contact. Please try again",
+        "Error deleting the contact:",
       );
-      console.error("Could not delete the contact:", err);
     }
   };
 
@@ -203,14 +200,11 @@ const ChatLayout = ({
       alert.success("Request created successfully!");
       handleModalClose();
     } catch (err) {
-      alert.error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage:
-            "Could not send an invite request. Please try again",
-        }),
+      handleError(
+        err,
+        "Could not send an invite request. Please try again",
+        "Error sending an invite request:",
       );
-      console.error("Could not send an invite request:", err);
     }
   };
 
@@ -223,11 +217,13 @@ const ChatLayout = ({
   const handleCopyChannelIdBtnClick = () => {
     const errorMessage = "Could not copy the channel id. Please try again";
 
-    if (channelId)
+    if (channelId) {
       copyToClipboard(channelId, "channel id").catch(() =>
         alert.error(errorMessage),
       );
-    else alert.error(errorMessage);
+    } else {
+      alert.error(errorMessage);
+    }
   };
 
   const handleInviteUserBtnClick = () =>

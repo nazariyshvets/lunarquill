@@ -1,18 +1,17 @@
 import { useEffect, useRef } from "react";
 
 import { Outlet, useNavigate } from "react-router-dom";
-import { useAlert } from "react-alert";
 
 import CallModal from "./CallModal";
 import useRTMClient from "../hooks/useRTMClient";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useAppSelector from "../hooks/useAppSelector";
 import useAuth from "../hooks/useAuth";
+import useHandleError from "../hooks/useHandleError";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { useFetchContactRelationMutation } from "../services/mainService";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
-import getErrorMessage from "../utils/getErrorMessage";
 
 const CallManager = () => {
   const audioRef = useRef(new Audio("/call_sound.mp3"));
@@ -22,7 +21,7 @@ const CallManager = () => {
   const { callModalState, callTimeout } = useAppSelector((state) => state.rtm);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const alert = useAlert();
+  const handleError = useHandleError();
 
   const handleDeclineBtnClick = async () => {
     if (!callModalState) return;
@@ -34,13 +33,11 @@ const CallManager = () => {
       );
       dispatch(setCallModalState(null));
     } catch (err) {
-      alert.error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage: "Could not decline the call. Please try again",
-        }),
+      handleError(
+        err,
+        "Could not decline the call. Please try again",
+        "Error declining the call:",
       );
-      console.error("Error declining the call:", err);
     }
   };
 
@@ -61,13 +58,11 @@ const CallManager = () => {
       dispatch(setCallModalState(null));
       navigate(`/contacts/${contact._id}/call`);
     } catch (err) {
-      alert.error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage: "Could not accept the call. Please try again",
-        }),
+      handleError(
+        err,
+        "Could not accept the call. Please try again",
+        "Error accepting the call:",
       );
-      console.error("Error accepting the call:", err);
     }
   };
 
@@ -82,13 +77,11 @@ const CallManager = () => {
       dispatch(setCallModalState(null));
       clearCallTimeout();
     } catch (err) {
-      alert.error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage: "Could not recall the call. Please try again",
-        }),
+      handleError(
+        err,
+        "Could not recall the call. Please try again",
+        "Error recalling the call:",
       );
-      console.error("Error recalling the call:", err);
     }
   };
 

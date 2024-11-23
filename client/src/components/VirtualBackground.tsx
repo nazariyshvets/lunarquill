@@ -73,6 +73,7 @@ const VirtualBackground = (): React.ReactNode => {
           const video = document.createElement("video");
 
           video.src = videoSrcUrl;
+          video.muted = true;
           video.setAttribute("loop", "");
           video.onloadeddata = () => {
             processor.current?.setOptions({ type: "video", source: video });

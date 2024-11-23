@@ -48,16 +48,26 @@ const useJoinRTMChannel = (
         isLoadingRef.current = false;
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    RTMClient,
+    RTMChannel,
+    isRTMClientInitialized,
+    username,
+    avatarId,
+    isJoined,
+  ]);
 
-    return () => {
+  useEffect(
+    () => () => {
       if (isJoined) {
-        RTMChannel.leave().catch((err) =>
+        RTMChannel?.leave().catch((err) =>
           console.error("Failed to leave RTM channel:", err),
         );
       }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [RTMClient, RTMChannel, isRTMClientInitialized, username, avatarId]);
+    },
+    [RTMChannel, isJoined],
+  );
 
   return isJoined;
 };
