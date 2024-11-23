@@ -2,9 +2,9 @@ import { useEffect } from "react";
 
 import { useAlert } from "react-alert";
 
-type ErrorMessage = string | Record<string, string> | null;
+import type CustomError from "../types/CustomError";
 
-const useError = (message: ErrorMessage) => {
+const useError = (message: CustomError) => {
   const alert = useAlert();
 
   useEffect(() => {

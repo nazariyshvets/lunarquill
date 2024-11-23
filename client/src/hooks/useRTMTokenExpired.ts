@@ -12,9 +12,11 @@ const useRTMTokenExpired = (client: RtmClient) => {
   const alert = useAlert();
 
   useEffect(() => {
-    if (!userId) return;
-
     const renewToken = async () => {
+      if (!userId) {
+        return;
+      }
+
       try {
         const token = await fetchRTMToken(userId).unwrap();
 

@@ -8,7 +8,8 @@ import { clearError } from "../redux/authSlice";
 const useAuthError = () => {
   const { error } = useAuth();
   const dispatch = useAppDispatch();
-  useError(error || null);
+
+  useError(error);
 
   useEffect(() => {
     // Clear the error when the component unmounts (page change)

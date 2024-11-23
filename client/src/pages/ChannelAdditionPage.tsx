@@ -22,6 +22,7 @@ import {
   useCreateWhiteboardRoomMutation,
   useFetchWhiteboardSdkTokenMutation,
 } from "../services/mainService";
+import useHandleError from "../hooks/useHandleError";
 import getErrorMessage from "../utils/getErrorMessage";
 import { RequestTypeEnum } from "../types/Request";
 import type { Channel } from "../types/Channel";
@@ -42,6 +43,7 @@ const ChannelAdditionPage = () => {
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
+  const handleError = useHandleError();
   const alert = useAlert();
 
   useDocumentTitle("Join/Create a channel");
@@ -164,13 +166,11 @@ const ChannelAdditionPage = () => {
       ]);
       alert.success("You joined the channel successfully");
     } catch (err) {
-      alert.error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage: "Could not join a channel. Please try again",
-        }),
+      handleError(
+        err,
+        "Could not join a channel. Please try again",
+        "Error joining a channel:",
       );
-      console.error("Error joining a channel:", err);
     }
   };
 

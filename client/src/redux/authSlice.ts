@@ -7,7 +7,7 @@ import type CustomError from "../types/CustomError";
 export interface AuthState {
   loading: boolean;
   userToken: string | null;
-  error: CustomError | null;
+  error: CustomError;
   success: boolean;
   userId: string | null;
   username: string | null;
