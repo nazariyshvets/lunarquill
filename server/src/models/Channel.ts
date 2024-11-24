@@ -1,6 +1,7 @@
 import { Schema, model, Document, Types } from "mongoose";
 
 import User from "./User";
+import File from "./File";
 
 interface IChannel extends Document {
   name: string;
@@ -8,6 +9,8 @@ interface IChannel extends Document {
   isPrivate: boolean;
   chatTargetId: string;
   whiteboardRoomId: string;
+  selectedAvatar?: Types.ObjectId;
+  avatars: Types.ObjectId[];
 }
 
 const ChannelSchema = new Schema<IChannel>(
@@ -33,6 +36,16 @@ const ChannelSchema = new Schema<IChannel>(
       type: String,
       required: true,
     },
+    selectedAvatar: {
+      type: Schema.Types.ObjectId,
+      ref: File,
+    },
+    avatars: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: File,
+      },
+    ],
   },
   {
     timestamps: true,

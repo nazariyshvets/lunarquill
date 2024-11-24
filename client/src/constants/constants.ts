@@ -38,6 +38,7 @@ enum QUERY_TAG_TYPES {
   USER_REQUESTS = "UserRequests",
   USER_CONTACTS = "UserContacts",
   USER_CHANNELS = "UserChannels",
+  CHANNEL = "Channel",
 }
 
 const CALL_TIMEOUT_MS = 30_000;

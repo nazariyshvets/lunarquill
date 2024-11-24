@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { ObjectId, type GridFSBucket } from "mongodb";
 
+import capitalize from "../utils/capitalize";
 import User, { IUser } from "../models/User";
 import Channel from "../models/Channel";
 import Membership from "../models/Membership";
@@ -39,7 +40,7 @@ const getUserChannels = async (userId: string) => {
   const memberships = await Membership.find({ user: userId });
   const channelIds = memberships.map((membership) => membership.channel);
 
-  return Channel.find({ _id: { $in: channelIds } });
+  return Channel.find({ _id: { $in: channelIds } }).populate("selectedAvatar");
 };
 
 const getUserById = async (userId: string) => {
@@ -81,21 +82,24 @@ const removeAvatars = async (
   );
 };
 
-const updateUserAvatarsCollection = async (
-  userId: string,
+const updateAvatarsCollection = async (
+  type: "user" | "channel",
+  id: string,
   removedAvatarIds: string[],
   newAvatarObjectIds: ObjectId[],
   selectedAvatarId: string | undefined,
   frontendIdToObjectIdMap: Record<string, ObjectId>,
 ) => {
-  const user = await User.findById(userId);
+  const document = await (type === "user"
+    ? User.findById(id)
+    : Channel.findById(id));
 
-  if (!user) {
-    throw new Error("User not found");
+  if (!document) {
+    throw new Error(`${capitalize(type)} not found`);
   }
 
-  user.avatars = [
-    ...user.avatars.filter(
+  document.avatars = [
+    ...document.avatars.filter(
       (avatarId) => !removedAvatarIds.includes(avatarId.toString()),
     ),
     ...newAvatarObjectIds.map((id) => new mongoose.Types.ObjectId(id)),
@@ -103,12 +107,12 @@ const updateUserAvatarsCollection = async (
 
   if (selectedAvatarId) {
     if (ObjectId.isValid(selectedAvatarId)) {
-      user.selectedAvatar = new mongoose.Types.ObjectId(selectedAvatarId);
+      document.selectedAvatar = new mongoose.Types.ObjectId(selectedAvatarId);
     } else {
       const selectedAvatarObjectId = frontendIdToObjectIdMap[selectedAvatarId];
 
       if (selectedAvatarObjectId) {
-        user.selectedAvatar = new mongoose.Types.ObjectId(
+        document.selectedAvatar = new mongoose.Types.ObjectId(
           selectedAvatarObjectId,
         );
       } else {
@@ -116,12 +120,12 @@ const updateUserAvatarsCollection = async (
       }
     }
   } else {
-    user.selectedAvatar = undefined;
+    document.selectedAvatar = undefined;
   }
 
-  await user.save();
+  await document.save();
 
-  return user;
+  return document;
 };
 
 export {
@@ -130,5 +134,5 @@ export {
   getUserById,
   updateUserById,
   removeAvatars,
-  updateUserAvatarsCollection,
+  updateAvatarsCollection,
 };

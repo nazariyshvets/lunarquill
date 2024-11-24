@@ -47,12 +47,16 @@ const createChannel = async (
 const searchChannels = async (query: string) => {
   // Check if the query is a valid ObjectId
   if (mongoose.Types.ObjectId.isValid(query))
-    return Channel.find({ _id: query, isPrivate: false });
+    return Channel.find({ _id: query, isPrivate: false }).populate(
+      "selectedAvatar",
+    );
 
   // If not a valid ObjectId, search by name using regex
   const regex = new RegExp(query, "i"); // Case-insensitive regex for partial match
 
-  return Channel.find({ name: { $regex: regex }, isPrivate: false });
+  return Channel.find({ name: { $regex: regex }, isPrivate: false }).populate(
+    "selectedAvatar",
+  );
 };
 
 const joinChannel = async (userId: string, channelId: string) => {
@@ -121,7 +125,7 @@ const getChannelById = async (channelId: string) => {
   if (!mongoose.Types.ObjectId.isValid(channelId))
     throw new Error("Invalid channel id");
 
-  const channel = await Channel.findById(channelId);
+  const channel = await Channel.findById(channelId).populate("selectedAvatar");
 
   if (!channel) throw new Error("Channel not found");
 

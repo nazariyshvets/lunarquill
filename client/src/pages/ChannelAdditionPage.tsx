@@ -25,13 +25,15 @@ import {
 import useHandleError from "../hooks/useHandleError";
 import getErrorMessage from "../utils/getErrorMessage";
 import { RequestTypeEnum } from "../types/Request";
-import type { Channel } from "../types/Channel";
+import type { PopulatedChannel } from "../types/Channel";
 import PeerMessage from "../types/PeerMessage";
 
 const ChannelAdditionPage = () => {
   const { userId } = useAuth();
 
-  const [searchedChannels, setSearchedChannels] = useState<Channel[]>([]);
+  const [searchedChannels, setSearchedChannels] = useState<PopulatedChannel[]>(
+    [],
+  );
 
   const { data: userChannels } = useGetUserChannelsQuery(userId ?? skipToken);
   const [createChannel] = useCreateChannelMutation();

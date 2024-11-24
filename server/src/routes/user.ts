@@ -5,7 +5,7 @@ import {
   getUserChannelsController,
   getUserByIdController,
   updateUserByIdController,
-  updateUserAvatarsCollectionController,
+  updateAvatarsCollectionController,
 } from "../controllers/user";
 import { uploadFiles } from "../middleware/uploadFile";
 
@@ -15,10 +15,8 @@ router.get("/:userId/contacts", getUserContactsController);
 router.get("/:userId/channels", getUserChannelsController);
 router.get("/:userId", getUserByIdController);
 router.put("/:userId", updateUserByIdController);
-router.put(
-  "/:userId/avatars-collection",
-  uploadFiles,
-  updateUserAvatarsCollectionController,
+router.put("/:id/avatars-collection", uploadFiles, (req, res) =>
+  updateAvatarsCollectionController(req, res, "user"),
 );
 
 export default router;

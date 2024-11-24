@@ -7,8 +7,9 @@ import {
   getUserById,
   updateUserById,
   removeAvatars,
-  updateUserAvatarsCollection,
+  updateAvatarsCollection,
 } from "../services/user";
+import capitalize from "../utils/capitalize";
 import ProfileAvatarsUpdateRequestPayload from "../types/ProfileAvatarsUpdateRequestPayload";
 import File from "../models/File";
 
@@ -55,19 +56,20 @@ const updateUserByIdController = async (req: Request, res: Response) => {
   return res.status(200).json(updatedUser);
 };
 
-const updateUserAvatarsCollectionController = async (
+const updateAvatarsCollectionController = async (
   req: Request,
   res: Response,
+  type: "user" | "channel",
 ) => {
-  const { userId } = req.params;
+  const { id } = req.params;
   const {
     removedAvatarIds = [],
     newAvatarIds = [],
     selectedAvatarId,
   }: ProfileAvatarsUpdateRequestPayload = req.body;
 
-  if (!userId) {
-    throw new Error("User id is required");
+  if (!id) {
+    throw new Error(`${capitalize(type)} id is required`);
   }
 
   const invalidRemovedAvatarIds = removedAvatarIds.filter(
@@ -112,8 +114,9 @@ const updateUserAvatarsCollectionController = async (
     {},
   );
 
-  const user = await updateUserAvatarsCollection(
-    userId,
+  const document = await updateAvatarsCollection(
+    type,
+    id,
     removedAvatarIds,
     newAvatarObjectIds.filter(Boolean),
     selectedAvatarId,
@@ -121,9 +124,9 @@ const updateUserAvatarsCollectionController = async (
   );
 
   return res.status(200).json({
-    message: "Profile avatars updated successfully",
-    avatars: user.avatars,
-    selectedAvatar: user.selectedAvatar,
+    message: "Avatars updated successfully",
+    avatars: document.avatars,
+    selectedAvatar: document.selectedAvatar,
     frontendIdToObjectIdMap,
   });
 };
@@ -133,5 +136,5 @@ export {
   getUserChannelsController,
   getUserByIdController,
   updateUserByIdController,
-  updateUserAvatarsCollectionController,
+  updateAvatarsCollectionController,
 };
