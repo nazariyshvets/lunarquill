@@ -10,6 +10,7 @@ interface RequestItemProps {
   username: string;
   userAvatarId?: string;
   channelName?: string;
+  channelAvatarId?: string;
   onDecline?: () => void;
   onAccept?: () => void;
   onRecall?: () => void;
@@ -21,6 +22,7 @@ const RequestItem = ({
   username,
   userAvatarId,
   channelName = "unknown",
+  channelAvatarId,
   onDecline,
   onAccept,
   onRecall,
@@ -56,7 +58,11 @@ const RequestItem = ({
           (type === RequestTypeEnum.Join && context === "inbox")) &&
           channelName && (
             <div className="flex items-center gap-1">
-              <Contact name={channelName} isOnline={false} />
+              <Contact
+                name={channelName}
+                isOnline={false}
+                avatarId={channelAvatarId}
+              />
               <span className="text-sm text-lightgrey">channel</span>
             </div>
           )}

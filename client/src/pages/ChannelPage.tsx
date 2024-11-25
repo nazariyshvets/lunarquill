@@ -21,6 +21,7 @@ import {
   useGetChannelByIdQuery,
   useGetContactByIdQuery,
 } from "../services/mainService";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import RTCConfig from "../config/RTCConfig";
 import { type ChatType, ChatTypeEnum } from "../types/ChatType";
 
@@ -72,11 +73,22 @@ const ChannelPageComponent = ({
     useGetContactByIdQuery(
       chatType === ChatTypeEnum.SingleChat ? channelId : skipToken,
     );
+  const remoteUser =
+    contact?.user1._id === userId
+      ? contact?.user2
+      : contact?.user2._id === userId
+        ? contact?.user1
+        : undefined;
   const { data: channel, isFetching: isChannelFetching } =
     useGetChannelByIdQuery(
       chatType === ChatTypeEnum.GroupChat ? channelId : skipToken,
     );
 
+  useDocumentTitle(
+    (chatType === ChatTypeEnum.SingleChat
+      ? remoteUser?.username
+      : channel?.name) || "Call",
+  );
   useRTCTokenWillExpire(RTCClient, channelId, userId ?? "");
   useRTCTokenWillExpire(RTCScreenSharingClient, channelId, RTCConfig.uidScreen);
   useAudioVolumeIndicator(RTCClient);
@@ -98,13 +110,9 @@ const ChannelPageComponent = ({
           channelId={channelId}
           chatType={chatType}
           chatTargetId={
-            chatType === ChatTypeEnum.SingleChat
-              ? contact?.user1._id === userId
-                ? contact?.user2._id
-                : contact?.user2._id === userId
-                  ? contact?.user1._id
-                  : ""
-              : channel?.chatTargetId ?? ""
+            (chatType === ChatTypeEnum.SingleChat
+              ? remoteUser?._id
+              : channel?.chatTargetId) ?? ""
           }
           whiteboardRoomId={
             (chatType === ChatTypeEnum.SingleChat

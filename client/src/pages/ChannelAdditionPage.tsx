@@ -214,7 +214,11 @@ const ChannelAdditionPage = () => {
                         key={channel._id}
                         className="flex items-center justify-between gap-2"
                       >
-                        <Contact name={channel.name} isOnline={false} />
+                        <Contact
+                          name={channel.name}
+                          isOnline={false}
+                          avatarId={channel.selectedAvatar?._id}
+                        />
 
                         {userChannels?.find(
                           (userChannel) => userChannel._id === channel._id,

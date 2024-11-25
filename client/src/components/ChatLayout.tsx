@@ -38,6 +38,7 @@ import {
   useGetUserByIdQuery,
 } from "../services/mainService";
 import useHandleError from "../hooks/useHandleError";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import { ChatTypeEnum } from "../types/ChatType";
 import { RequestTypeEnum } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
@@ -114,6 +115,8 @@ const ChatLayout = ({
     updateAvatarsCollection,
   });
 
+  useDocumentTitle(contactName);
+
   const handleModalClose = () => setModalState({ isOpen: false });
 
   const handleModalSave = async (action: ModalAction) => {
@@ -138,10 +141,24 @@ const ChatLayout = ({
     }
 
     try {
-      await Promise.all([
-        chatConnection.leaveGroup({ groupId: chatTargetId }),
-        leaveChannel({ userId, channelId: channel?._id }),
-      ]);
+      const chatInfo = await chatConnection.getGroupInfo({
+        groupId: chatTargetId,
+      });
+      const prevChatOwner = chatInfo?.data?.[0]?.owner;
+      const { isChannelRemoved, adminId } = await leaveChannel({
+        userId,
+        channelId: channel?._id,
+      }).unwrap();
+
+      if (isChannelRemoved) {
+        await chatConnection.destroyGroup({ groupId: chatTargetId });
+      } else if (userId === prevChatOwner && adminId) {
+        await chatConnection.changeGroupOwner({
+          groupId: chatTargetId,
+          newOwner: adminId,
+        });
+      }
+
       navigate("/profile");
       alert.success("You left the channel successfully");
     } catch (err) {
@@ -335,6 +352,7 @@ const ChatLayout = ({
         </div>
 
         <Chat
+          key={chatTargetId}
           chatType={chatType}
           targetId={chatTargetId}
           localUser={localUser}

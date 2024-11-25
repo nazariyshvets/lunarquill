@@ -73,11 +73,13 @@ const updateUserById = async (userId: string, updateData: Partial<IUser>) => {
 
 const removeAvatars = async (
   imageBucket: GridFSBucket,
-  removedAvatarIds: string[],
+  removedAvatarIds: string[] | ObjectId[],
 ) => {
   await Promise.all(
     removedAvatarIds.map((avatarId) =>
-      imageBucket.delete(new ObjectId(avatarId)),
+      imageBucket.delete(
+        typeof avatarId === "string" ? new ObjectId(avatarId) : avatarId,
+      ),
     ),
   );
 };

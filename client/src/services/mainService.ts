@@ -244,7 +244,7 @@ export const mainApi = createApi({
       invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
     leaveChannel: builder.mutation<
-      { message: string },
+      { isChannelRemoved: boolean; adminId?: string },
       { userId: string; channelId: string }
     >({
       query: (data) => ({

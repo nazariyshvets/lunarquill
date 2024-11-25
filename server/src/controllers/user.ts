@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { MongoClient, ObjectId, GridFSBucket } from "mongodb";
+import { ObjectId } from "mongodb";
 
 import {
   getUserContacts,
@@ -9,11 +9,10 @@ import {
   removeAvatars,
   updateAvatarsCollection,
 } from "../services/user";
+import { getGridFSBucket } from "../db";
 import capitalize from "../utils/capitalize";
 import ProfileAvatarsUpdateRequestPayload from "../types/ProfileAvatarsUpdateRequestPayload";
 import File from "../models/File";
-
-const mongoClient = new MongoClient(process.env.DB_URL!);
 
 const getUserContactsController = async (req: Request, res: Response) => {
   const { userId } = req.params;
@@ -82,15 +81,7 @@ const updateAvatarsCollectionController = async (
     );
   }
 
-  await mongoClient.connect();
-  res.on("close", () => {
-    mongoClient.close();
-  });
-
-  const database = mongoClient.db();
-  const imageBucket = new GridFSBucket(database, {
-    bucketName: "images",
-  });
+  const imageBucket = await getGridFSBucket("images");
 
   await removeAvatars(imageBucket, removedAvatarIds);
 
