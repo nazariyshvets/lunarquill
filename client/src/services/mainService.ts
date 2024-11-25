@@ -1,4 +1,8 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  createApi,
+  fetchBaseQuery,
+  FetchBaseQueryError,
+} from "@reduxjs/toolkit/query/react";
 import { UID } from "agora-rtc-react";
 
 import { RootState } from "../redux/store";
@@ -14,8 +18,62 @@ import {
   PopulatedContact,
   ProfileAvatarsUpdateRequestPayload,
 } from "../types/User";
-import { Channel } from "../types/Channel";
+import { Channel, PopulatedChannel } from "../types/Channel";
 import { File as CustomFile } from "../types/File";
+
+const createUpdateAvatarsCollectionMutation = (
+  tagTypes: QUERY_TAG_TYPES[],
+): {
+  query: (args: {
+    id: string;
+    updateData: ProfileAvatarsUpdateRequestPayload;
+  }) => {
+    url: string;
+    method: string;
+    body: FormData;
+  };
+  invalidatesTags: (
+    result:
+      | {
+          message: string;
+          avatars: string[];
+          selectedAvatar?: string;
+          frontendIdToObjectIdMap: Record<string, string>;
+        }
+      | undefined,
+    error: FetchBaseQueryError | undefined,
+    arg: { id: string },
+  ) => { type: QUERY_TAG_TYPES }[];
+} => ({
+  query: ({ id, updateData }) => {
+    const formData = new FormData();
+
+    updateData.removedAvatarIds.forEach((id) => {
+      formData.append("removedAvatarIds[]", id);
+    });
+    updateData.newAvatars.forEach((avatar) => {
+      formData.append("files", avatar.src);
+      formData.append("newAvatarIds[]", avatar.id);
+    });
+
+    if (updateData.selectedAvatarId) {
+      formData.append("selectedAvatarId", updateData.selectedAvatarId);
+    }
+
+    return {
+      url: `/${
+        tagTypes.includes(QUERY_TAG_TYPES.USER_DETAILS) ? "users" : "channels"
+      }/${id}/avatars-collection`,
+      method: "PUT",
+      body: formData,
+    };
+  },
+  invalidatesTags: (_, __, { id }) =>
+    tagTypes.map((type) => ({
+      type,
+      ...(type === QUERY_TAG_TYPES.CHANNEL ? { id } : {}),
+    })),
+});
 
 export const mainApi = createApi({
   reducerPath: "mainApi",
@@ -74,7 +132,7 @@ export const mainApi = createApi({
         }),
       },
     ),
-    getUserChannels: builder.query<Channel[], string>({
+    getUserChannels: builder.query<PopulatedChannel[], string>({
       query: (userId) => `/users/${userId}/channels`,
       providesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
@@ -100,6 +158,9 @@ export const mainApi = createApi({
       }),
       invalidatesTags: [QUERY_TAG_TYPES.USER_DETAILS],
     }),
+    updateUserAvatarsCollection: builder.mutation(
+      createUpdateAvatarsCollectionMutation([QUERY_TAG_TYPES.USER_DETAILS]),
+    ),
 
     // ===== REQUESTS =====
 
@@ -165,7 +226,7 @@ export const mainApi = createApi({
       }),
       invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
-    searchChannels: builder.mutation<Channel[], string>({
+    searchChannels: builder.mutation<PopulatedChannel[], string>({
       query: (name) => ({
         url: `/channels/search?name=${name}`,
         method: "GET",
@@ -183,7 +244,7 @@ export const mainApi = createApi({
       invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
     leaveChannel: builder.mutation<
-      { message: string },
+      { isChannelRemoved: boolean; adminId?: string },
       { userId: string; channelId: string }
     >({
       query: (data) => ({
@@ -193,15 +254,22 @@ export const mainApi = createApi({
       }),
       invalidatesTags: [QUERY_TAG_TYPES.USER_CHANNELS],
     }),
-    getChannelById: builder.query<Channel, string>({
+    getChannelById: builder.query<PopulatedChannel, string>({
       query: (id) => `/channels/${id}`,
+      providesTags: (_, __, id) => [{ type: QUERY_TAG_TYPES.CHANNEL, id }],
     }),
-    fetchChannelById: builder.mutation<Channel, string>({
+    fetchChannelById: builder.mutation<PopulatedChannel, string>({
       query: (id) => ({
         url: `/channels/${id}`,
         method: "GET",
       }),
     }),
+    updateChannelAvatarsCollection: builder.mutation(
+      createUpdateAvatarsCollectionMutation([
+        QUERY_TAG_TYPES.USER_CHANNELS,
+        QUERY_TAG_TYPES.CHANNEL,
+      ]),
+    ),
 
     //   ===== CONTACTS =====
 
@@ -335,38 +403,6 @@ export const mainApi = createApi({
         method: "DELETE",
       }),
     }),
-    updateUserAvatarsCollection: builder.mutation<
-      {
-        message: string;
-        avatars: string[];
-        selectedAvatar?: string;
-        frontendIdToObjectIdMap: Record<string, string>;
-      },
-      { userId: string; updateData: ProfileAvatarsUpdateRequestPayload }
-    >({
-      query: ({ userId, updateData }) => {
-        const formData = new FormData();
-
-        updateData.removedAvatarIds.forEach((id) => {
-          formData.append("removedAvatarIds[]", id);
-        });
-        updateData.newAvatars.forEach((avatar) => {
-          formData.append("files", avatar.src);
-          formData.append("newAvatarIds[]", avatar.id);
-        });
-
-        if (updateData.selectedAvatarId) {
-          formData.append("selectedAvatarId", updateData.selectedAvatarId);
-        }
-
-        return {
-          url: `/users/${userId}/avatars-collection`,
-          method: "PUT",
-          body: formData,
-        };
-      },
-      invalidatesTags: [QUERY_TAG_TYPES.USER_DETAILS],
-    }),
   }),
 });
 
@@ -382,6 +418,7 @@ export const {
   useGetUserByIdQuery,
   useFetchUserByIdMutation,
   useUpdateUserByIdMutation,
+  useUpdateUserAvatarsCollectionMutation,
   // REQUESTS
   useCreateRequestMutation,
   useGetUserRequestsQuery,
@@ -394,6 +431,7 @@ export const {
   useLeaveChannelMutation,
   useGetChannelByIdQuery,
   useFetchChannelByIdMutation,
+  useUpdateChannelAvatarsCollectionMutation,
   // CONTACTS
   useGetContactRelationQuery,
   useFetchContactRelationMutation,
@@ -414,5 +452,4 @@ export const {
   useDownloadFileQuery,
   useDownloadFilesMutation,
   useRemoveFileMutation,
-  useUpdateUserAvatarsCollectionMutation,
 } = mainApi;

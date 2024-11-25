@@ -6,13 +6,13 @@ import SimpleButton from "./SimpleButton";
 import Contact from "./Contact";
 import NoDataBox from "./NoDataBox";
 import type { PopulatedUserWithoutPassword } from "../types/User";
-import type { Channel } from "../types/Channel";
+import type { PopulatedChannel } from "../types/Channel";
 
 interface SidebarProps {
   user?: PopulatedUserWithoutPassword;
   inboxRequestsCount: number;
   contacts: PopulatedUserWithoutPassword[];
-  channels: Channel[];
+  channels: PopulatedChannel[];
   onClose?: () => void;
 }
 
@@ -100,6 +100,7 @@ const Sidebar = ({
                 <Contact
                   name={channel.name}
                   isOnline={false}
+                  avatarId={channel.selectedAvatar?._id}
                   onClick={onClose}
                 />
               </Link>

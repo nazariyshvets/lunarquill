@@ -240,6 +240,7 @@ const RequestsPage = () => {
                   username={request.from.username}
                   userAvatarId={request.from.selectedAvatar}
                   channelName={request.channel?.name}
+                  channelAvatarId={request.channel?.selectedAvatar}
                   onDecline={() =>
                     handleRequestItemBtnClick(RequestAction.Decline, request)
                   }
@@ -268,10 +269,11 @@ const RequestsPage = () => {
                   }
                   userAvatarId={
                     request.type === RequestTypeEnum.Join
-                      ? undefined
+                      ? request.channel?.selectedAvatar
                       : request.to.selectedAvatar
                   }
-                  channelName={request.channel?.name}
+                  channelName={request.channel?.name ?? "Unknown"}
+                  channelAvatarId={request.channel?.selectedAvatar}
                   onRecall={() =>
                     handleRequestItemBtnClick(RequestAction.Recall, request)
                   }

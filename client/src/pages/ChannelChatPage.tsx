@@ -14,9 +14,10 @@ const ChannelChatPage = () => {
     <ChatLayout
       contactName={channel?.name ?? "Unknown channel"}
       isContactOnline={false}
+      contactAvatarId={channel?.selectedAvatar?._id}
       chatType={ChatTypeEnum.GroupChat}
       chatTargetId={channel?.chatTargetId ?? null}
-      channelId={id}
+      channel={channel}
       onCallBtnClick={() => navigate(`/channels/${id}/call`)}
     />
   );

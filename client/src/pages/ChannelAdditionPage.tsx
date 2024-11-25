@@ -25,13 +25,15 @@ import {
 import useHandleError from "../hooks/useHandleError";
 import getErrorMessage from "../utils/getErrorMessage";
 import { RequestTypeEnum } from "../types/Request";
-import type { Channel } from "../types/Channel";
+import type { PopulatedChannel } from "../types/Channel";
 import PeerMessage from "../types/PeerMessage";
 
 const ChannelAdditionPage = () => {
   const { userId } = useAuth();
 
-  const [searchedChannels, setSearchedChannels] = useState<Channel[]>([]);
+  const [searchedChannels, setSearchedChannels] = useState<PopulatedChannel[]>(
+    [],
+  );
 
   const { data: userChannels } = useGetUserChannelsQuery(userId ?? skipToken);
   const [createChannel] = useCreateChannelMutation();
@@ -212,7 +214,11 @@ const ChannelAdditionPage = () => {
                         key={channel._id}
                         className="flex items-center justify-between gap-2"
                       >
-                        <Contact name={channel.name} isOnline={false} />
+                        <Contact
+                          name={channel.name}
+                          isOnline={false}
+                          avatarId={channel.selectedAvatar?._id}
+                        />
 
                         {userChannels?.find(
                           (userChannel) => userChannel._id === channel._id,

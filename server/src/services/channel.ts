@@ -1,5 +1,8 @@
+import { ObjectId } from "mongodb";
 import * as mongoose from "mongoose";
 
+import { removeAvatars } from "./user";
+import { getGridFSBucket } from "../db";
 import User from "../models/User";
 import Channel from "../models/Channel";
 import Membership from "../models/Membership";
@@ -45,18 +48,19 @@ const createChannel = async (
 };
 
 const searchChannels = async (query: string) => {
-  // Check if the query is a valid ObjectId
   if (mongoose.Types.ObjectId.isValid(query))
-    return Channel.find({ _id: query, isPrivate: false });
+    return Channel.find({ _id: query, isPrivate: false }).populate(
+      "selectedAvatar",
+    );
 
-  // If not a valid ObjectId, search by name using regex
-  const regex = new RegExp(query, "i"); // Case-insensitive regex for partial match
+  const regex = new RegExp(query, "i");
 
-  return Channel.find({ name: { $regex: regex }, isPrivate: false });
+  return Channel.find({ name: { $regex: regex }, isPrivate: false }).populate(
+    "selectedAvatar",
+  );
 };
 
 const joinChannel = async (userId: string, channelId: string) => {
-  // Validate user ID
   if (
     !mongoose.Types.ObjectId.isValid(userId) ||
     !mongoose.Types.ObjectId.isValid(channelId)
@@ -69,7 +73,6 @@ const joinChannel = async (userId: string, channelId: string) => {
   const channel = await Channel.findById(channelId);
   if (!channel) throw new Error("Channel not found");
 
-  // Check if the membership already exists
   const existingMembership = await Membership.findOne({
     user: userId,
     channel: channelId,
@@ -78,7 +81,6 @@ const joinChannel = async (userId: string, channelId: string) => {
   if (existingMembership)
     throw new Error("User is already a member of this channel");
 
-  // Create a new membership document
   const membership = new Membership({
     user: userId,
     channel: channelId,
@@ -90,7 +92,6 @@ const joinChannel = async (userId: string, channelId: string) => {
 };
 
 const leaveChannel = async (userId: string, channelId: string) => {
-  // Validate user ID and channel ID
   if (
     !mongoose.Types.ObjectId.isValid(userId) ||
     !mongoose.Types.ObjectId.isValid(channelId)
@@ -103,7 +104,6 @@ const leaveChannel = async (userId: string, channelId: string) => {
   const channel = await Channel.findById(channelId);
   if (!channel) throw new Error("Channel not found");
 
-  // Find the membership document
   const membership = await Membership.findOne({
     user: userId,
     channel: channelId,
@@ -111,17 +111,35 @@ const leaveChannel = async (userId: string, channelId: string) => {
 
   if (!membership) throw new Error("Membership not found");
 
-  // Remove the membership document
   await Membership.deleteOne({ _id: membership._id });
 
-  return { message: "User has left the channel" };
+  const channelMemberships = await Membership.find({ channel: channelId });
+  const shouldRemoveChannel = channelMemberships.length === 0;
+
+  if (shouldRemoveChannel) {
+    const imageBucket = await getGridFSBucket("images");
+
+    await removeAvatars(
+      imageBucket,
+      channel.avatars.map((id) => new ObjectId(id)),
+    );
+    await Channel.deleteOne({ _id: channel._id });
+  } else if (userId === channel.admin.toString() && channelMemberships[0]) {
+    channel.admin = channelMemberships[0].user;
+    await channel.save();
+  }
+
+  return {
+    isChannelRemoved: shouldRemoveChannel,
+    adminId: shouldRemoveChannel ? undefined : channel.admin,
+  };
 };
 
 const getChannelById = async (channelId: string) => {
   if (!mongoose.Types.ObjectId.isValid(channelId))
     throw new Error("Invalid channel id");
 
-  const channel = await Channel.findById(channelId);
+  const channel = await Channel.findById(channelId).populate("selectedAvatar");
 
   if (!channel) throw new Error("Channel not found");
 

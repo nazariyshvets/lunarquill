@@ -1,3 +1,5 @@
+import type { File as CustomFile } from "./File";
+
 interface Channel {
   _id: string;
   name: string;
@@ -5,8 +7,14 @@ interface Channel {
   isPrivate: boolean;
   chatTargetId: string;
   whiteboardRoomId: string;
+  selectedAvatar?: string;
+  avatars?: string[];
   createdAt: number;
   updatedAt: number;
 }
 
-export type { Channel };
+interface PopulatedChannel extends Omit<Channel, "selectedAvatar"> {
+  selectedAvatar: CustomFile;
+}
+
+export type { Channel, PopulatedChannel };

@@ -3,7 +3,14 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
-import { BiPhone, BiUserPlus, BiUserX, BiLogOut, BiCopy } from "react-icons/bi";
+import {
+  BiPhone,
+  BiUserPlus,
+  BiUserX,
+  BiLogOut,
+  BiCopy,
+  BiEdit,
+} from "react-icons/bi";
 import { Tooltip } from "react-tooltip";
 import { skipToken } from "@reduxjs/toolkit/query";
 
@@ -12,14 +19,17 @@ import Contact from "../components/Contact";
 import SimpleButton from "../components/SimpleButton";
 import Loading from "../components/Loading";
 import Modal from "./Modal";
+import AvatarUploadModal from "./AvatarUploadModal";
 import Input from "./Input";
 import useAppSelector from "../hooks/useAppSelector";
 import useRTMClient from "../hooks/useRTMClient";
 import useAuth from "../hooks/useAuth";
 import useCopyToClipboard from "../hooks/useCopyToClipboard";
+import useAvatarUpload from "../hooks/useAvatarUpload";
 import useChatConnection from "../hooks/useChatConnection";
 import {
   useCreateRequestMutation,
+  useUpdateChannelAvatarsCollectionMutation,
   useLeaveChannelMutation,
   useDisableWhiteboardRoomMutation,
   useFetchContactRelationMutation,
@@ -28,9 +38,11 @@ import {
   useGetUserByIdQuery,
 } from "../services/mainService";
 import useHandleError from "../hooks/useHandleError";
+import useDocumentTitle from "../hooks/useDocumentTitle";
 import { ChatTypeEnum } from "../types/ChatType";
 import { RequestTypeEnum } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
+import { PopulatedChannel } from "../types/Channel";
 
 interface ChatLayoutProps {
   contactName: string;
@@ -38,7 +50,7 @@ interface ChatLayoutProps {
   contactAvatarId?: string;
   chatType: ChatTypeEnum;
   chatTargetId: string | null;
-  channelId?: string;
+  channel?: PopulatedChannel;
   onCallBtnClick: () => void;
 }
 
@@ -59,7 +71,7 @@ const ChatLayout = ({
   contactAvatarId,
   chatType,
   chatTargetId,
-  channelId,
+  channel,
   onCallBtnClick,
 }: ChatLayoutProps) => {
   const { userId } = useAuth();
@@ -81,6 +93,7 @@ const ChatLayout = ({
   const [disableWhiteboardRoom] = useDisableWhiteboardRoomMutation();
   const [fetchContactRelation] = useFetchContactRelationMutation();
   const [createRequest] = useCreateRequestMutation();
+  const [updateAvatarsCollection] = useUpdateChannelAvatarsCollectionMutation();
   const [leaveChannel] = useLeaveChannelMutation();
   const [removeContact] = useRemoveContactMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
@@ -88,6 +101,21 @@ const ChatLayout = ({
   const handleError = useHandleError();
   const alert = useAlert();
   const navigate = useNavigate();
+  const {
+    modalState: editAvatarModalState,
+    handleModalOpen: handleEditAvatarModalOpen,
+    handleModalClose: handleEditAvatarModalClose,
+    handleAvatarSelect,
+    handleAvatarRemove,
+    handleAvatarUpload,
+    handleModalSaveBtnClick: handleEditAvatarModalSaveBtnClick,
+  } = useAvatarUpload({
+    selectedAvatarId: channel?.selectedAvatar?._id,
+    avatarIds: channel?.avatars ?? [],
+    updateAvatarsCollection,
+  });
+
+  useDocumentTitle(contactName);
 
   const handleModalClose = () => setModalState({ isOpen: false });
 
@@ -107,16 +135,30 @@ const ChatLayout = ({
   };
 
   const handleChannelLeave = async () => {
-    if (!userId || !chatTargetId || !channelId) {
+    if (!userId || !chatTargetId || !channel?._id) {
       alert.error("Could not leave the channel. Please try again");
       return;
     }
 
     try {
-      await Promise.all([
-        chatConnection.leaveGroup({ groupId: chatTargetId }),
-        leaveChannel({ userId, channelId }),
-      ]);
+      const chatInfo = await chatConnection.getGroupInfo({
+        groupId: chatTargetId,
+      });
+      const prevChatOwner = chatInfo?.data?.[0]?.owner;
+      const { isChannelRemoved, adminId } = await leaveChannel({
+        userId,
+        channelId: channel?._id,
+      }).unwrap();
+
+      if (isChannelRemoved) {
+        await chatConnection.destroyGroup({ groupId: chatTargetId });
+      } else if (userId === prevChatOwner && adminId) {
+        await chatConnection.changeGroupOwner({
+          groupId: chatTargetId,
+          newOwner: adminId,
+        });
+      }
+
       navigate("/profile");
       alert.success("You left the channel successfully");
     } catch (err) {
@@ -175,7 +217,7 @@ const ChatLayout = ({
   const handleInviteFormSubmit: SubmitHandler<{ contactId: string }> = async ({
     contactId,
   }) => {
-    if (!userId || !chatTargetId || !channelId) {
+    if (!userId || !chatTargetId || !channel?._id) {
       alert.error("Could not send an invite request. Please try again");
       return;
     }
@@ -186,7 +228,7 @@ const ChatLayout = ({
           from: userId,
           to: contactId,
           type: RequestTypeEnum.Invite,
-          channel: channelId,
+          channel: channel?._id,
         }).unwrap(),
         chatConnection.inviteUsersToGroup({
           groupId: chatTargetId,
@@ -217,8 +259,8 @@ const ChatLayout = ({
   const handleCopyChannelIdBtnClick = () => {
     const errorMessage = "Could not copy the channel id. Please try again";
 
-    if (channelId) {
-      copyToClipboard(channelId, "channel id").catch(() =>
+    if (channel?._id) {
+      copyToClipboard(channel?._id, "channel id").catch(() =>
         alert.error(errorMessage),
       );
     } else {
@@ -287,6 +329,15 @@ const ChatLayout = ({
                 >
                   <BiUserPlus />
                 </SimpleButton>
+                {userId && channel?.admin && userId === channel.admin && (
+                  <SimpleButton
+                    data-tooltip-id="editAvatar"
+                    data-tooltip-content="Edit avatar"
+                    onClick={handleEditAvatarModalOpen}
+                  >
+                    <BiEdit />
+                  </SimpleButton>
+                )}
                 <SimpleButton
                   isDanger
                   data-tooltip-id="leaveChannel"
@@ -301,6 +352,7 @@ const ChatLayout = ({
         </div>
 
         <Chat
+          key={chatTargetId}
           chatType={chatType}
           targetId={chatTargetId}
           localUser={localUser}
@@ -336,10 +388,23 @@ const ChatLayout = ({
           </Modal>
         )}
 
+        {editAvatarModalState.isOpen && (
+          <AvatarUploadModal
+            avatars={editAvatarModalState.avatars}
+            selectedAvatarId={editAvatarModalState.selectedAvatarId}
+            onAvatarSelect={handleAvatarSelect}
+            onAvatarRemove={handleAvatarRemove}
+            onAvatarUpload={handleAvatarUpload}
+            onCancel={handleEditAvatarModalClose}
+            onSave={() => handleEditAvatarModalSaveBtnClick(channel?._id)}
+          />
+        )}
+
         <Tooltip id="call" />
         <Tooltip id="removeContact" />
         <Tooltip id="copyChannelId" />
         <Tooltip id="inviteUser" />
+        <Tooltip id="editAvatar" />
         <Tooltip id="leaveChannel" />
       </div>
     )

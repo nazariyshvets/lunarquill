@@ -1,11 +1,10 @@
 import { Request, Response } from "express";
-import { MongoClient, GridFSBucket, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import archiver from "archiver";
 
 import { uploadFile } from "../middleware/uploadFile";
+import { getGridFSBucket } from "../db";
 import File from "../models/File";
-
-const mongoClient = new MongoClient(process.env.DB_URL!);
 
 const uploadFileController = async (req: Request, res: Response) => {
   await uploadFile(req, res);
@@ -25,15 +24,7 @@ const downloadFileController = async (req: Request, res: Response) => {
   if (!fileId) throw new Error("File id is required");
   if (!ObjectId.isValid(fileId)) throw new Error("Invalid file id");
 
-  await mongoClient.connect();
-  res.on("close", () => {
-    mongoClient.close();
-  });
-
-  const database = mongoClient.db();
-  const imageBucket = new GridFSBucket(database, {
-    bucketName: "images",
-  });
+  const imageBucket = await getGridFSBucket("images");
   const downloadStream = imageBucket.openDownloadStream(new ObjectId(fileId));
 
   downloadStream.on("file", (file) => {
@@ -67,15 +58,7 @@ const downloadFilesController = async (req: Request, res: Response) => {
     throw new Error(`Invalid file ids: ${invalidIds.join(", ")}`);
   }
 
-  await mongoClient.connect();
-  res.on("close", () => {
-    mongoClient.close();
-  });
-
-  const database = mongoClient.db();
-  const imageBucket = new GridFSBucket(database, {
-    bucketName: "images",
-  });
+  const imageBucket = await getGridFSBucket("images");
   const archive = archiver("zip", {
     zlib: { level: 9 },
   });
@@ -108,15 +91,7 @@ const removeFileController = async (req: Request, res: Response) => {
   if (!fileId) throw new Error("File id is required");
   if (!ObjectId.isValid(fileId)) throw new Error("Invalid file id");
 
-  await mongoClient.connect();
-  res.on("close", () => {
-    mongoClient.close();
-  });
-
-  const database = mongoClient.db();
-  const imageBucket = new GridFSBucket(database, {
-    bucketName: "images",
-  });
+  const imageBucket = await getGridFSBucket("images");
 
   await imageBucket.delete(new ObjectId(fileId));
 
