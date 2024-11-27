@@ -6,6 +6,7 @@ import {
   joinChannel,
   leaveChannel,
   getChannelById,
+  getChannelMembers,
 } from "../services/channel";
 
 const createChannelController = async (req: Request, res: Response) => {
@@ -79,10 +80,21 @@ const getChannelByIdController = async (req: Request, res: Response) => {
   return res.status(200).json(channel);
 };
 
+const getChannelMembersController = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) throw new Error("Channel id is required");
+
+  const channelMembers = await getChannelMembers(id);
+
+  return res.status(200).json(channelMembers);
+};
+
 export {
   createChannelController,
   searchChannelsController,
   joinChannelController,
   leaveChannelController,
   getChannelByIdController,
+  getChannelMembersController,
 };

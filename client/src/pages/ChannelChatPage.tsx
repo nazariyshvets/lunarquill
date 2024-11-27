@@ -1,7 +1,14 @@
 import { useState, useRef } from "react";
 
 import { Tooltip } from "react-tooltip";
-import { BiCopy, BiEdit, BiLogOut, BiPhone, BiUserPlus } from "react-icons/bi";
+import {
+  BiCopy,
+  BiEdit,
+  BiLogOut,
+  BiPhone,
+  BiUserPlus,
+  BiGroup,
+} from "react-icons/bi";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
@@ -16,12 +23,14 @@ import Modal from "../components/Modal";
 import AvatarUploadModal from "../components/AvatarUploadModal";
 import {
   useGetUserByIdQuery,
+  useGetUserContactsQuery,
   useCreateRequestMutation,
   useDisableWhiteboardRoomMutation,
   useFetchWhiteboardSdkTokenMutation,
   useGetChannelByIdQuery,
   useLeaveChannelMutation,
   useUpdateChannelAvatarsCollectionMutation,
+  useGetChannelMembersQuery,
 } from "../services/mainService";
 import useAvatarUpload from "../hooks/useAvatarUpload";
 import useAuth from "../hooks/useAuth";
@@ -31,12 +40,15 @@ import useCopyToClipboard from "../hooks/useCopyToClipboard";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useRTMClient from "../hooks/useRTMClient";
 import useAppSelector from "../hooks/useAppSelector";
+import useAddContact from "../hooks/useAddContact";
 import { RequestTypeEnum } from "../types/Request";
 import { ChatTypeEnum } from "../types/ChatType";
 import PeerMessage from "../types/PeerMessage";
+import { UserWithoutPassword } from "../types/User";
 
 enum ModalAction {
   InviteUser = "inviteUser",
+  ViewMembers = "viewMembers",
   LeaveChannel = "leaveChannel",
 }
 
@@ -58,6 +70,10 @@ const ChannelChatPage = () => {
   const { userId } = useAuth();
   const { data: localUser } = useGetUserByIdQuery(userId ?? skipToken);
   const { data: channel } = useGetChannelByIdQuery(id ?? skipToken);
+  const { data: channelMembers = [] } = useGetChannelMembersQuery(
+    id ?? skipToken,
+  );
+  const { data: contacts = [] } = useGetUserContactsQuery(userId ?? skipToken);
 
   const RTMClient = useRTMClient();
   const isChatInitialized = useAppSelector(
@@ -68,6 +84,7 @@ const ChannelChatPage = () => {
   const alert = useAlert();
   const copyToClipboard = useCopyToClipboard();
   const handleError = useHandleError();
+  const addContact = useAddContact();
 
   const [createRequest] = useCreateRequestMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
@@ -155,10 +172,13 @@ const ChannelChatPage = () => {
         groupId: chatTargetId,
       });
       const prevChatOwner = chatInfo?.data?.[0]?.owner;
-      const { isChannelRemoved, adminId } = await leaveChannel({
-        userId,
-        channelId,
-      }).unwrap();
+      const [{ isChannelRemoved, adminId }] = await Promise.all([
+        leaveChannel({
+          userId,
+          channelId,
+        }).unwrap(),
+        chatConnection.leaveGroup({ groupId: chatTargetId }),
+      ]);
 
       if (isChannelRemoved) {
         const { token: whiteboardSdkToken } =
@@ -189,6 +209,31 @@ const ChannelChatPage = () => {
     }
   };
 
+  const handleContactAdd = async (contactId: string) => {
+    try {
+      await addContact(contactId);
+    } catch (error) {
+      error instanceof Error
+        ? alert.error(error.message)
+        : typeof error === "string" && alert.error(error);
+      console.error("Error sending a contact request:", error);
+    }
+  };
+
+  const channelMembersSorter = (
+    a: UserWithoutPassword,
+    b: UserWithoutPassword,
+  ) =>
+    a._id === userId
+      ? -1
+      : b._id === userId
+        ? 1
+        : a.isOnline && !b.isOnline
+          ? -1
+          : !a.isOnline && b.isOnline
+            ? 1
+            : 0;
+
   const handleModalClose = () => setModalState({ isOpen: false });
 
   const handleModalSave = async (action: ModalAction) => {
@@ -200,6 +245,9 @@ const ChannelChatPage = () => {
         break;
       case ModalAction.LeaveChannel:
         await handleChannelLeave();
+        break;
+      case ModalAction.ViewMembers:
+        handleModalClose();
     }
   };
 
@@ -207,6 +255,12 @@ const ChannelChatPage = () => {
     setModalState({
       isOpen: true,
       action: ModalAction.InviteUser,
+    });
+
+  const handleViewMembersBtnClick = () =>
+    setModalState({
+      isOpen: true,
+      action: ModalAction.ViewMembers,
     });
 
   const handleLeaveChannelBtnClick = () =>
@@ -252,6 +306,13 @@ const ChannelChatPage = () => {
             >
               <BiUserPlus />
             </SimpleButton>
+            <SimpleButton
+              data-tooltip-id="viewMembers"
+              data-tooltip-content="View members list"
+              onClick={handleViewMembersBtnClick}
+            >
+              <BiGroup />
+            </SimpleButton>
             {userId && channel?.admin && userId === channel.admin && (
               <SimpleButton
                 data-tooltip-id="editAvatar"
@@ -284,12 +345,15 @@ const ChannelChatPage = () => {
             title={
               modalAction === ModalAction.InviteUser
                 ? "Enter user's id"
-                : "Are you sure you want to leave this channel"
+                : modalAction === ModalAction.ViewMembers
+                  ? "Members list"
+                  : "Are you sure you want to leave this channel"
             }
+            displayButtons={modalAction !== ModalAction.ViewMembers}
             onCancel={handleModalClose}
             onSave={() => handleModalSave(modalAction)}
           >
-            {modalAction === ModalAction.InviteUser && (
+            {modalAction === ModalAction.InviteUser ? (
               <form
                 ref={inviteFormRef}
                 method="POST"
@@ -303,6 +367,38 @@ const ChannelChatPage = () => {
                   required
                 />
               </form>
+            ) : (
+              modalAction === ModalAction.ViewMembers && (
+                <div className="flex flex-col gap-2">
+                  {[...channelMembers]
+                    .sort(channelMembersSorter)
+                    .map((member) => (
+                      <div
+                        key={member._id}
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <Contact
+                          name={member._id === userId ? "You" : member.username}
+                          isOnline={member.isOnline}
+                          avatarId={member.selectedAvatar}
+                        />
+
+                        {member._id !== userId &&
+                          !contacts.some(
+                            (contact) => contact._id === member._id,
+                          ) && (
+                            <SimpleButton
+                              data-tooltip-id="addUserToContacts"
+                              data-tooltip-content="Add to contacts"
+                              onClick={() => handleContactAdd(member._id)}
+                            >
+                              <BiUserPlus />
+                            </SimpleButton>
+                          )}
+                      </div>
+                    ))}
+                </div>
+              )
             )}
           </Modal>
         )}
@@ -322,8 +418,10 @@ const ChannelChatPage = () => {
         <Tooltip id="call" />
         <Tooltip id="copyChannelId" />
         <Tooltip id="inviteUser" />
+        <Tooltip id="viewMembers" />
         <Tooltip id="editAvatar" />
         <Tooltip id="leaveChannel" />
+        <Tooltip id="addUserToContacts" />
       </div>
     )
   );

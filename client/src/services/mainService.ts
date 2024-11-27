@@ -170,10 +170,15 @@ export const mainApi = createApi({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: [
-        QUERY_TAG_TYPES.USER_REQUESTS,
-        QUERY_TAG_TYPES.USER_CHANNELS,
-      ],
+      invalidatesTags: (response, _, request) =>
+        response
+          ? [
+              QUERY_TAG_TYPES.USER_REQUESTS,
+              ...(request.type === "join" && !response.channel?.isPrivate
+                ? [QUERY_TAG_TYPES.USER_CHANNELS]
+                : []),
+            ]
+          : [],
     }),
     getUserRequests: builder.query<PopulatedRequest[], string>({
       query: (uid) => `/requests/user-requests/${uid}`,
@@ -270,6 +275,12 @@ export const mainApi = createApi({
         QUERY_TAG_TYPES.CHANNEL,
       ]),
     ),
+    getChannelMembers: builder.query<UserWithoutPassword[], string>({
+      query: (channelId) => ({
+        url: `/channels/${channelId}/members`,
+        method: "GET",
+      }),
+    }),
 
     //   ===== CONTACTS =====
 
@@ -432,6 +443,7 @@ export const {
   useGetChannelByIdQuery,
   useFetchChannelByIdMutation,
   useUpdateChannelAvatarsCollectionMutation,
+  useGetChannelMembersQuery,
   // CONTACTS
   useGetContactRelationQuery,
   useFetchContactRelationMutation,

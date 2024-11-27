@@ -75,7 +75,7 @@ const Sidebar = ({
       <TabPanel>
         {contacts && contacts.length > 0 ? (
           <div className="flex flex-col gap-2">
-            {contacts
+            {[...contacts]
               .sort((a, b) => (b.isOnline ? 1 : -1) - (a.isOnline ? 1 : -1))
               .map((contact) => (
                 <Link key={contact._id} to={`/contacts/${contact._id}/chat`}>

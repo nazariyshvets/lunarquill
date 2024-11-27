@@ -108,7 +108,14 @@ const RequestsPage = () => {
   const handleRequestDecline = async (request: PopulatedRequest) => {
     const chatTargetId = request.channel?.chatTargetId;
 
-    if (!userId || !chatTargetId) return;
+    if (
+      !userId ||
+      ((request.type === RequestTypeEnum.Join ||
+        request.type === RequestTypeEnum.Invite) &&
+        !chatTargetId)
+    ) {
+      return;
+    }
 
     try {
       await Promise.all([
@@ -153,8 +160,9 @@ const RequestsPage = () => {
       ((request.type === RequestTypeEnum.Join ||
         request.type === RequestTypeEnum.Invite) &&
         !channelChatId)
-    )
+    ) {
       return;
+    }
 
     try {
       let whiteboardRoomId: string | undefined;

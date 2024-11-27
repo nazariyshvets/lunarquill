@@ -1,49 +1,16 @@
 import { SubmitHandler } from "react-hook-form";
-import { useAlert } from "react-alert";
 
 import ContactAdditionForm from "../components/ContactAdditionForm";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import useAuth from "../hooks/useAuth";
-import useRTMClient from "../hooks/useRTMClient";
-import { useCreateRequestMutation } from "../services/mainService";
-import getErrorMessage from "../utils/getErrorMessage";
-import { RequestTypeEnum } from "../types/Request";
-import PeerMessage from "../types/PeerMessage";
+import useAddContact from "../hooks/useAddContact";
 
 const ContactAdditionPage = () => {
-  const [createRequest] = useCreateRequestMutation();
-  const { userId } = useAuth();
-  const RTMClient = useRTMClient();
-  const alert = useAlert();
+  const addContact = useAddContact();
 
   useDocumentTitle("Add a contact");
 
-  const handleSubmit: SubmitHandler<{ contactId: string }> = async ({
-    contactId,
-  }) => {
-    if (!userId) return;
-
-    try {
-      await createRequest({
-        from: userId,
-        to: contactId,
-        type: RequestTypeEnum.Contact,
-      }).unwrap();
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.RequestCreated },
-        contactId,
-      );
-      alert.success("Request created successfully!");
-    } catch (err) {
-      throw new Error(
-        getErrorMessage({
-          error: err,
-          defaultErrorMessage:
-            "Could not send a contact request. Please try again",
-        }),
-      );
-    }
-  };
+  const handleSubmit: SubmitHandler<{ contactId: string }> = ({ contactId }) =>
+    addContact(contactId);
 
   return (
     <div className="flex h-full w-full flex-col justify-center gap-12">
