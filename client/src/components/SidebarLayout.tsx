@@ -9,10 +9,10 @@ import Sidebar from "./Sidebar";
 import SimpleButton from "./SimpleButton";
 import {
   useGetUserByIdQuery,
-  useGetUserRequestsQuery,
   useGetUserContactsQuery,
   useGetUserChannelsQuery,
-} from "../services/mainService";
+  useGetUserRequestsQuery,
+} from "../services/userApi";
 import useAuth from "../hooks/useAuth";
 
 const SidebarLayout = () => {

@@ -5,7 +5,7 @@ import User from "../models/User";
 import Channel from "../models/Channel";
 import Membership from "../models/Membership";
 import Contact from "../models/Contact";
-import { RequestTypeEnum } from "../types/RequestType";
+import { RequestType } from "../types/RequestType";
 
 const createRequest = async (
   from: string,
@@ -21,14 +21,13 @@ const createRequest = async (
   if (!fromUser) throw new Error("User 'from' not found");
 
   // Validate the request type
-  if (!Object.values(RequestTypeEnum).includes(type as RequestTypeEnum))
+  if (!Object.values(RequestType).includes(type as RequestType))
     throw new Error("Invalid request type");
 
-  if (type === RequestTypeEnum.Join) return handleJoinRequest(from, channelId);
-  else if (type === RequestTypeEnum.Invite)
+  if (type === RequestType.Join) return handleJoinRequest(from, channelId);
+  else if (type === RequestType.Invite)
     return handleInviteRequest(from, to, channelId);
-  else if (type === RequestTypeEnum.Contact)
-    return handleContactRequest(from, to);
+  else if (type === RequestType.Contact) return handleContactRequest(from, to);
   else throw new Error("Invalid request type");
 };
 
@@ -43,7 +42,7 @@ const handleJoinRequest = async (from: string, channelId?: string) => {
 
   // Check if a join request already exists
   const existingRequest = await Request.findOne({
-    type: RequestTypeEnum.Join,
+    type: RequestType.Join,
     from,
     channel: channel._id,
   });
@@ -81,7 +80,7 @@ const handleJoinRequest = async (from: string, channelId?: string) => {
     const request = new Request({
       from,
       to: toUser._id,
-      type: RequestTypeEnum.Join,
+      type: RequestType.Join,
       channel: channel._id,
     });
 
@@ -117,7 +116,7 @@ const handleInviteRequest = async (
   const existingRequest = await Request.findOne({
     from,
     to: toUser._id,
-    type: RequestTypeEnum.Invite,
+    type: RequestType.Invite,
     channel: channel._id,
   });
 
@@ -135,7 +134,7 @@ const handleInviteRequest = async (
   const request = new Request({
     from,
     to: toUser._id,
-    type: RequestTypeEnum.Invite,
+    type: RequestType.Invite,
     channel: channel._id,
   });
 
@@ -162,7 +161,7 @@ const handleContactRequest = async (from: string, to: string | null) => {
 
   // Check if a request between the users already exists
   const existingRequest = await Request.findOne({
-    type: RequestTypeEnum.Contact,
+    type: RequestType.Contact,
     $or: [
       { from, to: toUser._id },
       { from: toUser._id, to: from },
@@ -186,7 +185,7 @@ const handleContactRequest = async (from: string, to: string | null) => {
   const request = new Request({
     from,
     to: toUser._id,
-    type: RequestTypeEnum.Contact,
+    type: RequestType.Contact,
   });
 
   await request.save();
@@ -196,18 +195,6 @@ const handleContactRequest = async (from: string, to: string | null) => {
   await request.populate("to", "-password");
 
   return request;
-};
-
-const getUserRequests = (userId: string) => {
-  if (!mongoose.Types.ObjectId.isValid(userId))
-    throw new Error("Invalid user ID");
-
-  return Request.find({
-    $or: [{ from: userId }, { to: userId }],
-  })
-    .populate("from", "-password")
-    .populate("to", "-password")
-    .populate("channel");
 };
 
 const declineRequest = async (requestId: string, userId: string) => {
@@ -233,7 +220,7 @@ const acceptRequest = async (
   if (request.from.toString() !== userId && request.to.toString() !== userId)
     throw new Error("Unauthorized to accept this request");
 
-  if (request.type === RequestTypeEnum.Contact && !whiteboardRoomId)
+  if (request.type === RequestType.Contact && !whiteboardRoomId)
     throw new Error("Whiteboard id is required for creating a contact");
 
   // Start a session for atomic updates
@@ -242,7 +229,7 @@ const acceptRequest = async (
 
   try {
     switch (request.type) {
-      case RequestTypeEnum.Contact:
+      case RequestType.Contact:
         const [user1, user2] =
           request.from < request.to
             ? [request.from, request.to]
@@ -253,14 +240,14 @@ const acceptRequest = async (
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
         break;
-      case RequestTypeEnum.Invite:
+      case RequestType.Invite:
         await Membership.findOneAndUpdate(
           { user: request.to, channel: request.channel },
           {},
           { upsert: true, new: true, setDefaultsOnInsert: true },
         );
         break;
-      case RequestTypeEnum.Join:
+      case RequestType.Join:
         await Membership.findOneAndUpdate(
           { user: request.from, channel: request.channel },
           {},
@@ -276,7 +263,7 @@ const acceptRequest = async (
     await session.commitTransaction();
     await session.endSession();
 
-    return { success: true };
+    return request;
   } catch (err) {
     // Rollback the transaction in case of error
     await session.abortTransaction();
@@ -285,4 +272,4 @@ const acceptRequest = async (
   }
 };
 
-export { createRequest, getUserRequests, declineRequest, acceptRequest };
+export { createRequest, declineRequest, acceptRequest };

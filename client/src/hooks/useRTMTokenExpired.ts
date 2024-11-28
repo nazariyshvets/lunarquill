@@ -4,7 +4,7 @@ import { RtmClient } from "agora-rtm-react";
 import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
-import { useFetchRTMTokenMutation } from "../services/mainService";
+import { useFetchRTMTokenMutation } from "../services/tokenApi";
 
 const useRTMTokenExpired = (client: RtmClient) => {
   const { userId } = useAuth();

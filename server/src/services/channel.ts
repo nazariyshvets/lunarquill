@@ -146,10 +146,26 @@ const getChannelById = async (channelId: string) => {
   return channel;
 };
 
+const getChannelMembers = async (channelId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(channelId)) {
+    throw new Error("Invalid channel id");
+  }
+
+  const channelMemberships = await Membership.find({
+    channel: channelId,
+  }).populate({
+    path: "user",
+    select: "-password",
+  });
+
+  return channelMemberships.map((membership) => membership.user);
+};
+
 export {
   createChannel,
   searchChannels,
   joinChannel,
   leaveChannel,
   getChannelById,
+  getChannelMembers,
 };

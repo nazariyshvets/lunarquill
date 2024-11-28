@@ -12,19 +12,19 @@ import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAuth from "../hooks/useAuth";
 import useRTMClient from "../hooks/useRTMClient";
 import useChatConnection from "../hooks/useChatConnection";
+import { useGetUserChannelsQuery } from "../services/userApi";
+import { useCreateRequestMutation } from "../services/requestApi";
 import {
-  useGetUserChannelsQuery,
   useCreateChannelMutation,
   useSearchChannelsMutation,
   useJoinChannelMutation,
-  useCreateRequestMutation,
   useFetchChannelByIdMutation,
-  useCreateWhiteboardRoomMutation,
-  useFetchWhiteboardSdkTokenMutation,
-} from "../services/mainService";
+} from "../services/channelApi";
+import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
+import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
 import useHandleError from "../hooks/useHandleError";
 import getErrorMessage from "../utils/getErrorMessage";
-import { RequestTypeEnum } from "../types/Request";
+import { RequestType } from "../types/Request";
 import type { PopulatedChannel } from "../types/Channel";
 import PeerMessage from "../types/PeerMessage";
 
@@ -82,7 +82,7 @@ const ChannelAdditionPage = () => {
         createRequest({
           from: userId,
           to: null,
-          type: RequestTypeEnum.Join,
+          type: RequestType.Join,
           channel: channel._id,
         }).unwrap(),
         chatConnection.joinGroup({

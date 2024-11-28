@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 
 import {
   createRequest,
-  getUserRequests,
   declineRequest,
   acceptRequest,
 } from "../services/request";
@@ -15,16 +14,6 @@ const createRequestController = async (req: Request, res: Response) => {
   const request = await createRequest(from, to ?? null, type, channel);
 
   return res.status(201).json(request);
-};
-
-const getUserRequestsController = async (req: Request, res: Response) => {
-  const { uid } = req.params;
-
-  if (!uid) throw new Error("User id is required");
-
-  const requests = await getUserRequests(uid);
-
-  return res.json(requests);
 };
 
 const declineRequestController = async (req: Request, res: Response) => {
@@ -49,7 +38,6 @@ const acceptRequestController = async (req: Request, res: Response) => {
 
 export {
   createRequestController,
-  getUserRequestsController,
   declineRequestController,
   acceptRequestController,
 };

@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb";
 import {
   getUserContacts,
   getUserChannels,
+  getUserRequests,
   getUserById,
   updateUserById,
   removeAvatars,
@@ -11,7 +12,7 @@ import {
 } from "../services/user";
 import { getGridFSBucket } from "../db";
 import capitalize from "../utils/capitalize";
-import ProfileAvatarsUpdateRequestPayload from "../types/ProfileAvatarsUpdateRequestPayload";
+import AvatarsUpdateRequestPayload from "../types/AvatarsUpdateRequestPayload";
 import File from "../models/File";
 
 const getUserContactsController = async (req: Request, res: Response) => {
@@ -32,6 +33,16 @@ const getUserChannelsController = async (req: Request, res: Response) => {
   const channels = await getUserChannels(userId);
 
   return res.status(200).json(channels);
+};
+
+const getUserRequestsController = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  if (!userId) throw new Error("User id is required");
+
+  const requests = await getUserRequests(userId);
+
+  return res.json(requests);
 };
 
 const getUserByIdController = async (req: Request, res: Response) => {
@@ -65,7 +76,7 @@ const updateAvatarsCollectionController = async (
     removedAvatarIds = [],
     newAvatarIds = [],
     selectedAvatarId,
-  }: ProfileAvatarsUpdateRequestPayload = req.body;
+  }: AvatarsUpdateRequestPayload = req.body;
 
   if (!id) {
     throw new Error(`${capitalize(type)} id is required`);
@@ -125,6 +136,7 @@ const updateAvatarsCollectionController = async (
 export {
   getUserContactsController,
   getUserChannelsController,
+  getUserRequestsController,
   getUserByIdController,
   updateUserByIdController,
   updateAvatarsCollectionController,

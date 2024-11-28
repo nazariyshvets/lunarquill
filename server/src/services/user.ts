@@ -6,6 +6,7 @@ import User, { IUser } from "../models/User";
 import Channel from "../models/Channel";
 import Membership from "../models/Membership";
 import Contact from "../models/Contact";
+import Request from "../models/Request";
 
 const getUserContacts = async (userId: string) => {
   if (!mongoose.Types.ObjectId.isValid(userId))
@@ -41,6 +42,19 @@ const getUserChannels = async (userId: string) => {
   const channelIds = memberships.map((membership) => membership.channel);
 
   return Channel.find({ _id: { $in: channelIds } }).populate("selectedAvatar");
+};
+
+const getUserRequests = (userId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user Id");
+  }
+
+  return Request.find({
+    $or: [{ from: userId }, { to: userId }],
+  })
+    .populate("from", "-password")
+    .populate("to", "-password")
+    .populate("channel");
 };
 
 const getUserById = async (userId: string) => {
@@ -133,6 +147,7 @@ const updateAvatarsCollection = async (
 export {
   getUserContacts,
   getUserChannels,
+  getUserRequests,
   getUserById,
   updateUserById,
   removeAvatars,

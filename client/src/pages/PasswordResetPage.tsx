@@ -7,7 +7,7 @@ import { FaLock } from "react-icons/fa6";
 import GuestPage from "./GuestPage";
 import InputWithIcon from "../components/InputWithIcon";
 import Button from "../components/Button";
-import { useResetPasswordMutation } from "../services/mainService";
+import { useResetPasswordMutation } from "../services/authApi";
 import isFetchBaseQueryError from "../utils/isFetchBaseQueryError";
 import isErrorWithMessage from "../utils/isErrorWithMessage";
 

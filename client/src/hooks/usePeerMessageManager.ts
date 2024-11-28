@@ -10,11 +10,9 @@ import useAppSelector from "./useAppSelector";
 import useAuth from "./useAuth";
 import useChatConnection from "./useChatConnection";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
-import {
-  mainApi,
-  useFetchUserByIdMutation,
-  useFetchContactRelationMutation,
-} from "../services/mainService";
+import { useFetchUserByIdMutation } from "../services/userApi";
+import { useFetchContactRelationMutation } from "../services/contactApi";
+import { useInvalidateTags } from "../services/mutationHelpers";
 import { QUERY_TAG_TYPES } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
@@ -22,6 +20,7 @@ import { ChatTypeEnum } from "../types/ChatType";
 
 const usePeerMessageManager = () => {
   const { userId } = useAuth();
+  const localUserId = userId ?? undefined;
 
   const [fetchUser] = useFetchUserByIdMutation();
   const [fetchContactRelation] = useFetchContactRelationMutation();
@@ -32,6 +31,7 @@ const usePeerMessageManager = () => {
   const callTimeout = useAppSelector((state) => state.rtm.callTimeout);
   const navigate = useNavigate();
   const alert = useAlert();
+  const invalidateTags = useInvalidateTags();
 
   const clearCallTimeout = useCallback(() => {
     if (callTimeout) {
@@ -66,22 +66,22 @@ const usePeerMessageManager = () => {
             alert.info("The call was declined");
             break;
           case PeerMessage.CallAccepted:
-            try {
-              const contact = await fetchContactRelation({
-                userId1: userId ?? "",
-                userId2: peerId,
-              }).unwrap();
+            if (localUserId) {
+              try {
+                const contact = await fetchContactRelation({
+                  userId1: localUserId,
+                  userId2: peerId,
+                }).unwrap();
 
-              dispatch(setCallModalState(null));
-              clearCallTimeout();
-              navigate(`/contacts/${contact._id}/call`);
-            } catch (err) {
-              console.error("Error fetching contact relation data:", err);
+                dispatch(setCallModalState(null));
+                clearCallTimeout();
+                navigate(`/contacts/${contact._id}/call`);
+              } catch (err) {
+                console.error("Error fetching contact relation data:", err);
+              }
             }
             break;
           case PeerMessage.CallRecalled:
-            dispatch(setCallModalState(null));
-            break;
           case PeerMessage.CallTimedOut:
             dispatch(setCallModalState(null));
             break;
@@ -92,31 +92,43 @@ const usePeerMessageManager = () => {
           case PeerMessage.RequestDeclined:
           case PeerMessage.RequestRecalled:
           case PeerMessage.InviteRequestAccepted:
-            dispatch(
-              mainApi.util?.invalidateTags([QUERY_TAG_TYPES.USER_REQUESTS]),
-            );
+            invalidateTags([
+              {
+                type: QUERY_TAG_TYPES.USER_REQUESTS,
+                id: localUserId,
+              },
+            ]);
             break;
           case PeerMessage.ContactRequestAccepted:
-            dispatch(
-              mainApi.util?.invalidateTags([
-                QUERY_TAG_TYPES.USER_REQUESTS,
+            invalidateTags(
+              [
                 QUERY_TAG_TYPES.USER_CONTACTS,
-              ]),
+                QUERY_TAG_TYPES.USER_REQUESTS,
+              ].map((type) => ({
+                type,
+                id: localUserId,
+              })),
             );
             break;
           case PeerMessage.JoinRequestAccepted:
-            dispatch(
-              mainApi.util?.invalidateTags([
-                QUERY_TAG_TYPES.USER_REQUESTS,
+            invalidateTags(
+              [
                 QUERY_TAG_TYPES.USER_CHANNELS,
-              ]),
+                QUERY_TAG_TYPES.USER_REQUESTS,
+              ].map((type) => ({
+                type,
+                id: localUserId,
+              })),
             );
             break;
           case PeerMessage.UserWentOnline:
           case PeerMessage.UserWentOffline:
-            dispatch(
-              mainApi.util?.invalidateTags([QUERY_TAG_TYPES.USER_CONTACTS]),
-            );
+            invalidateTags([
+              {
+                type: QUERY_TAG_TYPES.USER_CONTACTS,
+                id: localUserId,
+              },
+            ]);
             break;
           case PeerMessage.ContactRemoved:
             chatConnection.deleteConversation({
@@ -125,9 +137,12 @@ const usePeerMessageManager = () => {
               deleteRoam: true,
             });
             navigate("/profile");
-            dispatch(
-              mainApi.util?.invalidateTags([QUERY_TAG_TYPES.USER_CONTACTS]),
-            );
+            invalidateTags([
+              {
+                type: QUERY_TAG_TYPES.USER_CONTACTS,
+                id: localUserId,
+              },
+            ]);
         }
       }
     };
@@ -138,7 +153,7 @@ const usePeerMessageManager = () => {
       RTMClient.off("MessageFromPeer", messageHandler);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [RTMClient, userId, clearCallTimeout]);
+  }, [RTMClient, localUserId, clearCallTimeout]);
 };
 
 export default usePeerMessageManager;

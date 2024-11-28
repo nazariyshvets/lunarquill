@@ -101,6 +101,10 @@
   display: block;
 }
 
+.react-tooltip {
+  z-index: 9001;
+}
+
 @media screen and (max-width: 640px) {
   .react-tabs__tab {
     font-size: 14px;

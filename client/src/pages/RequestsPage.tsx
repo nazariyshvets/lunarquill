@@ -12,16 +12,16 @@ import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAuth from "../hooks/useAuth";
 import useChatConnection from "../hooks/useChatConnection";
 import useRTMClient from "../hooks/useRTMClient";
+import { useGetUserRequestsQuery } from "../services/userApi";
 import {
   useAcceptRequestMutation,
   useDeclineRequestMutation,
-  useGetUserRequestsQuery,
-  useCreateWhiteboardRoomMutation,
-  useFetchWhiteboardSdkTokenMutation,
-} from "../services/mainService";
+} from "../services/requestApi";
+import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
+import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
 import type { PopulatedRequest } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
-import { RequestTypeEnum } from "../types/Request";
+import { RequestType } from "../types/Request";
 
 enum RequestAction {
   Recall = "recall",
@@ -108,7 +108,14 @@ const RequestsPage = () => {
   const handleRequestDecline = async (request: PopulatedRequest) => {
     const chatTargetId = request.channel?.chatTargetId;
 
-    if (!userId || !chatTargetId) return;
+    if (
+      !userId ||
+      ((request.type === RequestType.Join ||
+        request.type === RequestType.Invite) &&
+        !chatTargetId)
+    ) {
+      return;
+    }
 
     try {
       await Promise.all([
@@ -116,7 +123,7 @@ const RequestsPage = () => {
           requestId: request._id,
           uid: userId,
         }).unwrap(),
-        ...(request.type === RequestTypeEnum.Join
+        ...(request.type === RequestType.Join
           ? [
               await chatConnection.rejectGroupJoinRequest({
                 applicant: request.from._id,
@@ -125,7 +132,7 @@ const RequestsPage = () => {
               }),
             ]
           : []),
-        ...(request.type === RequestTypeEnum.Invite
+        ...(request.type === RequestType.Invite
           ? [
               await chatConnection.rejectGroupInvite({
                 invitee: request.to._id,
@@ -150,16 +157,17 @@ const RequestsPage = () => {
 
     if (
       !userId ||
-      ((request.type === RequestTypeEnum.Join ||
-        request.type === RequestTypeEnum.Invite) &&
+      ((request.type === RequestType.Join ||
+        request.type === RequestType.Invite) &&
         !channelChatId)
-    )
+    ) {
       return;
+    }
 
     try {
       let whiteboardRoomId: string | undefined;
 
-      if (request.type === RequestTypeEnum.Contact) {
+      if (request.type === RequestType.Contact) {
         const { token: whiteboardSdkToken } =
           await fetchWhiteboardSdkToken().unwrap();
 
@@ -173,11 +181,10 @@ const RequestsPage = () => {
         acceptRequest({
           requestId: request._id,
           uid: userId,
-          whiteboardRoomId: RequestTypeEnum.Contact
-            ? whiteboardRoomId
-            : undefined,
+          whiteboardRoomId:
+            request.type === RequestType.Contact ? whiteboardRoomId : undefined,
         }).unwrap(),
-        ...(request.type === RequestTypeEnum.Join && channelChatId
+        ...(request.type === RequestType.Join
           ? [
               await chatConnection.acceptGroupJoinRequest({
                 applicant: request.from._id,
@@ -185,7 +192,7 @@ const RequestsPage = () => {
               }),
             ]
           : []),
-        ...(request.type === RequestTypeEnum.Invite && channelChatId
+        ...(request.type === RequestType.Invite
           ? [
               await chatConnection.acceptGroupInvite({
                 invitee: request.to._id,
@@ -197,9 +204,9 @@ const RequestsPage = () => {
       await RTMClient.sendMessageToPeer(
         {
           text:
-            request.type === RequestTypeEnum.Contact
+            request.type === RequestType.Contact
               ? PeerMessage.ContactRequestAccepted
-              : request.type === RequestTypeEnum.Join
+              : request.type === RequestType.Join
                 ? PeerMessage.JoinRequestAccepted
                 : PeerMessage.InviteRequestAccepted,
         },
@@ -263,12 +270,12 @@ const RequestsPage = () => {
                   type={request.type}
                   context="outbox"
                   username={
-                    request.type === RequestTypeEnum.Join
+                    request.type === RequestType.Join
                       ? request.channel?.name ?? "Unknown"
                       : request.to.username
                   }
                   userAvatarId={
-                    request.type === RequestTypeEnum.Join
+                    request.type === RequestType.Join
                       ? request.channel?.selectedAvatar
                       : request.to.selectedAvatar
                   }

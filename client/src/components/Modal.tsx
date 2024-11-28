@@ -6,6 +6,7 @@ import useClickOutside from "../hooks/useClickOutside";
 
 interface ModalProps {
   title: string;
+  displayButtons?: boolean;
   cancelBtnText?: string;
   saveBtnText?: string;
   onCancel: () => void;
@@ -14,6 +15,7 @@ interface ModalProps {
 
 const Modal = ({
   title,
+  displayButtons = true,
   cancelBtnText = "Cancel",
   saveBtnText = "Save",
   children,
@@ -39,10 +41,12 @@ const Modal = ({
 
         <div className="overflow-auto">{children}</div>
 
-        <div className="flex gap-2 self-end">
-          <Button onClick={onCancel}>{cancelBtnText}</Button>
-          <Button onClick={onSave}>{saveBtnText}</Button>
-        </div>
+        {displayButtons && (
+          <div className="flex gap-2 self-end">
+            <Button onClick={onCancel}>{cancelBtnText}</Button>
+            <Button onClick={onSave}>{saveBtnText}</Button>
+          </div>
+        )}
       </div>
     </BaseModal>
   );

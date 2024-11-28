@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAlert } from "react-alert";
 
 import GuestPage from "./GuestPage";
-import { useVerifyAccountMutation } from "../services/mainService";
+import { useVerifyAccountMutation } from "../services/authApi";
 import isFetchBaseQueryError from "../utils/isFetchBaseQueryError";
 import isErrorWithMessage from "../utils/isErrorWithMessage";
 

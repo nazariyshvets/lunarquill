@@ -2,7 +2,7 @@ import { Schema, model, Document, Types } from "mongoose";
 
 import User, { IUser } from "./User";
 import Channel, { IChannel } from "./Channel";
-import { RequestType, RequestTypeEnum } from "../types/RequestType";
+import { RequestType } from "../types/RequestType";
 
 interface IRequest extends Document {
   from: Types.ObjectId;
@@ -24,7 +24,7 @@ const requestSchema = new Schema<IRequest>({
   to: { type: Schema.Types.ObjectId, ref: User, required: true },
   type: {
     type: String,
-    enum: RequestTypeEnum,
+    enum: RequestType,
     required: true,
   },
   channel: { type: Schema.Types.ObjectId, ref: Channel },
@@ -33,8 +33,7 @@ const requestSchema = new Schema<IRequest>({
 // Pre-save hook to handle the conditional requirement for `channel`
 requestSchema.pre<IRequest>("save", function (next) {
   if (
-    (this.type === RequestTypeEnum.Invite ||
-      this.type === RequestTypeEnum.Join) &&
+    (this.type === RequestType.Invite || this.type === RequestType.Join) &&
     !this.channel
   )
     next(new Error("Channel is required for invite or join requests."));
