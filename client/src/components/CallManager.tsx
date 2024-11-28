@@ -9,7 +9,7 @@ import useAppSelector from "../hooks/useAppSelector";
 import useAuth from "../hooks/useAuth";
 import useHandleError from "../hooks/useHandleError";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
-import { useFetchContactRelationMutation } from "../services/mainService";
+import { useFetchContactRelationMutation } from "../services/contactApi";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
 

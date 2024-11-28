@@ -8,7 +8,7 @@ import { FaEnvelope } from "react-icons/fa6";
 import GuestPage from "./GuestPage";
 import InputWithIcon from "../components/InputWithIcon";
 import Button from "../components/Button";
-import { useRequestPasswordResetMutation } from "../services/mainService";
+import { useRequestPasswordResetMutation } from "../services/authApi";
 import { EMAIL_PATTERN } from "../constants/constants";
 import isFetchBaseQueryError from "../utils/isFetchBaseQueryError";
 import isErrorWithMessage from "../utils/isErrorWithMessage";

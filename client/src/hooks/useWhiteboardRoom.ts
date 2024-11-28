@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
-import { useFetchWhiteboardRoomTokenMutation } from "../services/mainService";
+import { useFetchWhiteboardRoomTokenMutation } from "../services/tokenApi";
 import type WhiteboardRoomCredentials from "../types/WhiteboardRoomCredentials";
 
 const useWhiteboardRoom = (roomId: string) => {

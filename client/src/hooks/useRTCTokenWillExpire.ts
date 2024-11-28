@@ -1,7 +1,7 @@
 import { useClientEvent, IAgoraRTCClient, UID } from "agora-rtc-react";
 import { useAlert } from "react-alert";
 
-import { useFetchRTCTokenMutation } from "../services/mainService";
+import { useFetchRTCTokenMutation } from "../services/tokenApi";
 
 const useRTCTokenWillExpire = (
   client: IAgoraRTCClient,

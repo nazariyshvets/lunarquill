@@ -5,7 +5,7 @@ import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
 import useAppDispatch from "./useAppDispatch";
-import { useFetchChatTokenMutation } from "../services/mainService";
+import { useFetchChatTokenMutation } from "../services/tokenApi";
 import { setIsChatInitialized } from "../redux/chatSlice";
 
 const useInitChat = (connection: AgoraChat.Connection) => {

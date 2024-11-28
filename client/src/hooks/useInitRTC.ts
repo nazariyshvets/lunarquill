@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
-import { useFetchRTCTokenMutation } from "../services/mainService";
+import { useFetchRTCTokenMutation } from "../services/tokenApi";
 import RTCConfig from "../config/RTCConfig";
 
 const useInitRTC = (channelId: string) => {

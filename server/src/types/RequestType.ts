@@ -1,10 +1,7 @@
-type RequestType = "contact" | "invite" | "join";
-
-enum RequestTypeEnum {
+enum RequestType {
   Contact = "contact",
   Invite = "invite",
   Join = "join",
 }
 
-export type { RequestType };
-export { RequestTypeEnum };
+export { RequestType };

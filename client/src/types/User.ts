@@ -42,15 +42,6 @@ interface PopulatedContact {
   whiteboardRoomId: string;
 }
 
-interface ProfileAvatarsUpdateRequestPayload {
-  removedAvatarIds: string[];
-  newAvatars: {
-    id: string;
-    src: File;
-  }[];
-  selectedAvatarId?: string;
-}
-
 export type {
   User,
   UserWithoutPassword,
@@ -58,5 +49,4 @@ export type {
   UserVolume,
   DecodedUserToken,
   PopulatedContact,
-  ProfileAvatarsUpdateRequestPayload,
 };

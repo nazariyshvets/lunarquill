@@ -2,11 +2,11 @@ import { useCallback } from "react";
 
 import { useAlert } from "react-alert";
 
-import { useCreateRequestMutation } from "../services/mainService";
+import { useCreateRequestMutation } from "../services/requestApi";
 import useAuth from "./useAuth";
 import useRTMClient from "./useRTMClient";
 import getErrorMessage from "../utils/getErrorMessage";
-import { RequestTypeEnum } from "../types/Request";
+import { RequestType } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
 
 const useAddContact = () => {
@@ -23,7 +23,7 @@ const useAddContact = () => {
         await createRequest({
           from: userId,
           to: contactId,
-          type: RequestTypeEnum.Contact,
+          type: RequestType.Contact,
         }).unwrap();
         await RTMClient.sendMessageToPeer(
           { text: PeerMessage.RequestCreated },

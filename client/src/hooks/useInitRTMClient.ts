@@ -6,7 +6,7 @@ import { useAlert } from "react-alert";
 import useAppDispatch from "./useAppDispatch";
 import useAuth from "./useAuth";
 import useAppSelector from "./useAppSelector";
-import { useFetchRTMTokenMutation } from "../services/mainService";
+import { useFetchRTMTokenMutation } from "../services/tokenApi";
 import { setIsRTMClientInitialized } from "../redux/rtmSlice";
 
 const useInitRTMClient = (RTMClient: RtmClient) => {

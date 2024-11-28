@@ -16,11 +16,9 @@ import useInitRTC from "../hooks/useInitRTC";
 import useJoinRTMChannel from "../hooks/useJoinRTMChannel";
 import useAuth from "../hooks/useAuth";
 import useAppSelector from "../hooks/useAppSelector";
-import {
-  useGetUserByIdQuery,
-  useGetChannelByIdQuery,
-  useGetContactByIdQuery,
-} from "../services/mainService";
+import { useGetUserByIdQuery } from "../services/userApi";
+import { useGetChannelByIdQuery } from "../services/channelApi";
+import { useGetContactByIdQuery } from "../services/contactApi";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import RTCConfig from "../config/RTCConfig";
 import { type ChatType, ChatTypeEnum } from "../types/ChatType";

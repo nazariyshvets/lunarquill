@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 import { skipToken } from "@reduxjs/toolkit/query";
 
-import { useDownloadFileQuery } from "../services/mainService";
+import { useDownloadFileQuery } from "../services/fileApi";
 
 const useAvatarSource = (avatarId: string | undefined) => {
   const [avatarSrc, setAvatarSrc] = useState<string>();

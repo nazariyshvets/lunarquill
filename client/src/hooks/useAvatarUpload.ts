@@ -2,24 +2,20 @@ import { useState } from "react";
 
 import { nanoid } from "@reduxjs/toolkit";
 
-import {
-  useDownloadFilesMutation,
-  useUpdateUserAvatarsCollectionMutation,
-} from "../services/mainService";
+import { useDownloadFilesMutation } from "../services/fileApi";
 import useHandleError from "./useHandleError";
 import extractFilesFromBlob from "../utils/extractFilesFromBlob";
 import getFileDataUrls from "../utils/getFileDataUrls";
 import getBlobFromFile from "../utils/getBlobFromFile";
-import { Avatar } from "../types/Avatar";
-
-type UpdateAvatarsMutation = ReturnType<
-  typeof useUpdateUserAvatarsCollectionMutation
->[0];
+import {
+  Avatar,
+  AvatarsUpdateRequestPayload,
+  AvatarsUpdateResponsePayload,
+} from "../types/Avatar";
 
 interface UseAvatarUploadProps {
-  selectedAvatarId: string | undefined;
   avatarIds: string[];
-  updateAvatarsCollection: UpdateAvatarsMutation;
+  selectedAvatarId: string | undefined;
 }
 
 interface ModalState {
@@ -38,7 +34,6 @@ const initialModalState: ModalState = {
 const useAvatarUpload = ({
   selectedAvatarId,
   avatarIds,
-  updateAvatarsCollection,
 }: UseAvatarUploadProps) => {
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [modalState, setModalState] = useState(initialModalState);
@@ -132,12 +127,17 @@ const useAvatarUpload = ({
     }));
   };
 
-  const handleModalSaveBtnClick = async (id: string | null | undefined) => {
-    if (!id) return;
-
+  const handleModalSaveBtnClick = async <T>(
+    args: T,
+    updateAvatarsCollection: (
+      args: T & { updateData: AvatarsUpdateRequestPayload },
+    ) => {
+      unwrap(): Promise<AvatarsUpdateResponsePayload>;
+    },
+  ) => {
     try {
       const requestPayload = {
-        id,
+        ...args,
         updateData: {
           removedAvatarIds: modalState.removedAvatarIds,
           newAvatars: modalState.avatars

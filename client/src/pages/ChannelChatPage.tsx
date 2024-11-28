@@ -24,14 +24,16 @@ import AvatarUploadModal from "../components/AvatarUploadModal";
 import {
   useGetUserByIdQuery,
   useGetUserContactsQuery,
-  useCreateRequestMutation,
-  useDisableWhiteboardRoomMutation,
-  useFetchWhiteboardSdkTokenMutation,
+} from "../services/userApi";
+import {
   useGetChannelByIdQuery,
   useLeaveChannelMutation,
   useUpdateChannelAvatarsCollectionMutation,
   useGetChannelMembersQuery,
-} from "../services/mainService";
+} from "../services/channelApi";
+import { useCreateRequestMutation } from "../services/requestApi";
+import { useDisableWhiteboardRoomMutation } from "../services/whiteboardApi";
+import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
 import useAvatarUpload from "../hooks/useAvatarUpload";
 import useAuth from "../hooks/useAuth";
 import useHandleError from "../hooks/useHandleError";
@@ -41,7 +43,7 @@ import useDocumentTitle from "../hooks/useDocumentTitle";
 import useRTMClient from "../hooks/useRTMClient";
 import useAppSelector from "../hooks/useAppSelector";
 import useAddContact from "../hooks/useAddContact";
-import { RequestTypeEnum } from "../types/Request";
+import { RequestType } from "../types/Request";
 import { ChatTypeEnum } from "../types/ChatType";
 import PeerMessage from "../types/PeerMessage";
 import { UserWithoutPassword } from "../types/User";
@@ -108,7 +110,6 @@ const ChannelChatPage = () => {
   } = useAvatarUpload({
     selectedAvatarId: selectedChannelAvatarId,
     avatarIds: channel?.avatars ?? [],
-    updateAvatarsCollection,
   });
 
   useDocumentTitle(channelName);
@@ -138,7 +139,7 @@ const ChannelChatPage = () => {
         createRequest({
           from: userId,
           to: contactId,
-          type: RequestTypeEnum.Invite,
+          type: RequestType.Invite,
           channel: channelId,
         }).unwrap(),
         chatConnection.inviteUsersToGroup({
@@ -161,6 +162,14 @@ const ChannelChatPage = () => {
     }
   };
 
+  const handleChannelAvatarsUpdate = () =>
+    !!userId &&
+    !!channelId &&
+    handleEditAvatarModalSaveBtnClick(
+      { userId, channelId },
+      updateAvatarsCollection,
+    );
+
   const handleChannelLeave = async () => {
     if (!userId || !channelId || !chatTargetId) {
       alert.error("Could not leave the channel. Please try again");
@@ -172,13 +181,10 @@ const ChannelChatPage = () => {
         groupId: chatTargetId,
       });
       const prevChatOwner = chatInfo?.data?.[0]?.owner;
-      const [{ isChannelRemoved, adminId }] = await Promise.all([
-        leaveChannel({
-          userId,
-          channelId,
-        }).unwrap(),
-        chatConnection.leaveGroup({ groupId: chatTargetId }),
-      ]);
+      const { isChannelRemoved, adminId } = await leaveChannel({
+        userId,
+        channelId,
+      }).unwrap();
 
       if (isChannelRemoved) {
         const { token: whiteboardSdkToken } =
@@ -191,11 +197,15 @@ const ChannelChatPage = () => {
           }).unwrap(),
           chatConnection.destroyGroup({ groupId: chatTargetId }),
         ]);
-      } else if (userId === prevChatOwner && adminId) {
-        await chatConnection.changeGroupOwner({
-          groupId: chatTargetId,
-          newOwner: adminId,
-        });
+      } else {
+        if (userId === prevChatOwner && adminId) {
+          await chatConnection.changeGroupOwner({
+            groupId: chatTargetId,
+            newOwner: adminId,
+          });
+        }
+
+        await chatConnection.leaveGroup({ groupId: chatTargetId });
       }
 
       navigate("/profile");
@@ -390,6 +400,7 @@ const ChannelChatPage = () => {
                             <SimpleButton
                               data-tooltip-id="addUserToContacts"
                               data-tooltip-content="Add to contacts"
+                              className="text-xl"
                               onClick={() => handleContactAdd(member._id)}
                             >
                               <BiUserPlus />
@@ -411,7 +422,7 @@ const ChannelChatPage = () => {
             onAvatarRemove={handleAvatarRemove}
             onAvatarUpload={handleAvatarUpload}
             onCancel={handleEditAvatarModalClose}
-            onSave={() => handleEditAvatarModalSaveBtnClick(channelId)}
+            onSave={handleChannelAvatarsUpdate}
           />
         )}
 

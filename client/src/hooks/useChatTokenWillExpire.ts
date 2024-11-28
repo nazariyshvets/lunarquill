@@ -4,7 +4,7 @@ import { AgoraChat } from "agora-chat";
 import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
-import { useFetchChatTokenMutation } from "../services/mainService";
+import { useFetchChatTokenMutation } from "../services/tokenApi";
 
 const useChatTokenWillExpire = (connection: AgoraChat.Connection) => {
   const { userId } = useAuth();

@@ -2,7 +2,7 @@ import { BiXCircle, BiCheckCircle } from "react-icons/bi";
 
 import Contact from "./Contact";
 import RequestItemActionButton from "./RequestItemActionButton";
-import { RequestType, RequestTypeEnum } from "../types/Request";
+import { RequestType } from "../types/Request";
 
 interface RequestItemProps {
   type: RequestType;
@@ -29,15 +29,15 @@ const RequestItem = ({
 }: RequestItemProps) => {
   const renderMessage = () => {
     switch (type) {
-      case RequestTypeEnum.Contact:
+      case RequestType.Contact:
         return context === "inbox"
           ? "sends you a contact request"
           : "received your contact request";
-      case RequestTypeEnum.Invite:
+      case RequestType.Invite:
         return context === "inbox"
           ? "invites you to join"
           : "received your invite to join";
-      case RequestTypeEnum.Join:
+      case RequestType.Join:
         return context === "inbox"
           ? "wants to join"
           : "channel received your joining request";
@@ -54,8 +54,8 @@ const RequestItem = ({
           <span className="text-sm text-lightgrey">{renderMessage()}</span>
         </div>
 
-        {(type === RequestTypeEnum.Invite ||
-          (type === RequestTypeEnum.Join && context === "inbox")) &&
+        {(type === RequestType.Invite ||
+          (type === RequestType.Join && context === "inbox")) &&
           channelName && (
             <div className="flex items-center gap-1">
               <Contact

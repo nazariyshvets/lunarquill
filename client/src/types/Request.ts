@@ -1,9 +1,7 @@
 import type { UserWithoutPassword } from "./User";
 import type { Channel } from "./Channel";
 
-type RequestType = "contact" | "invite" | "join";
-
-enum RequestTypeEnum {
+enum RequestType {
   Contact = "contact",
   Invite = "invite",
   Join = "join",
@@ -28,5 +26,5 @@ interface PopulatedRequest extends Omit<Request, "from" | "to" | "channel"> {
   channel: Channel;
 }
 
-export { RequestTypeEnum };
-export type { RequestDto, Request, RequestType, PopulatedRequest };
+export { RequestType };
+export type { RequestDto, Request, PopulatedRequest };

@@ -14,7 +14,7 @@ import {
   useUpdateUserByIdMutation,
   useUpdateUserAvatarsCollectionMutation,
   useFetchUserContactsMutation,
-} from "../services/mainService";
+} from "../services/userApi";
 import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppDispatch from "../hooks/useAppDispatch";
@@ -45,7 +45,6 @@ const ProfilePage = () => {
   } = useAvatarUpload({
     selectedAvatarId: userDetails?.selectedAvatar?._id,
     avatarIds: userDetails?.avatars ?? [],
-    updateAvatarsCollection,
   });
 
   useDocumentTitle("Profile");
@@ -81,6 +80,10 @@ const ProfilePage = () => {
       );
     }
   }, 200);
+
+  const handleAvatarsUpdate = () =>
+    !!userId &&
+    handleEditAvatarModalSaveBtnClick({ userId }, updateAvatarsCollection);
 
   const userName = username ?? "You";
 
@@ -153,7 +156,7 @@ const ProfilePage = () => {
           onAvatarRemove={handleAvatarRemove}
           onAvatarUpload={handleAvatarUpload}
           onCancel={handleEditAvatarModalClose}
-          onSave={() => handleEditAvatarModalSaveBtnClick(userId)}
+          onSave={handleAvatarsUpdate}
         />
       )}
     </div>
