@@ -5,6 +5,7 @@ import { BiX, BiUserPlus, BiGroup, BiBell } from "react-icons/bi";
 import SimpleButton from "./SimpleButton";
 import Contact from "./Contact";
 import NoDataBox from "./NoDataBox";
+import useIsUserOnline from "../hooks/useIsUserOnline";
 import type { PopulatedUserWithoutPassword } from "../types/User";
 import type { PopulatedChannel } from "../types/Channel";
 
@@ -22,96 +23,104 @@ const Sidebar = ({
   contacts,
   channels,
   onClose,
-}: SidebarProps) => (
-  <aside className="flex h-full max-h-full w-full max-w-full flex-col gap-6 bg-deep-black">
-    <div className="flex flex-col gap-2">
-      <div className="flex justify-between gap-2">
-        <Link to="/profile" className="max-w-full overflow-hidden">
-          <Contact
-            name={user?.username ?? "You"}
-            isOnline={user?.isOnline ?? false}
-            avatarId={user?.selectedAvatar?._id}
-            size="lg"
-            onClick={onClose}
-          />
-        </Link>
-        <SimpleButton className="xl:hidden" onClick={onClose}>
-          <BiX className="text-2xl" />
-        </SimpleButton>
-      </div>
+}: SidebarProps) => {
+  const isUserOnline = useIsUserOnline();
 
-      <div className="flex items-center gap-1 text-2xl">
-        <Link to="/add-contact">
-          <SimpleButton onClick={onClose}>
-            <BiUserPlus />
+  return (
+    <aside className="flex h-full max-h-full w-full max-w-full flex-col gap-6 bg-deep-black">
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between gap-2">
+          <Link to="/profile" className="max-w-full overflow-hidden">
+            <Contact
+              name={user?.username ?? "You"}
+              isOnline={isUserOnline(user?._id)}
+              avatarId={user?.selectedAvatar?._id}
+              size="lg"
+              onClick={onClose}
+            />
+          </Link>
+          <SimpleButton className="xl:hidden" onClick={onClose}>
+            <BiX className="text-2xl" />
           </SimpleButton>
-        </Link>
-        <Link to="/add-channel">
-          <SimpleButton onClick={onClose}>
-            <BiGroup />
-          </SimpleButton>
-        </Link>
-        <Link to="/requests">
-          <div className="relative flex">
+        </div>
+
+        <div className="flex items-center gap-1 text-2xl">
+          <Link to="/add-contact">
             <SimpleButton onClick={onClose}>
-              <BiBell />
+              <BiUserPlus />
             </SimpleButton>
-            {Boolean(inboxRequestsCount) && (
-              <span className="absolute left-8 top-0 text-sm font-medium text-primary-light">
-                {inboxRequestsCount}
-              </span>
-            )}
-          </div>
-        </Link>
+          </Link>
+          <Link to="/add-channel">
+            <SimpleButton onClick={onClose}>
+              <BiGroup />
+            </SimpleButton>
+          </Link>
+          <Link to="/requests">
+            <div className="relative flex">
+              <SimpleButton onClick={onClose}>
+                <BiBell />
+              </SimpleButton>
+              {Boolean(inboxRequestsCount) && (
+                <span className="absolute left-8 top-0 text-sm font-medium text-primary-light">
+                  {inboxRequestsCount}
+                </span>
+              )}
+            </div>
+          </Link>
+        </div>
       </div>
-    </div>
 
-    <Tabs>
-      <TabList>
-        <Tab>Contacts</Tab>
-        <Tab>Channels</Tab>
-      </TabList>
+      <Tabs>
+        <TabList>
+          <Tab>Contacts</Tab>
+          <Tab>Channels</Tab>
+        </TabList>
 
-      <TabPanel>
-        {contacts && contacts.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {[...contacts]
-              .sort((a, b) => (b.isOnline ? 1 : -1) - (a.isOnline ? 1 : -1))
-              .map((contact) => (
-                <Link key={contact._id} to={`/contacts/${contact._id}/chat`}>
+        <TabPanel>
+          {contacts && contacts.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {[...contacts]
+                .sort(
+                  (a, b) =>
+                    (isUserOnline(b._id) ? 1 : -1) -
+                    (isUserOnline(a._id) ? 1 : -1),
+                )
+                .map((contact) => (
+                  <Link key={contact._id} to={`/contacts/${contact._id}/chat`}>
+                    <Contact
+                      name={contact.username}
+                      isOnline={isUserOnline(contact._id)}
+                      avatarId={contact.selectedAvatar?._id}
+                      onClick={onClose}
+                    />
+                  </Link>
+                ))}
+            </div>
+          ) : (
+            <NoDataBox text="No contacts" />
+          )}
+        </TabPanel>
+        <TabPanel>
+          {channels && channels.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {channels.map((channel) => (
+                <Link key={channel._id} to={`/channels/${channel._id}/chat`}>
                   <Contact
-                    name={contact.username}
-                    isOnline={contact.isOnline}
-                    avatarId={contact.selectedAvatar?._id}
+                    name={channel.name}
+                    isOnline={false}
+                    avatarId={channel.selectedAvatar?._id}
                     onClick={onClose}
                   />
                 </Link>
               ))}
-          </div>
-        ) : (
-          <NoDataBox text="No contacts" />
-        )}
-      </TabPanel>
-      <TabPanel>
-        {channels && channels.length > 0 ? (
-          <div className="flex flex-col gap-2">
-            {channels.map((channel) => (
-              <Link key={channel._id} to={`/channels/${channel._id}/chat`}>
-                <Contact
-                  name={channel.name}
-                  isOnline={false}
-                  avatarId={channel.selectedAvatar?._id}
-                  onClick={onClose}
-                />
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <NoDataBox text="No channels" />
-        )}
-      </TabPanel>
-    </Tabs>
-  </aside>
-);
+            </div>
+          ) : (
+            <NoDataBox text="No channels" />
+          )}
+        </TabPanel>
+      </Tabs>
+    </aside>
+  );
+};
 
 export default Sidebar;

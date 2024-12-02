@@ -8,6 +8,7 @@ import useInitChat from "../hooks/useInitChat";
 import useRTMTokenExpired from "../hooks/useRTMTokenExpired";
 import useChatTokenWillExpire from "../hooks/useChatTokenWillExpire";
 import usePeerMessageManager from "../hooks/usePeerMessageManager";
+import useContactOnlineStatus from "../hooks/useContactOnlineStatus";
 
 const ProtectedRoute = () => {
   const { userToken } = useAuth();
@@ -21,6 +22,7 @@ const ProtectedRoute = () => {
   useChatTokenWillExpire(chatConnection);
 
   usePeerMessageManager();
+  useContactOnlineStatus();
 
   return userToken ? <Outlet /> : <Navigate to="/login" replace />;
 };

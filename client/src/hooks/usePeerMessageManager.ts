@@ -121,15 +121,6 @@ const usePeerMessageManager = () => {
               })),
             );
             break;
-          case PeerMessage.UserWentOnline:
-          case PeerMessage.UserWentOffline:
-            invalidateTags([
-              {
-                type: QUERY_TAG_TYPES.USER_CONTACTS,
-                id: localUserId,
-              },
-            ]);
-            break;
           case PeerMessage.ContactRemoved:
             chatConnection.deleteConversation({
               channel: peerId,

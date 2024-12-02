@@ -8,7 +8,6 @@ interface UserWithoutPassword {
   username: string;
   email: string;
   active: boolean;
-  isOnline: boolean;
   selectedAvatar?: string;
   avatars?: string[];
   createdAt: number;

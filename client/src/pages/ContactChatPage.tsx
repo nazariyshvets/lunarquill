@@ -25,6 +25,7 @@ import useHandleError from "../hooks/useHandleError";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppSelector from "../hooks/useAppSelector";
 import useRTMClient from "../hooks/useRTMClient";
+import useIsUserOnline from "../hooks/useIsUserOnline";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { CALL_TIMEOUT_MS } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
@@ -57,6 +58,7 @@ const ContactChatPage = () => {
   const navigate = useNavigate();
   const alert = useAlert();
   const handleError = useHandleError();
+  const isUserOnline = useIsUserOnline();
 
   const [removeContact] = useRemoveContactMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
@@ -68,7 +70,7 @@ const ContactChatPage = () => {
       : contactRelation.user2
     : undefined;
   const contactName = contact?.username ?? "Unknown";
-  const isContactOnline = contact?.isOnline ?? false;
+  const isContactOnline = isUserOnline(contact?._id);
 
   useDocumentTitle(contactName);
 
