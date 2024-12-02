@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { ICameraVideoTrack, IMicrophoneAudioTrack } from "agora-rtc-react";
+import type { ICameraVideoTrack, ILocalAudioTrack } from "agora-rtc-react";
 
 import isValidHexColorCode from "../utils/isValidHexColorCode";
 import type { VirtualBgBlurDegree, VirtualBgType } from "../types/VirtualBg";
@@ -10,7 +10,7 @@ import type {
 
 export interface RTCState {
   localCameraTrack: ICameraVideoTrack | null;
-  localMicrophoneTrack: IMicrophoneAudioTrack | null;
+  localMicrophoneTrack: ILocalAudioTrack | null;
   // Virtual BG
   isVirtualBgEnabled: boolean;
   virtualBgType: VirtualBgType;
@@ -22,6 +22,9 @@ export interface RTCState {
   isNoiseSuppressionEnabled: boolean;
   noiseSuppressionMode: NoiseSuppressionMode;
   noiseSuppressionLevel: NoiseSuppressionLevel;
+  // Pitch shift
+  isPitchShiftEnabled: boolean;
+  pitchFactor: number;
   // Chat
   isChatDisplayed: boolean;
   // Whiteboard
@@ -40,6 +43,8 @@ const initialState: RTCState = {
   isNoiseSuppressionEnabled: false,
   noiseSuppressionMode: "NSNG",
   noiseSuppressionLevel: "SOFT",
+  isPitchShiftEnabled: false,
+  pitchFactor: 1.0,
   isChatDisplayed: false,
   isWhiteboardDisplayed: false,
 };
@@ -50,13 +55,13 @@ const rtcSlice = createSlice({
   reducers: {
     setLocalCameraTrack: (
       state,
-      { payload }: PayloadAction<ICameraVideoTrack>,
+      { payload }: PayloadAction<ICameraVideoTrack | null>,
     ) => {
       state.localCameraTrack = payload;
     },
     setLocalMicrophoneTrack: (
       state,
-      { payload }: PayloadAction<IMicrophoneAudioTrack>,
+      { payload }: PayloadAction<ILocalAudioTrack | null>,
     ) => {
       state.localMicrophoneTrack = payload;
     },
@@ -101,6 +106,12 @@ const rtcSlice = createSlice({
     ) => {
       state.noiseSuppressionLevel = payload;
     },
+    setIsPitchShiftEnabled: (state, { payload }: PayloadAction<boolean>) => {
+      state.isPitchShiftEnabled = payload;
+    },
+    setPitchFactor: (state, { payload }: PayloadAction<number>) => {
+      state.pitchFactor = payload;
+    },
     setIsChatDisplayed: (state, { payload }: PayloadAction<boolean>) => {
       state.isChatDisplayed = payload;
     },
@@ -122,6 +133,8 @@ export const {
   setIsNoiseSuppressionEnabled,
   setNoiseSuppressionMode,
   setNoiseSuppressionLevel,
+  setIsPitchShiftEnabled,
+  setPitchFactor,
   setIsChatDisplayed,
   setIsWhiteboardDisplayed,
 } = rtcSlice.actions;
