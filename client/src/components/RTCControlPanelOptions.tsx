@@ -6,11 +6,13 @@ import Switch from "./Switch";
 import RTCControlButton from "./RTCControlButton";
 import VirtualBackgroundConfigurator from "./VirtualBackgroundConfigurator";
 import NoiseSuppressionConfigurator from "./NoiseSuppressionConfigurator";
+import PitchShiftConfigurator from "./PitchShiftConfigurator";
 import useRTC from "../hooks/useRTC";
 import useAppDispatch from "../hooks/useAppDispatch";
 import {
   setIsVirtualBgEnabled,
   setIsNoiseSuppressionEnabled,
+  setIsPitchShiftEnabled,
   setIsChatDisplayed,
   setIsWhiteboardDisplayed,
 } from "../redux/rtcSlice";
@@ -18,6 +20,7 @@ import {
 enum ActiveConfigurator {
   VirtualBackground = "virtualBackground",
   NoiseSuppression = "noiseSuppression",
+  PitchShift = "pitchShift",
 }
 
 interface OptionRowProps {
@@ -33,6 +36,7 @@ const RTCControlPanelOptions = () => {
   const {
     isVirtualBgEnabled,
     isNoiseSuppressionEnabled,
+    isPitchShiftEnabled,
     isChatDisplayed,
     isWhiteboardDisplayed,
   } = useRTC();
@@ -58,6 +62,13 @@ const RTCControlPanelOptions = () => {
         setActiveConfigurator(ActiveConfigurator.NoiseSuppression),
     },
     {
+      title: "Pitch shift",
+      isEnabled: isPitchShiftEnabled ?? false,
+      onSwitchChange: () =>
+        dispatch(setIsPitchShiftEnabled(!isPitchShiftEnabled)),
+      onConfigure: () => setActiveConfigurator(ActiveConfigurator.PitchShift),
+    },
+    {
       title: "Chat",
       isEnabled: isChatDisplayed ?? false,
       onSwitchChange: () => dispatch(setIsChatDisplayed(!isChatDisplayed)),
@@ -80,6 +91,8 @@ const RTCControlPanelOptions = () => {
         <VirtualBackgroundConfigurator onClose={resetActiveConfigurator} />
       ) : activeConfigurator === ActiveConfigurator.NoiseSuppression ? (
         <NoiseSuppressionConfigurator onClose={resetActiveConfigurator} />
+      ) : activeConfigurator === ActiveConfigurator.PitchShift ? (
+        <PitchShiftConfigurator onClose={resetActiveConfigurator} />
       ) : (
         <></>
       )}

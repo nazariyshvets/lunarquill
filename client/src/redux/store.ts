@@ -46,6 +46,8 @@ const saveRtcSubsetFilter = createFilter("rtc", [
   "isNoiseSuppressionEnabled",
   "noiseSuppressionMode",
   "noiseSuppressionLevel",
+  "isPitchShiftEnabled",
+  "pitchFactor",
   "isChatDisplayed",
 ]);
 

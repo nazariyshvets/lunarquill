@@ -1,10 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
   useRTCClient,
-  useLocalCameraTrack,
-  useLocalMicrophoneTrack,
   useJoin,
   usePublish,
   useRemoteUsers,
@@ -29,15 +27,11 @@ import Chat from "./Chat";
 import useRTMClient from "../hooks/useRTMClient";
 import useRemoteUsersTracksState from "../hooks/useRemoteUsersTracksState";
 import useRemoteUsersAttributes from "../hooks/useUsersAttributes";
-import useAppDispatch from "../hooks/useAppDispatch";
 import useScreenCasterId from "../hooks/useScreenCasterId";
 import useAuth from "../hooks/useAuth";
 import useRTC from "../hooks/useRTC";
 import useWhiteboardRoom from "../hooks/useWhiteboardRoom";
-import {
-  setLocalCameraTrack,
-  setLocalMicrophoneTrack,
-} from "../redux/rtcSlice";
+import useInitMediaDevices from "../hooks/useInitMediaDevices";
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
@@ -64,9 +58,12 @@ const RTCManager = ({
 }: RTCManagerProps) => {
   const RTCClient = useRTCClient();
   const RTMClient = useRTMClient();
-  const { localCameraTrack, isLoading: isLoadingCam } = useLocalCameraTrack();
-  const { localMicrophoneTrack, isLoading: isLoadingMic } =
-    useLocalMicrophoneTrack();
+  const {
+    localMicrophoneTrack,
+    localCameraTrack,
+    isChatDisplayed,
+    isWhiteboardDisplayed,
+  } = useRTC();
   const [isCameraMuted, setIsCameraMuted] = useState(
     localCameraTrack?.muted ?? true,
   );
@@ -81,17 +78,14 @@ const RTCManager = ({
   );
   const remoteUsersAttrs = useRemoteUsersAttributes(RTMClient, RTMChannel);
   const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
-  const { isChatDisplayed, isWhiteboardDisplayed } = useRTC();
   const whiteboardRoomCredentials = useWhiteboardRoom(whiteboardRoomId);
   const screenCasterId = useScreenCasterId(RTMClient, RTMChannel, channelId);
   const { userId: localUserId } = useAuth();
   const windowWidth = useWindowWidth();
   const alert = useAlert();
-  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  // Join channel
-  useJoin(
+  const { isConnected: isConnectedToRTCChannel } = useJoin(
     {
       appid: RTCConfig.appId,
       channel: channelId,
@@ -102,11 +96,19 @@ const RTCManager = ({
     RTCClient,
   );
 
-  // Publish local tracks
-  usePublish([localMicrophoneTrack], !isMicrophoneMuted, RTCClient);
-  usePublish([localCameraTrack], !isCameraMuted, RTCClient);
+  useInitMediaDevices(isConnectedToRTCChannel);
 
-  // Check for active users
+  usePublish(
+    [localMicrophoneTrack],
+    !!localMicrophoneTrack && !isMicrophoneMuted,
+    RTCClient,
+  );
+  usePublish(
+    [localCameraTrack],
+    !!localCameraTrack && !isCameraMuted,
+    RTCClient,
+  );
+
   useClientEvent(RTCClient, "volume-indicator", (volumes) => {
     const newActiveUsers = volumes.filter((volume) => volume.level > 10);
 
@@ -114,24 +116,6 @@ const RTCManager = ({
       setActiveUsers(newActiveUsers);
     }
   });
-
-  // Set local tracks to the redux store
-  useEffect(() => {
-    if (localCameraTrack) {
-      dispatch(setLocalCameraTrack(localCameraTrack));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localCameraTrack]);
-
-  useEffect(() => {
-    if (localMicrophoneTrack) {
-      dispatch(setLocalMicrophoneTrack(localMicrophoneTrack));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localMicrophoneTrack]);
-
-  useEffect(() => () => localMicrophoneTrack?.close(), [localMicrophoneTrack]);
-  useEffect(() => () => localCameraTrack?.close(), [localCameraTrack]);
 
   const toggleCamera = async () => {
     try {
@@ -383,12 +367,7 @@ const RTCManager = ({
     );
 
   // Check if devices are still loading
-  if (
-    isLoadingCam ||
-    isLoadingMic ||
-    !localCameraTrack ||
-    !localMicrophoneTrack
-  ) {
+  if (!localCameraTrack || !localMicrophoneTrack) {
     return <Loading />;
   }
 
