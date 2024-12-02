@@ -43,6 +43,7 @@ import useDocumentTitle from "../hooks/useDocumentTitle";
 import useRTMClient from "../hooks/useRTMClient";
 import useAppSelector from "../hooks/useAppSelector";
 import useAddContact from "../hooks/useAddContact";
+import useIsUserOnline from "../hooks/useIsUserOnline";
 import { RequestType } from "../types/Request";
 import { ChatTypeEnum } from "../types/ChatType";
 import PeerMessage from "../types/PeerMessage";
@@ -87,6 +88,7 @@ const ChannelChatPage = () => {
   const copyToClipboard = useCopyToClipboard();
   const handleError = useHandleError();
   const addContact = useAddContact();
+  const isUserOnline = useIsUserOnline();
 
   const [createRequest] = useCreateRequestMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
@@ -238,9 +240,9 @@ const ChannelChatPage = () => {
       ? -1
       : b._id === userId
         ? 1
-        : a.isOnline && !b.isOnline
+        : isUserOnline(a._id) && !isUserOnline(b._id)
           ? -1
-          : !a.isOnline && b.isOnline
+          : !isUserOnline(a._id) && isUserOnline(b._id)
             ? 1
             : 0;
 
@@ -389,7 +391,7 @@ const ChannelChatPage = () => {
                       >
                         <Contact
                           name={member._id === userId ? "You" : member.username}
-                          isOnline={member.isOnline}
+                          isOnline={isUserOnline(member._id)}
                           avatarId={member.selectedAvatar}
                         />
 

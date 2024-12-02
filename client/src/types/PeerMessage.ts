@@ -13,9 +13,6 @@ enum PeerMessage {
   ContactRequestAccepted = "contactRequestAccepted",
   JoinRequestAccepted = "joinRequestAccepted",
   InviteRequestAccepted = "inviteRequestAccepted",
-  // ONLINE STATUS
-  UserWentOnline = "userWentOnline",
-  UserWentOffline = "userWentOffline",
   // CONTACT REMOVAL
   ContactRemoved = "contactRemoved",
 }

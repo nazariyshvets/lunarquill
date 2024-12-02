@@ -6,7 +6,6 @@ interface IUserWithoutPassword extends Document {
   username: string;
   email: string;
   active: boolean;
-  isOnline: boolean;
   selectedAvatar?: Types.ObjectId;
   avatars: Types.ObjectId[];
 }
@@ -30,10 +29,6 @@ const UserSchema = new Schema<IUser>(
       type: String,
     },
     active: {
-      type: Boolean,
-      default: false,
-    },
-    isOnline: {
       type: Boolean,
       default: false,
     },
