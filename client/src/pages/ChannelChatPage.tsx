@@ -9,7 +9,7 @@ import {
   BiUserPlus,
   BiGroup,
 } from "react-icons/bi";
-import { useParams, useNavigate } from "react-router-dom";
+import { Navigate, useParams, useNavigate } from "react-router-dom";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { useAlert } from "react-alert";
 import { skipToken } from "@reduxjs/toolkit/query";
@@ -66,13 +66,15 @@ const ChannelChatPage = () => {
     register,
     formState: { errors },
     handleSubmit,
+    reset: resetInviteForm,
   } = useForm<{ contactId: string }>();
   const inviteFormRef = useRef<HTMLFormElement>(null);
 
   const { id } = useParams();
   const { userId } = useAuth();
   const { data: localUser } = useGetUserByIdQuery(userId ?? skipToken);
-  const { data: channel } = useGetChannelByIdQuery(id ?? skipToken);
+  const { data: channel, isError: isFetchingChannelError } =
+    useGetChannelByIdQuery(id ?? skipToken);
   const { data: channelMembers = [] } = useGetChannelMembersQuery(
     id ?? skipToken,
   );
@@ -116,6 +118,13 @@ const ChannelChatPage = () => {
 
   useDocumentTitle(channelName);
 
+  if (!isChatInitialized) {
+    return <Loading />;
+  }
+  if (isFetchingChannelError) {
+    return <Navigate to="/profile" replace />;
+  }
+
   const handleCopyChannelIdBtnClick = () => {
     const errorMessage = "Could not copy the channel id. Please try again";
 
@@ -155,6 +164,7 @@ const ChannelChatPage = () => {
       );
       alert.success("Request created successfully!");
       handleModalClose();
+      resetInviteForm();
     } catch (err) {
       handleError(
         err,
@@ -208,6 +218,18 @@ const ChannelChatPage = () => {
         }
 
         await chatConnection.leaveGroup({ groupId: chatTargetId });
+        await Promise.all(
+          channelMembers
+            .filter((member) => member._id !== userId)
+            .map((member) =>
+              RTMClient.sendMessageToPeer(
+                {
+                  text: `${PeerMessage.ChannelMemberLeft}__${channelId}`,
+                },
+                member._id,
+              ),
+            ),
+        );
       }
 
       navigate("/profile");
@@ -280,8 +302,6 @@ const ChannelChatPage = () => {
       isOpen: true,
       action: ModalAction.LeaveChannel,
     });
-
-  if (!isChatInitialized) return <Loading />;
 
   const modalAction = modalState.action;
 

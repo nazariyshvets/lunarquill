@@ -25,7 +25,6 @@ import FeaturedUser from "./FeaturedUser";
 import RTCControlPanel from "./RTCControlPanel";
 import Chat from "./Chat";
 import useRTMClient from "../hooks/useRTMClient";
-import useRemoteUsersTracksState from "../hooks/useRemoteUsersTracksState";
 import useRemoteUsersAttributes from "../hooks/useUsersAttributes";
 import useScreenCasterId from "../hooks/useScreenCasterId";
 import useAuth from "../hooks/useAuth";
@@ -72,10 +71,6 @@ const RTCManager = ({
   );
   const [isLocalScreenShared, setIsLocalScreenShared] = useState(false);
   const remoteUsers = useRemoteUsers();
-  const remoteUsersTracksState = useRemoteUsersTracksState(
-    RTMClient,
-    RTMChannel,
-  );
   const remoteUsersAttrs = useRemoteUsersAttributes(RTMClient, RTMChannel);
   const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
   const whiteboardRoomCredentials = useWhiteboardRoom(whiteboardRoomId);
@@ -190,7 +185,11 @@ const RTCManager = ({
           .uid;
 
   const isMediaEnabled = (userId: UID, media: "camera" | "microphone") =>
-    !(remoteUsersTracksState[userId]?.[media]?.muted ?? true);
+    !(
+      remoteUsersAttrs[userId]?.[
+        media === "camera" ? "isCameraMuted" : "isMicrophoneMuted"
+      ] ?? true
+    );
 
   const renderMobileView = () => (
     <div className="h-full w-full overflow-auto">

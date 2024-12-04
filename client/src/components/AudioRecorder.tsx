@@ -39,8 +39,9 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
       playbackAudioRef.current.pause();
       setIsPlayingBack(false);
     } else {
-      if (!playbackAudioRef.current.src)
+      if (!playbackAudioRef.current.src) {
         playbackAudioRef.current.src = URL.createObjectURL(blob);
+      }
 
       try {
         await playbackAudioRef.current.play();
@@ -71,6 +72,14 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
     onCancel();
   };
 
+  const handleVisualizerContainerClick = async (posCoefficient: number) => {
+    const audio = playbackAudioRef.current;
+
+    if (!!audio.duration && audio.duration !== Infinity) {
+      audio.currentTime = audio.duration * posCoefficient;
+    }
+  };
+
   useEffect(() => {
     startRecording();
 
@@ -82,7 +91,10 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
     const playbackAudio = playbackAudioRef.current;
 
     return () => {
-      if (playbackAudio.src) URL.revokeObjectURL(playbackAudio.src);
+      if (playbackAudio.src) {
+        playbackAudio.pause();
+        URL.revokeObjectURL(playbackAudio.src);
+      }
     };
   }, []);
 
@@ -109,7 +121,11 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
     <div className="flex h-10 w-full items-center">
       <div className="relative mx-2 h-full w-full">
         {recordingBlob ? (
-          <AudioVisualizer blob={recordingBlob} currentTime={playbackTime} />
+          <AudioVisualizer
+            blob={recordingBlob}
+            currentTime={playbackTime}
+            onContainerClick={handleVisualizerContainerClick}
+          />
         ) : (
           mediaRecorder && (
             <AudioVisualizer isLive mediaRecorder={mediaRecorder} />

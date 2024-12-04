@@ -149,13 +149,16 @@ export const channelApi = createApi({
       },
     }),
     getChannelMembers: builder.query<UserWithoutPassword[], string>({
+      query: (channelId) => `/channels/${channelId}/members`,
+      providesTags: (_, __, id) => [
+        { type: QUERY_TAG_TYPES.CHANNEL_MEMBERS, id },
+      ],
+    }),
+    fetchChannelMembers: builder.mutation<UserWithoutPassword[], string>({
       query: (channelId) => ({
         url: `/channels/${channelId}/members`,
         method: "GET",
       }),
-      providesTags: (_, __, id) => [
-        { type: QUERY_TAG_TYPES.CHANNEL_MEMBERS, id },
-      ],
     }),
   }),
 });
@@ -169,4 +172,5 @@ export const {
   useFetchChannelByIdMutation,
   useUpdateChannelAvatarsCollectionMutation,
   useGetChannelMembersQuery,
+  useFetchChannelMembersMutation,
 } = channelApi;

@@ -13,15 +13,16 @@ import useAuth from "../hooks/useAuth";
 import useChatConnection from "../hooks/useChatConnection";
 import useRTMClient from "../hooks/useRTMClient";
 import { useGetUserRequestsQuery } from "../services/userApi";
+import { useFetchChannelMembersMutation } from "../services/channelApi";
 import {
   useAcceptRequestMutation,
   useDeclineRequestMutation,
 } from "../services/requestApi";
 import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
-import type { PopulatedRequest } from "../types/Request";
+import addOptionalArrayItem from "../utils/addOptionalArrayItem";
+import { type PopulatedRequest, RequestType } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
-import { RequestType } from "../types/Request";
 
 enum RequestAction {
   Recall = "recall",
@@ -41,6 +42,7 @@ const RequestsPage = () => {
   });
   const { userId } = useAuth();
   const { data: requests = [] } = useGetUserRequestsQuery(userId ?? skipToken);
+  const [fetchChannelMembers] = useFetchChannelMembersMutation();
   const [declineRequest] = useDeclineRequestMutation();
   const [acceptRequest] = useAcceptRequestMutation();
   const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
@@ -123,23 +125,21 @@ const RequestsPage = () => {
           requestId: request._id,
           uid: userId,
         }).unwrap(),
-        ...(request.type === RequestType.Join
-          ? [
-              await chatConnection.rejectGroupJoinRequest({
-                applicant: request.from._id,
-                groupId: chatTargetId,
-                reason: "",
-              }),
-            ]
-          : []),
-        ...(request.type === RequestType.Invite
-          ? [
-              await chatConnection.rejectGroupInvite({
-                invitee: request.to._id,
-                groupId: chatTargetId,
-              }),
-            ]
-          : []),
+        ...addOptionalArrayItem(
+          await chatConnection.rejectGroupJoinRequest({
+            applicant: request.from._id,
+            groupId: chatTargetId,
+            reason: "",
+          }),
+          request.type === RequestType.Join,
+        ),
+        ...addOptionalArrayItem(
+          await chatConnection.rejectGroupInvite({
+            invitee: request.to._id,
+            groupId: chatTargetId,
+          }),
+          request.type === RequestType.Invite,
+        ),
       ]);
       await RTMClient.sendMessageToPeer(
         { text: PeerMessage.RequestDeclined },
@@ -153,69 +153,159 @@ const RequestsPage = () => {
   };
 
   const handleRequestAccept = async (request: PopulatedRequest) => {
-    const channelChatId = request.channel?.chatTargetId;
+    const requestId = request._id;
+    const peerId = request.from._id;
+    const channelId = request.channel?._id;
+    const channelChatTargetId = request.channel?.chatTargetId;
 
-    if (
-      !userId ||
-      ((request.type === RequestType.Join ||
-        request.type === RequestType.Invite) &&
-        !channelChatId)
-    ) {
+    if (!userId || !peerId) {
       return;
     }
 
+    switch (request.type) {
+      case RequestType.Contact:
+        await handleContactRequestAccept(requestId, userId, peerId);
+        break;
+      case RequestType.Invite:
+        channelId &&
+          channelChatTargetId &&
+          (await handleInviteRequestAccept(
+            requestId,
+            userId,
+            peerId,
+            channelId,
+            channelChatTargetId,
+          ));
+        break;
+      case RequestType.Join:
+        channelId &&
+          channelChatTargetId &&
+          (await handleJoinRequestAccept(
+            requestId,
+            userId,
+            peerId,
+            channelId,
+            channelChatTargetId,
+          ));
+    }
+  };
+
+  const handleContactRequestAccept = async (
+    requestId: string,
+    localUserId: string,
+    peerId: string,
+  ) => {
     try {
-      let whiteboardRoomId: string | undefined;
+      const { token: whiteboardSdkToken } =
+        await fetchWhiteboardSdkToken().unwrap();
+      const createWhiteboardRoomResponse = await createWhiteboardRoom({
+        sdkToken: whiteboardSdkToken,
+      }).unwrap();
+      const whiteboardRoomId = JSON.parse(createWhiteboardRoomResponse).uuid;
 
-      if (request.type === RequestType.Contact) {
-        const { token: whiteboardSdkToken } =
-          await fetchWhiteboardSdkToken().unwrap();
-
-        const createWhiteboardRoomResponse = await createWhiteboardRoom({
-          sdkToken: whiteboardSdkToken,
-        }).unwrap();
-        whiteboardRoomId = JSON.parse(createWhiteboardRoomResponse).uuid;
-      }
-
-      await Promise.all([
-        acceptRequest({
-          requestId: request._id,
-          uid: userId,
-          whiteboardRoomId:
-            request.type === RequestType.Contact ? whiteboardRoomId : undefined,
-        }).unwrap(),
-        ...(request.type === RequestType.Join
-          ? [
-              await chatConnection.acceptGroupJoinRequest({
-                applicant: request.from._id,
-                groupId: channelChatId,
-              }),
-            ]
-          : []),
-        ...(request.type === RequestType.Invite
-          ? [
-              await chatConnection.acceptGroupInvite({
-                invitee: request.to._id,
-                groupId: channelChatId,
-              }),
-            ]
-          : []),
-      ]);
+      await acceptRequest({
+        requestId,
+        uid: localUserId,
+        whiteboardRoomId,
+      }).unwrap();
       await RTMClient.sendMessageToPeer(
         {
-          text:
-            request.type === RequestType.Contact
-              ? PeerMessage.ContactRequestAccepted
-              : request.type === RequestType.Join
-                ? PeerMessage.JoinRequestAccepted
-                : PeerMessage.InviteRequestAccepted,
+          text: PeerMessage.ContactRequestAccepted,
         },
-        request.from._id,
+        peerId,
       );
-      alert.success("Request is accepted successfully");
+      alert.success("Contact request is accepted successfully");
     } catch (err) {
-      alert.error("Could not accept the request. Please try again");
-      console.error("Error accepting the request:", err);
+      alert.error("Could not accept the contact request. Please try again");
+      console.error("Error accepting the contact request:", err);
+    }
+  };
+
+  const handleInviteRequestAccept = async (
+    requestId: string,
+    localUserId: string,
+    peerId: string,
+    channelId: string,
+    channelChatTargetId: string,
+  ) => {
+    try {
+      await Promise.all([
+        acceptRequest({
+          requestId,
+          uid: localUserId,
+        }).unwrap(),
+        chatConnection.acceptGroupInvite({
+          invitee: localUserId,
+          groupId: channelChatTargetId,
+        }),
+      ]);
+      const channelMembers = await fetchChannelMembers(channelId).unwrap();
+      await Promise.all([
+        RTMClient.sendMessageToPeer(
+          {
+            text: PeerMessage.InviteRequestAccepted,
+          },
+          peerId,
+        ),
+        channelMembers
+          .filter((member) => member._id !== localUserId)
+          .map((member) =>
+            RTMClient.sendMessageToPeer(
+              {
+                text: `${PeerMessage.ChannelMemberJoined}__${channelId}`,
+              },
+              member._id,
+            ),
+          ),
+      ]);
+      alert.success("Invite request is accepted successfully");
+    } catch (err) {
+      alert.error("Could not accept the invite request. Please try again");
+      console.error("Error accepting the invite request:", err);
+    }
+  };
+
+  const handleJoinRequestAccept = async (
+    requestId: string,
+    localUserId: string,
+    peerId: string,
+    channelId: string,
+    channelChatTargetId: string,
+  ) => {
+    try {
+      await Promise.all([
+        acceptRequest({
+          requestId,
+          uid: localUserId,
+        }).unwrap(),
+        chatConnection.acceptGroupJoinRequest({
+          applicant: peerId,
+          groupId: channelChatTargetId,
+        }),
+      ]);
+      const channelMembers = await fetchChannelMembers(channelId).unwrap();
+      await Promise.all([
+        RTMClient.sendMessageToPeer(
+          {
+            text: PeerMessage.JoinRequestAccepted,
+          },
+          peerId,
+        ),
+        channelMembers
+          .filter((member) => ![localUserId, peerId].includes(member._id))
+          .map((member) =>
+            RTMClient.sendMessageToPeer(
+              {
+                text: `${PeerMessage.ChannelMemberJoined}__${channelId}`,
+              },
+              member._id,
+            ),
+          ),
+      ]);
+      alert.success("Join request is accepted successfully");
+    } catch (err) {
+      alert.error("Could not accept the join request. Please try again");
+      console.error("Error accepting the join request:", err);
     }
   };
 

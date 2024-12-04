@@ -19,14 +19,12 @@ const registerChatUser = async (uid: string, password: string) => {
   };
 
   try {
-    const response = await new Gaxios().request({
+    await new Gaxios().request({
       method: "POST",
       url: url,
       data: { username: uid, password },
       headers: headers,
     });
-
-    console.log("User registered successfully:", response.data);
   } catch (error) {
     console.error(
       "Error registering user:",

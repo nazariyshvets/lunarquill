@@ -19,6 +19,7 @@ import {
   useSearchChannelsMutation,
   useJoinChannelMutation,
   useFetchChannelByIdMutation,
+  useFetchChannelMembersMutation,
 } from "../services/channelApi";
 import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
@@ -41,6 +42,7 @@ const ChannelAdditionPage = () => {
   const [joinChannel] = useJoinChannelMutation();
   const [createRequest] = useCreateRequestMutation();
   const [fetchChannel] = useFetchChannelByIdMutation();
+  const [fetchChannelMembers] = useFetchChannelMembersMutation();
   const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const RTMClient = useRTMClient();
@@ -167,6 +169,20 @@ const ChannelAdditionPage = () => {
         }),
       ]);
       alert.success("You joined the channel successfully");
+
+      const channelMembers = await fetchChannelMembers(channelId).unwrap();
+      await Promise.all(
+        channelMembers
+          .filter((member) => member._id !== userId)
+          .map((member) =>
+            RTMClient.sendMessageToPeer(
+              {
+                text: `${PeerMessage.ChannelMemberJoined}__${channelId}`,
+              },
+              member._id,
+            ),
+          ),
+      );
     } catch (err) {
       handleError(
         err,

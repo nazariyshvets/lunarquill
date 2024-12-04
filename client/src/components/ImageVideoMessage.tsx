@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 
+import { BiPlay } from "react-icons/bi";
+
 import MediaModal from "./MediaModal";
 
 interface ImageVideoMessageProps {
@@ -26,7 +28,10 @@ const ImageVideoMessage = ({ type, url }: ImageVideoMessageProps) => {
       {type === "img" ? (
         <img alt={url} {...messageWidgetAttrs} />
       ) : (
-        <video {...messageWidgetAttrs} />
+        <div className="flex items-center justify-center">
+          <video {...messageWidgetAttrs} />
+          <BiPlay className="pointer-events-none absolute text-3xl text-white xl:text-5xl" />
+        </div>
       )}
       {isOpened && (
         <MediaModal type={type} url={url} onClose={() => setIsOpened(false)} />
