@@ -40,16 +40,14 @@ const RTCControlPanel = ({
   const toggleOptions = () => setAreOptionsDisplayed((prevState) => !prevState);
 
   return (
-    <div className="flex w-full items-center justify-center gap-4 text-white">
+    <div className="relative flex w-full items-center justify-center gap-4 text-white">
       <Dropdown
         isOpen={areOptionsDisplayed}
         content={<RTCControlPanelOptions />}
         placement={Placement.TOP_LEFT}
+        containerClassName="sm:absolute sm:left-0"
       >
-        <RTCControlButton
-          onClick={toggleOptions}
-          className="sm:absolute sm:left-0"
-        >
+        <RTCControlButton onClick={toggleOptions}>
           {areOptionsDisplayed ? (
             <BiDotsHorizontalRounded className="h-full w-full text-primary" />
           ) : (

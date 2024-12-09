@@ -7,15 +7,19 @@ interface DropdownProps {
   isOpen: boolean;
   content: React.ReactNode;
   placement: Placement;
+  containerClassName?: string;
 }
 
 const Dropdown = ({
   isOpen,
   placement,
   content,
+  containerClassName = "",
   children,
 }: PropsWithChildren<DropdownProps>) => (
-  <div className="relative">
+  <div
+    className={`relative${containerClassName ? ` ${containerClassName}` : ""}`}
+  >
     {children}
     {isOpen && (
       <div

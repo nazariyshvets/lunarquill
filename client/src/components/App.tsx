@@ -21,7 +21,8 @@ import ChannelAdditionPage from "../pages/ChannelAdditionPage";
 import RequestsPage from "../pages/RequestsPage";
 import ContactChatPage from "../pages/ContactChatPage";
 import ChannelChatPage from "../pages/ChannelChatPage";
-import ChannelPage from "../pages/ChannelPage";
+import ContactCallPage from "../pages/ContactCallPage";
+import ChannelCallPage from "../pages/ChannelCallPage";
 import CallManager from "./CallManager";
 import DBConfig from "../config/DBConfig";
 
@@ -52,8 +53,8 @@ const router = createBrowserRouter(
             <Route path="/contacts/:id/chat" element={<ContactChatPage />} />
             <Route path="/channels/:id/chat" element={<ChannelChatPage />} />
           </Route>
-          <Route path="/contacts/:id/call" element={<ChannelPage />} />
-          <Route path="/channels/:id/call" element={<ChannelPage />} />
+          <Route path="/contacts/:id/call" element={<ContactCallPage />} />
+          <Route path="/channels/:id/call" element={<ChannelCallPage />} />
         </Route>
       </Route>
     </>,
