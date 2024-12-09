@@ -1,7 +1,4 @@
-import type { File as CustomFile } from "./File";
-
-interface Channel {
-  _id: string;
+interface ChannelDto {
   name: string;
   admin: string;
   isPrivate: boolean;
@@ -9,12 +6,12 @@ interface Channel {
   whiteboardRoomId: string;
   selectedAvatar?: string;
   avatars?: string[];
+}
+
+interface Channel extends ChannelDto {
+  _id: string;
   createdAt: number;
   updatedAt: number;
 }
 
-interface PopulatedChannel extends Omit<Channel, "selectedAvatar"> {
-  selectedAvatar: CustomFile;
-}
-
-export type { Channel, PopulatedChannel };
+export type { ChannelDto, Channel };

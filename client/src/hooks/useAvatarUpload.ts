@@ -1,8 +1,10 @@
 import { useState } from "react";
 
+import { useAlert } from "react-alert";
 import { nanoid } from "@reduxjs/toolkit";
 
 import { useDownloadFilesMutation } from "../services/fileApi";
+import useRTMClient from "./useRTMClient";
 import useHandleError from "./useHandleError";
 import extractFilesFromBlob from "../utils/extractFilesFromBlob";
 import getFileDataUrls from "../utils/getFileDataUrls";
@@ -38,8 +40,10 @@ const useAvatarUpload = ({
   const [avatars, setAvatars] = useState<Avatar[]>([]);
   const [modalState, setModalState] = useState(initialModalState);
 
+  const RTMClient = useRTMClient();
   const handleError = useHandleError();
   const [downloadFiles] = useDownloadFilesMutation();
+  const alert = useAlert();
 
   const handleModalOpen = async () => {
     if (avatars.length) {
@@ -124,6 +128,7 @@ const useAvatarUpload = ({
         },
         ...prevState.avatars,
       ],
+      selectedAvatarId: avatarId,
     }));
   };
 
@@ -134,6 +139,8 @@ const useAvatarUpload = ({
     ) => {
       unwrap(): Promise<AvatarsUpdateResponsePayload>;
     },
+    usersToNotify: { _id: string }[],
+    notification: string,
   ) => {
     try {
       const requestPayload = {
@@ -158,6 +165,17 @@ const useAvatarUpload = ({
                 src: undefined,
               }
             : avatar,
+        ),
+      );
+      alert.success("Avatars collection was updated successfully");
+      await Promise.allSettled(
+        usersToNotify.map((user) =>
+          RTMClient.sendMessageToPeer(
+            {
+              text: notification,
+            },
+            user._id,
+          ),
         ),
       );
     } catch (error) {

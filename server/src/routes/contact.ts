@@ -8,8 +8,8 @@ import {
 
 const router = Router();
 
+router.delete("/relation", removeContactRelationController);
 router.get("/:userId1/:userId2", getContactRelationController);
 router.get("/:id", getContactByIdController);
-router.delete("/relation", removeContactRelationController);
 
 export default router;

@@ -26,15 +26,15 @@ import parseMessage from "../utils/parseMessage";
 import { ERROR_CODES } from "../constants/constants";
 import type { ChatType } from "../types/ChatType";
 import type Message from "../types/Message";
-import { PopulatedUserWithoutPassword } from "../types/User";
+import { UserWithoutPassword } from "../types/User";
 
 interface ChatProps {
   chatType: ChatType;
   targetId: string;
-  localUser: PopulatedUserWithoutPassword | undefined;
+  members: UserWithoutPassword[];
 }
 
-const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
+const Chat = ({ chatType, targetId, members }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [emojiPickerState, setEmojiPickerState] = useState<{
@@ -121,10 +121,6 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
         msg: message,
         to: targetId,
         chatType,
-        ext: {
-          senderUsername: username,
-          senderAvatarId: localUser?.selectedAvatar?._id,
-        },
       };
 
       try {
@@ -136,8 +132,6 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
           type: "txt",
           msg: message,
           senderId: userId ?? "",
-          senderUsername: username ?? "unknown",
-          senderAvatarId: localUser?.selectedAvatar?._id,
           recipientId: msg.to,
           time: Date.now(),
         };
@@ -168,8 +162,6 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
         to: targetId,
         chatType,
         ext: {
-          senderUsername: username ?? "unknown",
-          senderAvatarId: localUser?.selectedAvatar?._id,
           fileType: file.filetype,
           fileName: file.filename,
           fileSize: file.data.size,
@@ -194,8 +186,6 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
             fileSize: file.data.size,
             url: file.url,
             senderId: userId ?? "",
-            senderUsername: username ?? "unknown",
-            senderAvatarId: localUser?.selectedAvatar?._id,
             recipientId: msg.to,
             time: Date.now(),
           },
@@ -299,9 +289,12 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
 
         await handleReactionRemove(messageId);
 
-        if (!isReactionSelected)
+        if (!isReactionSelected) {
           await handleReactionAdd(messageId, emojiUnified);
-      } else setEmojiPickerState({ isOpened: true, messageId });
+        }
+      } else {
+        setEmojiPickerState({ isOpened: true, messageId });
+      }
     },
     [getLocalUserReactions, handleReactionAdd, handleReactionRemove],
   );
@@ -313,7 +306,9 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
       if (messageId) {
         await handleReactionClick(messageId, data.unified);
         setEmojiPickerState({ isOpened: false });
-      } else await handleEmojiAdd(data.unified);
+      } else {
+        await handleEmojiAdd(data.unified);
+      }
     },
     [emojiPickerState?.messageId, handleEmojiAdd, handleReactionClick],
   );
@@ -344,8 +339,9 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
     if (
       !areMessagesFetchingRef.current &&
       messagesCursorRef.current !== "undefined"
-    )
+    ) {
       await getMessages();
+    }
   }, [getMessages]);
 
   const handleSmileBtnClick = useCallback(
@@ -425,6 +421,7 @@ const Chat = ({ chatType, targetId, localUser }: ChatProps) => {
     <div className="flex h-full max-h-full w-full flex-col overflow-hidden bg-deep-black">
       <ChatMessagesView
         messageGroups={messageGroups}
+        members={members}
         onReactionClick={handleReactionClick}
         onScroll={handleMessagesViewScroll}
       />

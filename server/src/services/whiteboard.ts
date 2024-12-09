@@ -28,7 +28,9 @@ const formatJSON = <T extends StrAndIntByObj>(object: T) => {
   const keys = Object.keys(object).sort();
   const target: StrByObj = {};
 
-  for (const key of keys) target[key] = String(object[key]);
+  for (const key of keys) {
+    target[key] = String(object[key]);
+  }
 
   return target;
 };
@@ -38,8 +40,12 @@ const stringify = (object: StrByObj) =>
     .map((key) => {
       const value = object[key];
 
-      if (value === undefined) return "";
-      if (value === null) return "null";
+      if (value === undefined) {
+        return "";
+      }
+      if (value === null) {
+        return "null";
+      }
 
       return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
     })
@@ -130,7 +136,9 @@ const createToken =
       nonce: uuidv1(),
     };
 
-    if (lifespan > 0) object.expireAt = `${Date.now() + lifespan}`;
+    if (lifespan > 0) {
+      object.expireAt = `${Date.now() + lifespan}`;
+    }
 
     const information = JSON.stringify(formatJSON(object));
     const hmac = createHmac("sha256", secretAccessKey);

@@ -11,8 +11,10 @@ import {
   BiPhoneOff,
 } from "react-icons/bi";
 
+import Dropdown from "./Dropdown";
 import RTCControlPanelOptions from "./RTCControlPanelOptions";
 import RTCControlButton from "./RTCControlButton";
+import Placement from "../types/Placement";
 
 interface RTCControlPanelProps {
   isCameraMuted: boolean;
@@ -38,19 +40,23 @@ const RTCControlPanel = ({
   const toggleOptions = () => setAreOptionsDisplayed((prevState) => !prevState);
 
   return (
-    <div className="relative flex w-full items-center justify-center gap-4 text-white">
-      {areOptionsDisplayed && <RTCControlPanelOptions />}
-
-      <RTCControlButton
-        onClick={toggleOptions}
-        className="sm:absolute sm:left-0"
+    <div className="flex w-full items-center justify-center gap-4 text-white">
+      <Dropdown
+        isOpen={areOptionsDisplayed}
+        content={<RTCControlPanelOptions />}
+        placement={Placement.TOP_LEFT}
       >
-        {areOptionsDisplayed ? (
-          <BiDotsHorizontalRounded className="h-full w-full text-primary" />
-        ) : (
-          <BiDotsHorizontalRounded className="h-full w-full" />
-        )}
-      </RTCControlButton>
+        <RTCControlButton
+          onClick={toggleOptions}
+          className="sm:absolute sm:left-0"
+        >
+          {areOptionsDisplayed ? (
+            <BiDotsHorizontalRounded className="h-full w-full text-primary" />
+          ) : (
+            <BiDotsHorizontalRounded className="h-full w-full" />
+          )}
+        </RTCControlButton>
+      </Dropdown>
       <RTCControlButton onClick={onToggleCamera}>
         {isCameraMuted ? (
           <BiCameraOff className="h-full w-full" />

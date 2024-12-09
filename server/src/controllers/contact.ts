@@ -9,7 +9,9 @@ import {
 const getContactRelationController = async (req: Request, res: Response) => {
   const { userId1, userId2 } = req.params;
 
-  if (!userId1 || !userId2) throw new Error("User ids are required");
+  if (!userId1 || !userId2) {
+    throw new Error("User ids are required");
+  }
 
   const contact = await getContactRelation(userId1, userId2);
 
@@ -19,7 +21,9 @@ const getContactRelationController = async (req: Request, res: Response) => {
 const getContactByIdController = async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  if (!id) throw new Error("Contact id is required");
+  if (!id) {
+    throw new Error("Contact id is required");
+  }
 
   const contact = await getContactById(id);
 
@@ -29,7 +33,9 @@ const getContactByIdController = async (req: Request, res: Response) => {
 const removeContactRelationController = async (req: Request, res: Response) => {
   const { user1Id, user2Id } = req.body;
 
-  if (!user1Id || !user2Id) throw new Error("User ids are required");
+  if (!user1Id || !user2Id) {
+    throw new Error("User ids are required");
+  }
 
   const response = await removeContactRelation(user1Id, user2Id);
 

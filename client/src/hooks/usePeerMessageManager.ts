@@ -137,6 +137,32 @@ const usePeerMessageManager = () => {
             id: message.text.split("__")[1],
           },
         ]);
+      } else if (message.text.startsWith(PeerMessage.ChannelUpdated)) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.CHANNEL,
+            id: message.text.split("__")[1],
+          },
+          {
+            type: QUERY_TAG_TYPES.USER_CHANNELS,
+            id: localUserId,
+          },
+        ]);
+      } else if (message.text.startsWith(PeerMessage.ChannelKicked)) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.USER_CHANNELS,
+            id: localUserId,
+          },
+        ]);
+        navigate("/profile");
+      } else if (message.text.startsWith(PeerMessage.ChannelMemberKicked)) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.CHANNEL_MEMBERS,
+            id: message.text.split("__")[1],
+          },
+        ]);
       }
     };
 

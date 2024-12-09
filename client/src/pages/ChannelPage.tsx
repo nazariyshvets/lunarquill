@@ -17,7 +17,10 @@ import useJoinRTMChannel from "../hooks/useJoinRTMChannel";
 import useAuth from "../hooks/useAuth";
 import useAppSelector from "../hooks/useAppSelector";
 import { useGetUserByIdQuery } from "../services/userApi";
-import { useGetChannelByIdQuery } from "../services/channelApi";
+import {
+  useGetChannelByIdQuery,
+  useGetChannelMembersQuery,
+} from "../services/channelApi";
 import { useGetContactByIdQuery } from "../services/contactApi";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import RTCConfig from "../config/RTCConfig";
@@ -61,7 +64,7 @@ const ChannelPageComponent = ({
   const isRTMChannelJoined = useJoinRTMChannel(
     RTMClient,
     RTMChannel,
-    localUser?.selectedAvatar?._id,
+    localUser?.selectedAvatar,
   );
   const isChatInitialized = useAppSelector(
     (state) => state.chat.isChatInitialized,
@@ -81,6 +84,8 @@ const ChannelPageComponent = ({
     useGetChannelByIdQuery(
       chatType === ChatTypeEnum.GroupChat ? channelId : skipToken,
     );
+  const { data: channelMembers = [], isFetching: isChannelMembersFetching } =
+    useGetChannelMembersQuery(channel?._id ? channel._id : skipToken);
 
   useDocumentTitle(
     (chatType === ChatTypeEnum.SingleChat
@@ -97,7 +102,8 @@ const ChannelPageComponent = ({
     !isChatInitialized ||
     !RTMChannel ||
     isContactFetching ||
-    isChannelFetching ? (
+    isChannelFetching ||
+    isChannelMembersFetching ? (
     <Loading />
   ) : (
     <AgoraRTCProvider client={RTCClient}>
@@ -111,6 +117,13 @@ const ChannelPageComponent = ({
             (chatType === ChatTypeEnum.SingleChat
               ? remoteUser?._id
               : channel?.chatTargetId) ?? ""
+          }
+          chatMembers={
+            chatType === ChatTypeEnum.SingleChat
+              ? contact
+                ? [contact.user1, contact.user2]
+                : []
+              : channelMembers
           }
           whiteboardRoomId={
             (chatType === ChatTypeEnum.SingleChat

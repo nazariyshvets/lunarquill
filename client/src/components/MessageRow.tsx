@@ -11,6 +11,7 @@ import type Message from "../types/Message";
 
 interface MessageRowProps {
   message: Message;
+  senderUsername?: string;
   displayUsername?: boolean;
   isLocalUser?: boolean;
   onReactionClick: (emojiUnified?: string) => Promise<void>;
@@ -18,6 +19,7 @@ interface MessageRowProps {
 
 const MessageRow = ({
   message,
+  senderUsername,
   displayUsername = false,
   isLocalUser = false,
   onReactionClick,
@@ -75,7 +77,7 @@ const MessageRow = ({
       >
         {displayUsername && (
           <span className="truncate text-sm font-medium tracking-wider text-primary-light sm:text-base">
-            {isLocalUser ? "You" : message.senderUsername ?? "Unknown"}
+            {isLocalUser ? "You" : senderUsername ?? "Unknown"}
           </span>
         )}
 

@@ -9,8 +9,9 @@ const generateRTMToken = (uid: string, expiry?: string) => {
   // get the expire time
   let expireTime;
 
-  if (!expiry || expiry === "") expireTime = 3600;
-  else {
+  if (!expiry || expiry === "") {
+    expireTime = 3600;
+  } else {
     try {
       expireTime = parseInt(expiry, 10);
     } catch (err) {

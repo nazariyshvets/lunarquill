@@ -11,7 +11,6 @@ import Contact from "../components/Contact";
 import SimpleButton from "../components/SimpleButton";
 import Chat from "../components/Chat";
 import Modal from "../components/Modal";
-import { useGetUserByIdQuery } from "../services/userApi";
 import {
   useGetContactRelationQuery,
   useRemoveContactMutation,
@@ -38,7 +37,6 @@ const ContactChatPage = () => {
 
   const { id: contactId } = useParams();
   const { userId } = useAuth();
-  const { data: localUser } = useGetUserByIdQuery(userId ?? skipToken);
   const { data: contactRelation, isLoading: isContactRelationLoading } =
     useGetContactRelationQuery(
       userId && contactId
@@ -168,7 +166,7 @@ const ContactChatPage = () => {
           <Contact
             name={contactName}
             isOnline={isContactOnline}
-            avatarId={contact?.selectedAvatar?._id}
+            avatarId={contact?.selectedAvatar}
             size="sm"
           />
 
@@ -195,7 +193,7 @@ const ContactChatPage = () => {
           key={contactId}
           chatType={ChatTypeEnum.SingleChat}
           targetId={contactId}
-          localUser={localUser}
+          members={[contactRelation.user1, contactRelation.user2]}
         />
 
         {isRemoveContactModalOpen && (

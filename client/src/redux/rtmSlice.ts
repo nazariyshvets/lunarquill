@@ -1,11 +1,11 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import CallDirection from "../types/CallDirection";
-import type { PopulatedUserWithoutPassword } from "../types/User";
+import type { UserWithoutPassword } from "../types/User";
 
 interface CallModal {
   callDirection: CallDirection;
-  contact: PopulatedUserWithoutPassword;
+  contact: UserWithoutPassword;
 }
 
 export interface RTMState {

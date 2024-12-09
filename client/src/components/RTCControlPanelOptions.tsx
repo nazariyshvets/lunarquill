@@ -82,7 +82,7 @@ const RTCControlPanelOptions = () => {
   ];
 
   return (
-    <div className="absolute bottom-[calc(100%+1rem)] left-0 z-[200] max-w-[288px] rounded bg-deep-black p-4 shadow-button sm:max-w-[400px]">
+    <>
       {optionConfigs.map((config, i) => (
         <OptionRow key={i} {...config} />
       ))}
@@ -96,7 +96,7 @@ const RTCControlPanelOptions = () => {
       ) : (
         <></>
       )}
-    </div>
+    </>
   );
 };
 

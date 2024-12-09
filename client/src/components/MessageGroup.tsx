@@ -1,9 +1,11 @@
 import MessageRow from "./MessageRow";
 import useAvatarSource from "../hooks/useAvatarSource";
 import type { GroupedMessage } from "../utils/groupMessages";
+import { UserWithoutPassword } from "../types/User";
 
 interface MessageGroupProps extends GroupedMessage {
   isLocalUser?: boolean;
+  chatMembers: UserWithoutPassword[];
   onReactionClick: (messageId: string, emojiUnified?: string) => Promise<void>;
 }
 
@@ -11,9 +13,13 @@ const MessageGroup = ({
   messages,
   displayDate,
   isLocalUser = false,
+  chatMembers,
   onReactionClick,
 }: MessageGroupProps) => {
-  const avatarSrc = useAvatarSource(messages[0]?.senderAvatarId);
+  const sender = chatMembers.find(
+    (member) => member._id === messages[0]?.senderId,
+  );
+  const avatarSrc = useAvatarSource(sender?.selectedAvatar);
 
   return (
     <div className="flex flex-col gap-4">
@@ -37,7 +43,7 @@ const MessageGroup = ({
             />
           ) : (
             <span className="flex h-full w-full items-center justify-center rounded-full bg-primary-light">
-              {(isLocalUser ? "You" : messages[0]?.senderUsername ?? "Unknown")
+              {(isLocalUser ? "You" : sender?.username ?? "Unknown")
                 .slice(0, 2)
                 .toUpperCase()}
             </span>
@@ -53,6 +59,7 @@ const MessageGroup = ({
               key={message.id}
               message={message}
               isLocalUser={isLocalUser}
+              senderUsername={sender?.username}
               displayUsername={i === 0}
               onReactionClick={(emojiUnified?: string) =>
                 onReactionClick(message.id, emojiUnified)

@@ -11,7 +11,9 @@ const uploadFileController = async (req: Request, res: Response) => {
 
   const file = req.file;
 
-  if (!file) throw new Error("File is required");
+  if (!file) {
+    throw new Error("File is required");
+  }
 
   const fileInfo = await File.findOne({ filename: file.filename });
 
@@ -21,8 +23,12 @@ const uploadFileController = async (req: Request, res: Response) => {
 const downloadFileController = async (req: Request, res: Response) => {
   const { fileId } = req.params;
 
-  if (!fileId) throw new Error("File id is required");
-  if (!ObjectId.isValid(fileId)) throw new Error("Invalid file id");
+  if (!fileId) {
+    throw new Error("File id is required");
+  }
+  if (!ObjectId.isValid(fileId)) {
+    throw new Error("Invalid file id");
+  }
 
   const imageBucket = await getGridFSBucket("images");
   const downloadStream = imageBucket.openDownloadStream(new ObjectId(fileId));
@@ -88,8 +94,12 @@ const downloadFilesController = async (req: Request, res: Response) => {
 const removeFileController = async (req: Request, res: Response) => {
   const { fileId } = req.params;
 
-  if (!fileId) throw new Error("File id is required");
-  if (!ObjectId.isValid(fileId)) throw new Error("Invalid file id");
+  if (!fileId) {
+    throw new Error("File id is required");
+  }
+  if (!ObjectId.isValid(fileId)) {
+    throw new Error("Invalid file id");
+  }
 
   const imageBucket = await getGridFSBucket("images");
 

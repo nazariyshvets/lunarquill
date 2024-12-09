@@ -18,7 +18,9 @@ import File from "../models/File";
 const getUserContactsController = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
-  if (!userId) throw new Error("User id is required");
+  if (!userId) {
+    throw new Error("User id is required");
+  }
 
   const contacts = await getUserContacts(userId);
 
@@ -28,7 +30,9 @@ const getUserContactsController = async (req: Request, res: Response) => {
 const getUserChannelsController = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
-  if (!userId) throw new Error("User id is required");
+  if (!userId) {
+    throw new Error("User id is required");
+  }
 
   const channels = await getUserChannels(userId);
 
@@ -38,7 +42,9 @@ const getUserChannelsController = async (req: Request, res: Response) => {
 const getUserRequestsController = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
-  if (!userId) throw new Error("User id is required");
+  if (!userId) {
+    throw new Error("User id is required");
+  }
 
   const requests = await getUserRequests(userId);
 
@@ -48,7 +54,9 @@ const getUserRequestsController = async (req: Request, res: Response) => {
 const getUserByIdController = async (req: Request, res: Response) => {
   const { userId } = req.params;
 
-  if (!userId) throw new Error("User id is required");
+  if (!userId) {
+    throw new Error("User id is required");
+  }
 
   const user = await getUserById(userId);
 
@@ -59,7 +67,9 @@ const updateUserByIdController = async (req: Request, res: Response) => {
   const { userId } = req.params;
   const updateData = req.body;
 
-  if (!userId) throw new Error("User id is required");
+  if (!userId) {
+    throw new Error("User id is required");
+  }
 
   const updatedUser = await updateUserById(userId, updateData);
 

@@ -7,8 +7,9 @@ const storage = new GridFsStorage({
   file: (_, file) => {
     const filename = `${Date.now()}__${file.originalname}`;
 
-    if (file.mimetype.startsWith("image/"))
+    if (file.mimetype.startsWith("image/")) {
       return { bucketName: "images", filename };
+    }
 
     return filename;
   },

@@ -32,7 +32,7 @@ const ProfilePage = () => {
     handleAvatarUpload,
     handleModalSaveBtnClick: handleEditAvatarModalSaveBtnClick,
   } = useAvatarUpload({
-    selectedAvatarId: userDetails?.selectedAvatar?._id,
+    selectedAvatarId: userDetails?.selectedAvatar,
     avatarIds: userDetails?.avatars ?? [],
   });
 
@@ -42,7 +42,12 @@ const ProfilePage = () => {
 
   const handleAvatarsUpdate = () =>
     !!userId &&
-    handleEditAvatarModalSaveBtnClick({ userId }, updateAvatarsCollection);
+    handleEditAvatarModalSaveBtnClick(
+      { userId },
+      updateAvatarsCollection,
+      [],
+      "",
+    );
 
   const userName = username ?? "You";
 
@@ -54,7 +59,7 @@ const ProfilePage = () => {
             <Contact
               name={userName}
               isOnline
-              avatarId={userDetails?.selectedAvatar?._id}
+              avatarId={userDetails?.selectedAvatar}
               size="xl"
               layout="vertical"
               withOverlay

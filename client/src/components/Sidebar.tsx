@@ -6,14 +6,14 @@ import SimpleButton from "./SimpleButton";
 import Contact from "./Contact";
 import NoDataBox from "./NoDataBox";
 import useIsUserOnline from "../hooks/useIsUserOnline";
-import type { PopulatedUserWithoutPassword } from "../types/User";
-import type { PopulatedChannel } from "../types/Channel";
+import type { UserWithoutPassword } from "../types/User";
+import type { Channel } from "../types/Channel";
 
 interface SidebarProps {
-  user?: PopulatedUserWithoutPassword;
+  user?: UserWithoutPassword;
   inboxRequestsCount: number;
-  contacts: PopulatedUserWithoutPassword[];
-  channels: PopulatedChannel[];
+  contacts: UserWithoutPassword[];
+  channels: Channel[];
   onClose?: () => void;
 }
 
@@ -34,7 +34,7 @@ const Sidebar = ({
             <Contact
               name={user?.username ?? "You"}
               isOnline={isUserOnline(user?._id)}
-              avatarId={user?.selectedAvatar?._id}
+              avatarId={user?.selectedAvatar}
               size="lg"
               onClick={onClose}
             />
@@ -90,7 +90,7 @@ const Sidebar = ({
                     <Contact
                       name={contact.username}
                       isOnline={isUserOnline(contact._id)}
-                      avatarId={contact.selectedAvatar?._id}
+                      avatarId={contact.selectedAvatar}
                       onClick={onClose}
                     />
                   </Link>
@@ -108,7 +108,7 @@ const Sidebar = ({
                   <Contact
                     name={channel.name}
                     isOnline={false}
-                    avatarId={channel.selectedAvatar?._id}
+                    avatarId={channel.selectedAvatar}
                     onClick={onClose}
                   />
                 </Link>
