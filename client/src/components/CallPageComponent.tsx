@@ -6,7 +6,7 @@ import VirtualBackground from "../components/VirtualBackground";
 import NoiseSuppression from "../components/NoiseSuppression";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useInitCall from "../hooks/useInitCall";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 import type { UserWithoutPassword } from "../types/User";
 
 interface CallPageComponentProps<T> {
@@ -14,7 +14,7 @@ interface CallPageComponentProps<T> {
   channelId: string;
   pageTitle: string;
   data: T | undefined;
-  chatType: ChatTypeEnum;
+  chatType: ChatType;
   getChatTargetId: (data: T) => string;
   getChatMembers: (data: T) => UserWithoutPassword[];
   getWhiteboardRoomId: (data: T) => string;

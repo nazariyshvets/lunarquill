@@ -16,7 +16,7 @@ import { useInvalidateTags } from "../services/mutationHelpers";
 import { QUERY_TAG_TYPES } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 
 const usePeerMessageManager = () => {
   const { userId } = useAuth();
@@ -117,7 +117,7 @@ const usePeerMessageManager = () => {
       } else if (message.text === PeerMessage.ContactRemoved) {
         chatConnection.deleteConversation({
           channel: peerId,
-          chatType: ChatTypeEnum.SingleChat,
+          chatType: ChatType.SingleChat,
           deleteRoam: true,
         });
         navigate("/profile");

@@ -4,7 +4,7 @@ import {
   useGetChannelMembersQuery,
 } from "../services/channelApi";
 import { Channel } from "../types/Channel";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 import type { UserWithoutPassword } from "../types/User";
 
 interface ChannelCallPageComponentProps {
@@ -37,7 +37,7 @@ const ChannelCallPageComponent = ({
       channelId={channelId}
       pageTitle={`Call in ${channel?.name || "unknown"} channel`}
       data={data}
-      chatType={ChatTypeEnum.GroupChat}
+      chatType={ChatType.GroupChat}
       getChatTargetId={(data) => data.channel.chatTargetId}
       getChatMembers={(data) => data.channelMembers}
       getWhiteboardRoomId={(data) => data.channel.whiteboardRoomId}

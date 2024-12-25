@@ -29,7 +29,7 @@ import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { CALL_TIMEOUT_MS } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 
 const ContactChatPage = () => {
   const [isRemoveContactModalOpen, setIsRemoveContactModalOpen] =
@@ -135,7 +135,7 @@ const ContactChatPage = () => {
         }).unwrap(),
         chatConnection.deleteConversation({
           channel: contactId,
-          chatType: ChatTypeEnum.SingleChat,
+          chatType: ChatType.SingleChat,
           deleteRoam: true,
         }),
       ]);
@@ -191,7 +191,7 @@ const ContactChatPage = () => {
 
         <Chat
           key={contactId}
-          chatType={ChatTypeEnum.SingleChat}
+          chatType={ChatType.SingleChat}
           targetId={contactId}
           members={[contactRelation.user1, contactRelation.user2]}
         />

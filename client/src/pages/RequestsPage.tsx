@@ -20,7 +20,6 @@ import {
 } from "../services/requestApi";
 import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
-import addOptionalArrayItem from "../utils/addOptionalArrayItem";
 import { type PopulatedRequest, RequestType } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
 
@@ -89,7 +88,9 @@ const RequestsPage = () => {
   };
 
   const handleRequestRecall = async (request: PopulatedRequest) => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     try {
       await declineRequest({
@@ -125,21 +126,14 @@ const RequestsPage = () => {
           requestId: request._id,
           uid: userId,
         }).unwrap(),
-        ...addOptionalArrayItem(
-          await chatConnection.rejectGroupJoinRequest({
-            applicant: request.from._id,
-            groupId: chatTargetId,
-            reason: "",
-          }),
-          request.type === RequestType.Join,
-        ),
-        ...addOptionalArrayItem(
-          await chatConnection.rejectGroupInvite({
-            invitee: request.to._id,
-            groupId: chatTargetId,
-          }),
-          request.type === RequestType.Invite,
-        ),
+        ...(request.type === RequestType.Invite
+          ? [
+              chatConnection.rejectGroupInvite({
+                invitee: request.to._id,
+                groupId: chatTargetId,
+              }),
+            ]
+          : []),
       ]);
       await RTMClient.sendMessageToPeer(
         { text: PeerMessage.RequestDeclined },
@@ -179,14 +173,7 @@ const RequestsPage = () => {
         break;
       case RequestType.Join:
         channelId &&
-          channelChatTargetId &&
-          (await handleJoinRequestAccept(
-            requestId,
-            userId,
-            peerId,
-            channelId,
-            channelChatTargetId,
-          ));
+          (await handleJoinRequestAccept(requestId, userId, peerId, channelId));
     }
   };
 
@@ -229,16 +216,14 @@ const RequestsPage = () => {
     channelChatTargetId: string,
   ) => {
     try {
-      await Promise.all([
-        acceptRequest({
-          requestId,
-          uid: localUserId,
-        }).unwrap(),
-        chatConnection.acceptGroupInvite({
-          invitee: localUserId,
-          groupId: channelChatTargetId,
-        }),
-      ]);
+      await chatConnection.acceptGroupInvite({
+        invitee: localUserId,
+        groupId: channelChatTargetId,
+      });
+      await acceptRequest({
+        requestId,
+        uid: localUserId,
+      }).unwrap();
       const channelMembers = await fetchChannelMembers(channelId).unwrap();
       await Promise.all([
         RTMClient.sendMessageToPeer(
@@ -270,19 +255,12 @@ const RequestsPage = () => {
     localUserId: string,
     peerId: string,
     channelId: string,
-    channelChatTargetId: string,
   ) => {
     try {
-      await Promise.all([
-        acceptRequest({
-          requestId,
-          uid: localUserId,
-        }).unwrap(),
-        chatConnection.acceptGroupJoinRequest({
-          applicant: peerId,
-          groupId: channelChatTargetId,
-        }),
-      ]);
+      await acceptRequest({
+        requestId,
+        uid: localUserId,
+      }).unwrap();
       const channelMembers = await fetchChannelMembers(channelId).unwrap();
       await Promise.all([
         RTMClient.sendMessageToPeer(

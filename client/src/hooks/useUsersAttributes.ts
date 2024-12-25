@@ -91,6 +91,7 @@ const useUsersAttributes = (RTMClient: RtmClient, RTMChannel: RtmChannel) => {
       setUsersAttributes(attributes);
     };
 
+    handleMemberCountUpdated();
     RTMChannel.on("MemberCountUpdated", handleMemberCountUpdated);
 
     return () => {

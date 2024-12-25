@@ -20,11 +20,12 @@ import ChatForm from "./ChatForm";
 import ChatToolbar from "./ChatToolbar";
 import AudioRecorder from "./AudioRecorder";
 import useChatConnection from "../hooks/useChatConnection";
+import useJoinChatGroup from "../hooks/useJoinChatGroup";
 import useAuth from "../hooks/useAuth";
 import groupMessages from "../utils/groupMessages";
 import parseMessage from "../utils/parseMessage";
 import { ERROR_CODES } from "../constants/constants";
-import type { ChatType } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 import type Message from "../types/Message";
 import { UserWithoutPassword } from "../types/User";
 
@@ -49,6 +50,12 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
   const connection = useChatConnection();
   const { userId, username } = useAuth();
   const alert = useAlert();
+  const hasJoinedChatGroup = useJoinChatGroup(
+    connection,
+    chatType,
+    targetId,
+    members.some((member) => member._id === userId),
+  );
 
   // ===== FUNCTIONS =====
 
@@ -419,51 +426,55 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
 
   return (
     <div className="flex h-full max-h-full w-full flex-col overflow-hidden bg-deep-black">
-      <ChatMessagesView
-        messageGroups={messageGroups}
-        members={members}
-        onReactionClick={handleReactionClick}
-        onScroll={handleMessagesViewScroll}
-      />
-
-      <div className="relative flex flex-col gap-2 border-t border-lightgrey p-2">
-        <ChatForm
-          ref={messageInputRef}
-          message={message}
-          onMessageInput={handleTextMessageInput}
-          onSubmit={handleTextMessageSend}
-        />
-
-        <ChatToolbar
-          ref={fileInputRef}
-          isEmojiPickerOpen={emojiPickerState.isOpened}
-          onSmileBtnClick={handleSmileBtnClick}
-          onMicrophoneBtnClick={handleMicrophoneBtnClick}
-          onPaperclipBtnClick={handlePaperclipBtnClick}
-          onFileUpload={handleFileUpload}
-        />
-
-        {isRecordingAudio && (
-          <AudioRecorder
-            onSubmit={handleRecordedAudioSubmit}
-            onCancel={handleRecordingCancel}
+      {hasJoinedChatGroup && (
+        <>
+          <ChatMessagesView
+            messageGroups={messageGroups}
+            members={members}
+            onReactionClick={handleReactionClick}
+            onScroll={handleMessagesViewScroll}
           />
-        )}
 
-        {emojiPickerState.isOpened && (
-          <div className="absolute bottom-full left-0 z-20">
-            <EmojiPicker
-              theme={Theme.DARK}
-              emojiStyle={EmojiStyle.NATIVE}
-              skinTonesDisabled
-              height={300}
-              searchDisabled
-              previewConfig={{ showPreview: false }}
-              onEmojiClick={handleEmojiClick}
+          <div className="relative flex flex-col gap-2 border-t border-lightgrey p-2">
+            <ChatForm
+              ref={messageInputRef}
+              message={message}
+              onMessageInput={handleTextMessageInput}
+              onSubmit={handleTextMessageSend}
             />
+
+            <ChatToolbar
+              ref={fileInputRef}
+              isEmojiPickerOpen={emojiPickerState.isOpened}
+              onSmileBtnClick={handleSmileBtnClick}
+              onMicrophoneBtnClick={handleMicrophoneBtnClick}
+              onPaperclipBtnClick={handlePaperclipBtnClick}
+              onFileUpload={handleFileUpload}
+            />
+
+            {isRecordingAudio && (
+              <AudioRecorder
+                onSubmit={handleRecordedAudioSubmit}
+                onCancel={handleRecordingCancel}
+              />
+            )}
+
+            {emojiPickerState.isOpened && (
+              <div className="absolute bottom-full left-0 z-20">
+                <EmojiPicker
+                  theme={Theme.DARK}
+                  emojiStyle={EmojiStyle.NATIVE}
+                  skinTonesDisabled
+                  height={300}
+                  searchDisabled
+                  previewConfig={{ showPreview: false }}
+                  onEmojiClick={handleEmojiClick}
+                />
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 };

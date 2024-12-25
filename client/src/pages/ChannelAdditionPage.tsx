@@ -75,23 +75,19 @@ const ChannelAdditionPage = () => {
   const handlePrivateJoiningFormSubmit: SubmitHandler<{
     privateSearchValue: string;
   }> = async ({ privateSearchValue }) => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     try {
       const channel = await fetchChannel(privateSearchValue).unwrap();
 
-      await Promise.all([
-        createRequest({
-          from: userId,
-          to: null,
-          type: RequestType.Join,
-          channel: channel._id,
-        }).unwrap(),
-        chatConnection.joinGroup({
-          groupId: channel.chatTargetId,
-          message: "",
-        }),
-      ]);
+      await createRequest({
+        from: userId,
+        to: null,
+        type: RequestType.Join,
+        channel: channel._id,
+      }).unwrap();
       await RTMClient.sendMessageToPeer(
         { text: PeerMessage.RequestCreated },
         channel.admin.toString(),
@@ -112,7 +108,9 @@ const ChannelAdditionPage = () => {
     channelName: string;
     isPrivate: boolean;
   }> = async (data) => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     try {
       const { token: whiteboardSdkToken } =
@@ -126,8 +124,8 @@ const ChannelAdditionPage = () => {
           groupname: data.channelName,
           desc: "",
           members: [userId],
-          public: !data.isPrivate,
-          approval: data.isPrivate,
+          public: true,
+          approval: false,
           allowinvites: true,
           inviteNeedConfirm: true,
           maxusers: 100,
@@ -156,16 +154,12 @@ const ChannelAdditionPage = () => {
   };
 
   const handleJoinChannel = async (channel: Channel) => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     try {
-      await Promise.all([
-        joinChannel({ userId, channelId: channel._id }).unwrap(),
-        chatConnection.joinGroup({
-          groupId: channel.chatTargetId,
-          message: "",
-        }),
-      ]);
+      await joinChannel({ userId, channelId: channel._id }).unwrap();
       alert.success("You joined the channel successfully");
 
       const channelMembers = await fetchChannelMembers(channel._id).unwrap();

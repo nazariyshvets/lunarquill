@@ -1,6 +1,6 @@
 import CallPageComponent from "./CallPageComponent";
 import { useGetContactByIdQuery } from "../services/contactApi";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 import type { PopulatedContact, UserWithoutPassword } from "../types/User";
 
 interface ContactCallPageComponentProps {
@@ -37,7 +37,7 @@ const ContactCallPageComponent = ({
       channelId={contactRelationId}
       pageTitle={`Call with ${remoteUser?.username || "unknown"}`}
       data={data}
-      chatType={ChatTypeEnum.SingleChat}
+      chatType={ChatType.SingleChat}
       getChatTargetId={(data) => data.remoteUser._id}
       getChatMembers={(data) => [
         data.contactRelation.user1,

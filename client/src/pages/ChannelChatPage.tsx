@@ -38,7 +38,7 @@ import useAuth from "../hooks/useAuth";
 import useCopyToClipboard from "../hooks/useCopyToClipboard";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppSelector from "../hooks/useAppSelector";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 import Placement from "../types/Placement";
 import PeerMessage from "../types/PeerMessage";
 
@@ -278,7 +278,7 @@ const ChannelChatPage = () => {
 
         <Chat
           key={chatTargetId}
-          chatType={ChatTypeEnum.GroupChat}
+          chatType={ChatType.GroupChat}
           targetId={chatTargetId}
           members={channelMembers}
         />
@@ -317,8 +317,7 @@ const ChannelChatPage = () => {
           ) : (
             <EditChannelPrivacyModal
               localUserId={userId}
-              channelId={channelId}
-              isChannelPrivate={channel?.isPrivate}
+              channel={channel}
               channelMembers={channelMembers}
               onClose={handleModalClose}
             />

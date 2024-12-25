@@ -1,9 +1,6 @@
-type ChatType = "singleChat" | "groupChat";
-
-enum ChatTypeEnum {
+enum ChatType {
   SingleChat = "singleChat",
   GroupChat = "groupChat",
 }
 
-export type { ChatType };
-export { ChatTypeEnum };
+export { ChatType };

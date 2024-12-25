@@ -9,19 +9,18 @@ import { useUpdateChannelMutation } from "../../services/channelApi";
 import useRTMClient from "../../hooks/useRTMClient";
 import PeerMessage from "../../types/PeerMessage";
 import type { UserWithoutPassword } from "../../types/User";
+import type { Channel } from "../../types/Channel";
 
 interface EditChannelPrivacyModalProps {
   localUserId: string | null | undefined;
-  channelId: string | null | undefined;
-  isChannelPrivate: boolean | undefined;
+  channel: Channel | undefined;
   channelMembers: UserWithoutPassword[];
   onClose: () => void;
 }
 
 const EditChannelPrivacyModal = ({
   localUserId,
-  channelId,
-  isChannelPrivate: sourceIsChannelPrivate,
+  channel,
   channelMembers,
   onClose,
 }: EditChannelPrivacyModalProps) => {
@@ -30,7 +29,7 @@ const EditChannelPrivacyModal = ({
     formState: { errors },
     handleSubmit,
   } = useForm<{ isChannelPrivate: boolean }>({
-    defaultValues: { isChannelPrivate: sourceIsChannelPrivate },
+    defaultValues: { isChannelPrivate: channel?.isPrivate ?? false },
   });
   const formRef = useRef<HTMLFormElement>(null);
   const RTMClient = useRTMClient();
@@ -46,12 +45,12 @@ const EditChannelPrivacyModal = ({
   const handleFormSubmit: SubmitHandler<{
     isChannelPrivate: boolean;
   }> = async ({ isChannelPrivate }) => {
-    if (localUserId && channelId) {
+    if (localUserId && channel) {
       try {
-        if (isChannelPrivate !== sourceIsChannelPrivate) {
+        if (isChannelPrivate !== channel.isPrivate) {
           await updateChannel({
             localUserId,
-            channelId,
+            channelId: channel._id,
             updateData: { isPrivate: isChannelPrivate },
           }).unwrap();
           await Promise.all(
@@ -60,7 +59,7 @@ const EditChannelPrivacyModal = ({
               .map((member) =>
                 RTMClient.sendMessageToPeer(
                   {
-                    text: `${PeerMessage.ChannelUpdated}__${channelId}`,
+                    text: `${PeerMessage.ChannelUpdated}__${channel._id}`,
                   },
                   member._id,
                 ),

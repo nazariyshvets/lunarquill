@@ -35,7 +35,7 @@ import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import type { UserWithoutPassword, UserVolume } from "../types/User";
-import { type ChatType, ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 
 interface RTCManagerProps {
   localUser: UserWithoutPassword | undefined;
@@ -144,7 +144,7 @@ const RTCManager = ({
     isLocalScreenShared ? handleScreenShareEnd() : handleScreenShareStart();
 
   const leaveChannel = () => {
-    if (chatType === ChatTypeEnum.SingleChat) {
+    if (chatType === ChatType.SingleChat) {
       RTMClient.sendMessageToPeer(
         {
           text: PeerMessage.CallEnded,
@@ -155,7 +155,7 @@ const RTCManager = ({
 
     navigate(
       `/${
-        chatType === ChatTypeEnum.SingleChat
+        chatType === ChatType.SingleChat
           ? `contacts/${chatTargetId}`
           : `channels/${channelId}`
       }/chat`,
