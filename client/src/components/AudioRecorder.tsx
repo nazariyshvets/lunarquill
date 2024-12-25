@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, memo } from "react";
 
 import { useAudioRecorder } from "react-audio-voice-recorder";
-import { useAlert } from "react-alert";
 import {
   BiPlayCircle,
   BiPauseCircle,
@@ -11,6 +10,7 @@ import {
 
 import AudioVisualizer from "./AudioVisualizer";
 import SimpleButton from "./SimpleButton";
+import showToast from "../utils/showToast";
 
 interface AudioRecorderProps {
   onSubmit: (blob: Blob) => void;
@@ -29,7 +29,6 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(0);
   const playbackAudioRef = useRef(new Audio());
-  const alert = useAlert();
 
   const togglePlayPause = () =>
     recordingBlob ? togglePlayback(recordingBlob) : toggleRecording();
@@ -48,7 +47,7 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
         setIsPlayingBack(true);
       } catch (err) {
         resetPlayback();
-        alert.error("Could not playback the audio. Please try again");
+        showToast("error", "Could not playback the audio. Please try again");
         console.error("Error playing back the audio:", err);
       }
     }
@@ -65,7 +64,7 @@ const AudioRecorder = ({ onSubmit, onCancel }: AudioRecorderProps) => {
   const handleCompleteBtnClick = () =>
     recordingBlob
       ? onSubmit(recordingBlob)
-      : alert.info("Please record an audio message at first");
+      : showToast("info", "Please record an audio message at first");
 
   const handleCloseBtnClick = () => {
     stopRecording();

@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 
 import { RtmClient } from "agora-rtm-react";
-import { useAlert } from "react-alert";
+
+import showToast from "../utils/showToast";
 
 import useAppDispatch from "./useAppDispatch";
 import useAuth from "./useAuth";
@@ -16,7 +17,6 @@ const useInitRTMClient = (RTMClient: RtmClient) => {
   const isRTMClientInitialized = useAppSelector(
     (state) => state.rtm.isRTMClientInitialized,
   );
-  const alert = useAlert();
 
   useEffect(() => {
     if (!userId) return;
@@ -29,7 +29,7 @@ const useInitRTMClient = (RTMClient: RtmClient) => {
         dispatch(setIsRTMClientInitialized(true));
       } catch (err) {
         dispatch(setIsRTMClientInitialized(false));
-        alert.error("Could not initialize RTM client");
+        showToast("error", "Could not initialize RTM client");
         console.error("RTM client initialization failed:", err);
       }
     })();

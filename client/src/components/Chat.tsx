@@ -8,7 +8,6 @@ import React, {
 } from "react";
 
 import AC, { AgoraChat } from "agora-chat";
-import { useAlert } from "react-alert";
 import EmojiPicker, {
   EmojiClickData,
   EmojiStyle,
@@ -24,6 +23,7 @@ import useJoinChatGroup from "../hooks/useJoinChatGroup";
 import useAuth from "../hooks/useAuth";
 import groupMessages from "../utils/groupMessages";
 import parseMessage from "../utils/parseMessage";
+import showToast from "../utils/showToast";
 import { ERROR_CODES } from "../constants/constants";
 import { ChatType } from "../types/ChatType";
 import type Message from "../types/Message";
@@ -49,7 +49,6 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
   const messagesCursorRef = useRef<string>();
   const connection = useChatConnection();
   const { userId, username } = useAuth();
-  const alert = useAlert();
   const hasJoinedChatGroup = useJoinChatGroup(
     connection,
     chatType,
@@ -79,7 +78,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
         ...prevState,
       ]);
     } catch (err) {
-      alert.error("Could not retrieve history messages");
+      showToast("error", "Could not retrieve history messages");
       console.error("Error retrieving history messages:", err);
     } finally {
       areMessagesFetchingRef.current = false;
@@ -147,7 +146,8 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
         setMessage("");
         adjustMessageInputHeight();
       } catch (err) {
-        alert.error(
+        showToast(
+          "error",
           "An error occurred while sending text message. Please try again",
         );
         console.error("Error sending text message:", err);
@@ -198,7 +198,8 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
           },
         ]);
       } catch (err) {
-        alert.error(
+        showToast(
+          "error",
           `An error occurred while sending ${type} message. Please try again`,
         );
         console.error(`Error sending ${type} message:`, err);
@@ -252,9 +253,11 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
       } catch (err) {
         const reactionErr = err as { type: number; message: string };
 
-        if (reactionErr?.type === ERROR_CODES.REACTION_ALREADY_ADDED)
-          alert.info("Reaction is already added");
-        else alert.info("Something went wrong");
+        if (reactionErr?.type === ERROR_CODES.REACTION_ALREADY_ADDED) {
+          showToast("info", "Reaction is already added");
+        } else {
+          showToast("info", "Something went wrong");
+        }
 
         console.error("Error adding reaction:", reactionErr);
       }
@@ -277,7 +280,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
         try {
           await Promise.all(removeReactionPromises);
         } catch (err) {
-          alert.error("Could not remove reaction. Please try again");
+          showToast("error", "Could not remove reaction. Please try again");
           console.error("Error removing reaction:", err);
         }
       }

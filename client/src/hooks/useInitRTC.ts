@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 
-import { useAlert } from "react-alert";
-
 import useAuth from "./useAuth";
 import { useFetchRTCTokenMutation } from "../services/tokenApi";
+import showToast from "../utils/showToast";
 import RTCConfig from "../config/RTCConfig";
 
 const useInitRTC = (channelId: string) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [fetchRTCToken] = useFetchRTCTokenMutation();
   const { userId } = useAuth();
-  const alert = useAlert();
 
   useEffect(() => {
-    if (!channelId || !userId) return;
+    if (!channelId || !userId) {
+      return;
+    }
 
     (async () => {
       try {
@@ -30,7 +30,7 @@ const useInitRTC = (channelId: string) => {
         setIsInitialized(true);
       } catch (err) {
         setIsInitialized(false);
-        alert.error("Could not initialize RTC client");
+        showToast("error", "Could not initialize RTC client");
         console.error("Error initializing RTC client:", err);
       }
     })();

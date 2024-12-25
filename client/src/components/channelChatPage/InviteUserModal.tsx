@@ -1,14 +1,14 @@
 import { useRef } from "react";
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useAlert } from "react-alert";
 
 import Modal from "../Modal";
 import Input from "../Input";
 import { useCreateRequestMutation } from "../../services/requestApi";
 import useChatConnection from "../../hooks/useChatConnection";
-import useHandleError from "../../hooks/useHandleError";
 import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
+import showToast from "../../utils/showToast";
+import handleError from "../../utils/handleError";
 import { RequestType } from "../../types/Request";
 import PeerMessage from "../../types/PeerMessage";
 import type { Channel } from "../../types/Channel";
@@ -32,8 +32,6 @@ const InviteUserModal = ({
   const formRef = useRef<HTMLFormElement>(null);
   const [createRequest] = useCreateRequestMutation();
   const chatConnection = useChatConnection();
-  const handleError = useHandleError();
-  const alert = useAlert();
   const sendMessageToPeer = useSendMessageToPeer();
 
   const handleSave = () => {
@@ -49,7 +47,7 @@ const InviteUserModal = ({
     const chatTargetId = channel?.chatTargetId;
 
     if (!localUserId || !channelId || !chatTargetId) {
-      alert.error("Could not send an invite request. Please try again");
+      showToast("error", "Could not send an invite request. Please try again");
       return;
     }
 
@@ -67,7 +65,7 @@ const InviteUserModal = ({
         }),
       ]);
       await sendMessageToPeer(contactId, PeerMessage.RequestCreated);
-      alert.success("Request created successfully!");
+      showToast("success", "Request created successfully!");
       onClose();
     } catch (err) {
       handleError(

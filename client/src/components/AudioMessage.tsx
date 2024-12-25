@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 
-import { useAlert } from "react-alert";
 import { BiPlayCircle, BiPauseCircle } from "react-icons/bi";
 
 import AudioVisualizer from "./AudioVisualizer";
 import SimpleButton from "./SimpleButton";
 import fetchFile from "../utils/fetchFile";
+import showToast from "../utils/showToast";
 
 interface AudioMessageProps {
   url: string;
@@ -17,7 +17,6 @@ const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
   const [isPlayingBack, setIsPlayingBack] = useState(false);
   const [playbackTime, setPlaybackTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const alert = useAlert();
 
   useEffect(() => {
     let audioInstance: HTMLAudioElement | null = null;
@@ -36,7 +35,7 @@ const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
 
         return blobUrl;
       } catch (err) {
-        alert.error("Failed to fetch the audio file.");
+        showToast("error", "Failed to fetch the audio file.");
         console.error("Error fetching audio file:", err);
 
         return undefined;
@@ -63,7 +62,7 @@ const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
       audioInstance?.removeEventListener("ended", handleEnd);
       blobUrlPromise.then((blobUrl) => blobUrl && URL.revokeObjectURL(blobUrl));
     };
-  }, [url, fileName, alert]);
+  }, [url, fileName]);
 
   const togglePlayback = async () => {
     const audio = audioRef.current;
@@ -77,7 +76,7 @@ const AudioMessage = ({ url, fileName }: AudioMessageProps) => {
         await audio.play();
         setIsPlayingBack(true);
       } catch (err) {
-        alert.error("Unable to play audio. Please try again.");
+        showToast("error", "Unable to play audio. Please try again.");
         console.error("Error playing audio:", err);
       }
     }

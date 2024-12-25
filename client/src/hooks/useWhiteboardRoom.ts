@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
 import { useFetchWhiteboardRoomTokenMutation } from "../services/tokenApi";
+import showToast from "../utils/showToast";
 import type WhiteboardRoomCredentials from "../types/WhiteboardRoomCredentials";
 
 const useWhiteboardRoom = (roomId: string) => {
@@ -10,7 +10,6 @@ const useWhiteboardRoom = (roomId: string) => {
     useState<WhiteboardRoomCredentials>();
   const [fetchWhiteboardRoomToken] = useFetchWhiteboardRoomTokenMutation();
   const { userId } = useAuth();
-  const alert = useAlert();
 
   useEffect(() => {
     if (userId && roomId)
@@ -25,7 +24,7 @@ const useWhiteboardRoom = (roomId: string) => {
             roomToken,
           });
         } catch (err) {
-          alert.error("Could not initialize whiteboard");
+          showToast("error", "Could not initialize whiteboard");
           console.error("Error initializing whiteboard:", err);
         }
       })();

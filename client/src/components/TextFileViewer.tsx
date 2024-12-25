@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 
 import ReactLoading from "react-loading";
-import { useAlert } from "react-alert";
 
 import fetchFile from "../utils/fetchFile";
+import showToast from "../utils/showToast";
 
 interface TextFileViewerProps {
   url: string;
@@ -12,7 +12,6 @@ interface TextFileViewerProps {
 const TextFileViewer = ({ url }: TextFileViewerProps) => {
   const [textLines, setTextLines] = useState<string[]>();
   const [isLoading, setIsLoading] = useState(true);
-  const alert = useAlert();
 
   useEffect(() => {
     (async () => {
@@ -22,7 +21,8 @@ const TextFileViewer = ({ url }: TextFileViewerProps) => {
 
         setTextLines(text.split("\n"));
       } catch (err) {
-        alert.error(
+        showToast(
+          "error",
           "An error occurred while fetching the text file. Please try again",
         );
         console.error("Error fetching the text file:", err);

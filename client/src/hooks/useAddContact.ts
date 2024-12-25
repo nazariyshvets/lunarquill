@@ -1,17 +1,15 @@
 import { useCallback } from "react";
 
-import { useAlert } from "react-alert";
-
 import { useCreateRequestMutation } from "../services/requestApi";
 import useAuth from "./useAuth";
 import useSendMessageToPeer from "./useSendMessageToPeer";
 import getErrorMessage from "../utils/getErrorMessage";
+import showToast from "../utils/showToast";
 import { RequestType } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
 
 const useAddContact = () => {
   const { userId } = useAuth();
-  const alert = useAlert();
   const [createRequest] = useCreateRequestMutation();
   const sendMessageToPeer = useSendMessageToPeer();
 
@@ -26,7 +24,7 @@ const useAddContact = () => {
           type: RequestType.Contact,
         }).unwrap();
         await sendMessageToPeer(contactId, PeerMessage.RequestCreated);
-        alert.success("Request created successfully!");
+        showToast("success", "Request created successfully!");
       } catch (err) {
         throw new Error(
           getErrorMessage({
@@ -37,7 +35,7 @@ const useAddContact = () => {
         );
       }
     },
-    [userId, createRequest, sendMessageToPeer, alert],
+    [userId, createRequest, sendMessageToPeer],
   );
 };
 

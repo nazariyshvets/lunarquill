@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
 import { RtmChannel, RtmClient } from "agora-rtm-react";
-import { useAlert } from "react-alert";
 
 import useAppSelector from "./useAppSelector";
+import showToast from "../utils/showToast";
 import type { UserWithoutPassword } from "../types/User";
 
 const useJoinRTMChannel = (
@@ -16,7 +16,6 @@ const useJoinRTMChannel = (
     (state) => state.rtm.isRTMClientInitialized,
   );
   const isLoadingRef = useRef(false);
-  const alert = useAlert();
 
   useEffect(() => {
     if (
@@ -43,7 +42,7 @@ const useJoinRTMChannel = (
         await RTMChannel.join();
         setHasJoined(true);
       } catch (err) {
-        alert.error("Could not join RTM channel");
+        showToast("error", "Could not join RTM channel");
         console.error("RTM channel joining failed:", err);
         setHasJoined(false);
       } finally {

@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import { Tooltip } from "react-tooltip";
-import { useAlert } from "react-alert";
 import { BiUserPlus, BiUserX } from "react-icons/bi";
 
 import Contact from "../Contact";
@@ -12,6 +11,7 @@ import useChatConnection from "../../hooks/useChatConnection";
 import useIsUserOnline from "../../hooks/useIsUserOnline";
 import useAddContact from "../../hooks/useAddContact";
 import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
+import showToast from "../../utils/showToast";
 import type { UserWithoutPassword } from "../../types/User";
 import type { Channel } from "../../types/Channel";
 import PeerMessage from "../../types/PeerMessage";
@@ -47,7 +47,6 @@ const ViewMembersModal = ({
   const [kickUserOutOfChannel] = useKickUserOutOfChannelMutation();
   const addContact = useAddContact();
   const isUserOnline = useIsUserOnline();
-  const alert = useAlert();
   const sendMessageToPeer = useSendMessageToPeer();
   const isLocalUserAdmin =
     !!localUserId && !!channel?.admin && localUserId === channel?.admin;
@@ -77,7 +76,7 @@ const ViewMembersModal = ({
           }),
         ]);
         handleKickUserModalClose();
-        alert.success("User was kicked out of the channel successfully");
+        showToast("success", "User was kicked out of the channel successfully");
 
         await Promise.all([
           sendMessageToPeer(
@@ -94,7 +93,7 @@ const ViewMembersModal = ({
             ),
         ]);
       } catch (err) {
-        alert.error("Could not kick the user out of the channel");
+        showToast("error", "Could not kick the user out of the channel");
         console.error("Error kicking the user out of the channel:", err);
       }
     }
@@ -107,8 +106,8 @@ const ViewMembersModal = ({
       await addContact(contactId);
     } catch (error) {
       error instanceof Error
-        ? alert.error(error.message)
-        : typeof error === "string" && alert.error(error);
+        ? showToast("error", error.message)
+        : typeof error === "string" && showToast("error", error);
       console.error("Error sending a contact request:", error);
     }
   };

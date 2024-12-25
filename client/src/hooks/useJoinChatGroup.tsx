@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 
-import { useAlert } from "react-alert";
 import { AgoraChat } from "agora-chat";
 
+import showToast from "../utils/showToast";
 import { ChatType } from "../types/ChatType";
 
 const useJoinChatGroup = (
@@ -12,7 +12,6 @@ const useJoinChatGroup = (
   isLocalUserChatMember: boolean,
 ) => {
   const [hasJoined, setHasJoined] = useState(false);
-  const alert = useAlert();
 
   useEffect(() => {
     (async () => {
@@ -38,11 +37,11 @@ const useJoinChatGroup = (
         setHasJoined(true);
       } catch (err) {
         setHasJoined(false);
-        alert.error("Could not connect to chat");
+        showToast("error", "Could not connect to chat");
         console.error("Error joining chat group:", err);
       }
     })();
-  }, [chatType, connection, targetId, isLocalUserChatMember, alert]);
+  }, [chatType, connection, targetId, isLocalUserChatMember]);
 
   return hasJoined;
 };

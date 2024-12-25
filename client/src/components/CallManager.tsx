@@ -6,10 +6,10 @@ import CallModal from "./CallModal";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useAppSelector from "../hooks/useAppSelector";
 import useAuth from "../hooks/useAuth";
-import useHandleError from "../hooks/useHandleError";
 import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { useFetchContactRelationMutation } from "../services/contactApi";
+import handleError from "../utils/handleError";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
 
@@ -20,7 +20,6 @@ const CallManager = () => {
   const { callModalState, callTimeout } = useAppSelector((state) => state.rtm);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const handleError = useHandleError();
   const sendMessageToPeer = useSendMessageToPeer();
 
   const handleDeclineBtnClick = async () => {

@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { SubmitHandler } from "react-hook-form";
 import { Tab, Tabs, TabList, TabPanel } from "react-tabs";
-import { useAlert } from "react-alert";
 import { skipToken } from "@reduxjs/toolkit/query";
 
 import SimpleButton from "../components/SimpleButton";
@@ -22,9 +21,10 @@ import {
 } from "../services/channelApi";
 import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
-import useHandleError from "../hooks/useHandleError";
 import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import getErrorMessage from "../utils/getErrorMessage";
+import showToast from "../utils/showToast";
+import handleError from "../utils/handleError";
 import { RequestType } from "../types/Request";
 import type { Channel } from "../types/Channel";
 import PeerMessage from "../types/PeerMessage";
@@ -44,8 +44,6 @@ const ChannelAdditionPage = () => {
   const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const chatConnection = useChatConnection();
-  const handleError = useHandleError();
-  const alert = useAlert();
   const sendMessageToPeer = useSendMessageToPeer();
 
   useDocumentTitle("Join/Create a channel");
@@ -57,7 +55,7 @@ const ChannelAdditionPage = () => {
       const response = await searchChannels(publicSearchValue).unwrap();
 
       if (response.length === 0) {
-        alert.info("No channels found");
+        showToast("info", "No channels found");
       }
 
       setSearchedChannels(response);
@@ -92,7 +90,7 @@ const ChannelAdditionPage = () => {
         channel.admin.toString(),
         PeerMessage.RequestCreated,
       );
-      alert.success("Request created successfully!");
+      showToast("success", "Request created successfully!");
     } catch (err) {
       throw new Error(
         getErrorMessage({
@@ -141,7 +139,7 @@ const ChannelAdditionPage = () => {
           whiteboardRoomId,
           isPrivate: data.isPrivate,
         }).unwrap();
-        alert.success("Channel created successfully!");
+        showToast("success", "Channel created successfully!");
       }
     } catch (err) {
       throw new Error(
@@ -160,7 +158,7 @@ const ChannelAdditionPage = () => {
 
     try {
       await joinChannel({ userId, channelId: channel._id }).unwrap();
-      alert.success("You joined the channel successfully");
+      showToast("success", "You joined the channel successfully");
 
       const channelMembers = await fetchChannelMembers(channel._id).unwrap();
       await Promise.all(

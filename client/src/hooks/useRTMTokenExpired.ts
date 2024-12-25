@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 
 import { RtmClient } from "agora-rtm-react";
-import { useAlert } from "react-alert";
+
+import showToast from "../utils/showToast";
 
 import useAuth from "./useAuth";
 import { useFetchRTMTokenMutation } from "../services/tokenApi";
@@ -9,7 +10,6 @@ import { useFetchRTMTokenMutation } from "../services/tokenApi";
 const useRTMTokenExpired = (client: RtmClient) => {
   const { userId } = useAuth();
   const [fetchRTMToken] = useFetchRTMTokenMutation();
-  const alert = useAlert();
 
   useEffect(() => {
     const renewToken = async () => {
@@ -22,7 +22,7 @@ const useRTMTokenExpired = (client: RtmClient) => {
 
         await client.renewToken(token);
       } catch (err) {
-        alert.error("Could not renew RTM token");
+        showToast("error", "Could not renew RTM token");
         console.error("Error renewing RTM token:", err);
       }
     };

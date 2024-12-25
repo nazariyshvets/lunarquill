@@ -1,13 +1,13 @@
 import { useNavigate } from "react-router-dom";
-import { useAlert } from "react-alert";
 
 import Modal from "../Modal";
 import { useLeaveChannelMutation } from "../../services/channelApi";
 import { useDisableWhiteboardRoomMutation } from "../../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../../services/tokenApi";
 import useChatConnection from "../../hooks/useChatConnection";
-import useHandleError from "../../hooks/useHandleError";
 import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
+import showToast from "../../utils/showToast";
+import handleError from "../../utils/handleError";
 import PeerMessage from "../../types/PeerMessage";
 import type { UserWithoutPassword } from "../../types/User";
 import type { Channel } from "../../types/Channel";
@@ -29,9 +29,7 @@ const LeaveChannelModal = ({
   const [leaveChannel] = useLeaveChannelMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const [disableWhiteboardRoom] = useDisableWhiteboardRoomMutation();
-  const handleError = useHandleError();
   const navigate = useNavigate();
-  const alert = useAlert();
   const sendMessageToPeer = useSendMessageToPeer();
 
   const handleSave = async () => {
@@ -39,7 +37,7 @@ const LeaveChannelModal = ({
     const chatTargetId = channel?.chatTargetId;
 
     if (!localUserId || !channelId || !chatTargetId) {
-      alert.error("Could not leave the channel. Please try again");
+      showToast("error", "Could not leave the channel. Please try again");
       return;
     }
 
@@ -86,7 +84,7 @@ const LeaveChannelModal = ({
       }
 
       navigate("/profile");
-      alert.success("You left the channel successfully");
+      showToast("success", "You left the channel successfully");
     } catch (err) {
       handleError(
         err,

@@ -15,14 +15,13 @@ import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useAvatarUpload from "../hooks/useAvatarUpload";
-import useCopyToClipboard from "../hooks/useCopyToClipboard";
+import copyToClipboard from "../utils/copyToClipboard";
 
 const ProfilePage = () => {
   const { userId, username } = useAuth();
   const { data: userDetails } = useGetUserByIdQuery(userId ?? skipToken);
   const [updateAvatarsCollection] = useUpdateUserAvatarsCollectionMutation();
   const dispatch = useAppDispatch();
-  const copyToClipboard = useCopyToClipboard();
   const {
     modalState: editAvatarModalState,
     handleModalOpen: handleEditAvatarModalOpen,

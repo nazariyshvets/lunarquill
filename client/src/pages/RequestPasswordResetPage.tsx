@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useAlert } from "react-alert";
 import { FaEnvelope } from "react-icons/fa6";
 
 import GuestPage from "./GuestPage";
@@ -12,6 +11,7 @@ import { useRequestPasswordResetMutation } from "../services/authApi";
 import { EMAIL_PATTERN } from "../constants/constants";
 import isFetchBaseQueryError from "../utils/isFetchBaseQueryError";
 import isErrorWithMessage from "../utils/isErrorWithMessage";
+import showToast from "../utils/showToast";
 
 interface FormValues {
   email: string;
@@ -26,7 +26,6 @@ const RequestPasswordResetPage = () => {
     formState: { errors },
     handleSubmit,
   } = useForm<FormValues>();
-  const alert = useAlert();
 
   const onSubmit: SubmitHandler<FormValues> = async ({ email }) => {
     if (countdown > 0 || isLoading) return;
@@ -34,15 +33,15 @@ const RequestPasswordResetPage = () => {
     try {
       email = email.toLowerCase();
       await requestResetPassword({ email }).unwrap();
-      alert.success("Email with a password reset link is sent");
+      showToast("success", "Email with a password reset link is sent");
       setCountdown(60);
     } catch (err) {
       console.error("Error requesting password reset link:", err);
 
       if (isFetchBaseQueryError(err)) {
-        alert.error(err.data as string);
+        showToast("error", err.data as string);
       } else if (isErrorWithMessage(err)) {
-        alert.error(err.message);
+        showToast("error", err.message);
       }
     }
   };

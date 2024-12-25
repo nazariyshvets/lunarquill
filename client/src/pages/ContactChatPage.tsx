@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Tooltip } from "react-tooltip";
 import { BiPhone, BiUserX } from "react-icons/bi";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { useAlert } from "react-alert";
 import { skipToken } from "@reduxjs/toolkit/query";
 
 import Loading from "../components/Loading";
@@ -20,12 +19,13 @@ import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
 import useAuth from "../hooks/useAuth";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useChatConnection from "../hooks/useChatConnection";
-import useHandleError from "../hooks/useHandleError";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppSelector from "../hooks/useAppSelector";
 import useIsUserOnline from "../hooks/useIsUserOnline";
 import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
+import showToast from "../utils/showToast";
+import handleError from "../utils/handleError";
 import { CALL_TIMEOUT_MS } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
@@ -53,8 +53,6 @@ const ContactChatPage = () => {
   const chatConnection = useChatConnection();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const alert = useAlert();
-  const handleError = useHandleError();
   const isUserOnline = useIsUserOnline();
   const sendMessageToPeer = useSendMessageToPeer();
 
@@ -95,22 +93,22 @@ const ContactChatPage = () => {
               sendMessageToPeer(contact._id, PeerMessage.CallTimedOut);
               dispatch(setCallModalState(null));
               dispatch(setCallTimeout(null));
-              alert.info("The recipient did not respond");
+              showToast("info", "The recipient did not respond");
             }, CALL_TIMEOUT_MS),
           ),
         );
       } catch (err) {
-        alert.error(`Could not call ${contactName}. Please try again`);
+        showToast("error", `Could not call ${contactName}. Please try again`);
         console.error(`Error calling ${contactName}:`, err);
       }
     } else {
-      alert.info(`${contactName} is offline. The call cannot be sent`);
+      showToast("info", `${contactName} is offline. The call cannot be sent`);
     }
   };
 
   const handleContactRemove = async () => {
     if (!userId || !contactId) {
-      alert.error("Could not remove the contact. Please try again");
+      showToast("error", "Could not remove the contact. Please try again");
       return;
     }
 
@@ -135,7 +133,7 @@ const ContactChatPage = () => {
       ]);
       await sendMessageToPeer(contactId, PeerMessage.ContactRemoved);
       navigate("/profile");
-      alert.success("The contact was deleted successfully");
+      showToast("success", "The contact was deleted successfully");
     } catch (err) {
       handleError(
         err,

@@ -12,7 +12,6 @@ import {
 import { RtmChannel } from "agora-rtm-react";
 import { useWindowWidth } from "@react-hook/window-size";
 import { isEmpty } from "lodash";
-import { useAlert } from "react-alert";
 
 import Whiteboard from "./Whiteboard";
 import Loading from "./Loading";
@@ -32,6 +31,7 @@ import useRTC from "../hooks/useRTC";
 import useWhiteboardRoom from "../hooks/useWhiteboardRoom";
 import useInitMediaDevices from "../hooks/useInitMediaDevices";
 import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
+import showToast from "../utils/showToast";
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
@@ -80,7 +80,6 @@ const RTCManager = ({
   const screenCasterId = useScreenCasterId(RTMClient, RTMChannel, channelId);
   const { userId: localUserId } = useAuth();
   const windowWidth = useWindowWidth();
-  const alert = useAlert();
   const navigate = useNavigate();
   const sendMessageToPeer = useSendMessageToPeer();
 
@@ -124,7 +123,7 @@ const RTCManager = ({
       });
       setIsCameraMuted(!isCameraMuted);
     } catch (err) {
-      alert.error("Could not turn camera on/off. Please try again");
+      showToast("error", "Could not turn camera on/off. Please try again");
       console.error("Error toggling camera:", err);
     }
   };
@@ -137,7 +136,7 @@ const RTCManager = ({
       });
       setIsMicrophoneMuted(!isMicrophoneMuted);
     } catch (err) {
-      alert.error("Could not turn microphone on/off. Please try again");
+      showToast("error", "Could not turn microphone on/off. Please try again");
       console.error("Error toggling microphone:", err);
     }
   };
@@ -161,7 +160,7 @@ const RTCManager = ({
 
   const handleScreenShareStart = () => {
     if (screenCasterId) {
-      alert.info("Someone's screen is already shared");
+      showToast("info", "Someone's screen is already shared");
     } else {
       setIsLocalScreenShared(true);
     }

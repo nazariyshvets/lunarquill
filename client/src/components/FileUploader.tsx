@@ -4,10 +4,10 @@ import {
   FileRejection,
   ErrorCode,
 } from "react-dropzone";
-import { useAlert } from "react-alert";
 import { BiCloudUpload } from "react-icons/bi";
 
 import formatBytes from "../utils/formatBytes";
+import showToast from "../utils/showToast";
 import { MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from "../constants/constants";
 
 interface FileUploaderProps
@@ -16,12 +16,11 @@ interface FileUploaderProps
 }
 
 const FileUploader = ({ type, ...dropzoneOptions }: FileUploaderProps) => {
-  const alert = useAlert();
-
   const handleDropRejected = (rejections: FileRejection[]) => {
     rejections.forEach((rejection) =>
       rejection.errors.forEach((error) =>
-        alert.info(
+        showToast(
+          "info",
           error.code === ErrorCode.FileTooSmall ||
             error.code === ErrorCode.FileTooLarge
             ? error.message.replace(/(\d+)\s*bytes/, (match) =>
