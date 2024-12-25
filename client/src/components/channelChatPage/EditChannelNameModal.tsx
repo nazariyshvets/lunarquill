@@ -6,7 +6,7 @@ import { useAlert } from "react-alert";
 import Modal from "../Modal";
 import Input from "../Input";
 import { useUpdateChannelMutation } from "../../services/channelApi";
-import useRTMClient from "../../hooks/useRTMClient";
+import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
 import PeerMessage from "../../types/PeerMessage";
 import type { UserWithoutPassword } from "../../types/User";
 
@@ -33,9 +33,9 @@ const EditChannelNameModal = ({
     defaultValues: { channelName: sourceChannelName },
   });
   const formRef = useRef<HTMLFormElement>(null);
-  const RTMClient = useRTMClient();
   const [updateChannel] = useUpdateChannelMutation();
   const alert = useAlert();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   const handleSave = () => {
     formRef.current?.dispatchEvent(
@@ -58,11 +58,9 @@ const EditChannelNameModal = ({
             channelMembers
               .filter((member) => member._id !== localUserId)
               .map((member) =>
-                RTMClient.sendMessageToPeer(
-                  {
-                    text: `${PeerMessage.ChannelUpdated}__${channelId}`,
-                  },
+                sendMessageToPeer(
                   member._id,
+                  `${PeerMessage.ChannelUpdated}__${channelId}`,
                 ),
               ),
           );

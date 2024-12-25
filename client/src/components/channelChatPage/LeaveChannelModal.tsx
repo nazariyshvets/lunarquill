@@ -6,8 +6,8 @@ import { useLeaveChannelMutation } from "../../services/channelApi";
 import { useDisableWhiteboardRoomMutation } from "../../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../../services/tokenApi";
 import useChatConnection from "../../hooks/useChatConnection";
-import useRTMClient from "../../hooks/useRTMClient";
 import useHandleError from "../../hooks/useHandleError";
+import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
 import PeerMessage from "../../types/PeerMessage";
 import type { UserWithoutPassword } from "../../types/User";
 import type { Channel } from "../../types/Channel";
@@ -25,7 +25,6 @@ const LeaveChannelModal = ({
   channelMembers,
   onClose,
 }: LeaveChannelModalProps) => {
-  const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
   const [leaveChannel] = useLeaveChannelMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
@@ -33,6 +32,7 @@ const LeaveChannelModal = ({
   const handleError = useHandleError();
   const navigate = useNavigate();
   const alert = useAlert();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   const handleSave = async () => {
     const channelId = channel?._id;
@@ -77,11 +77,9 @@ const LeaveChannelModal = ({
           channelMembers
             .filter((member) => member._id !== localUserId)
             .map((member) =>
-              RTMClient.sendMessageToPeer(
-                {
-                  text: `${PeerMessage.ChannelMemberLeft}__${channelId}`,
-                },
+              sendMessageToPeer(
                 member._id,
+                `${PeerMessage.ChannelMemberLeft}__${channelId}`,
               ),
             ),
         );

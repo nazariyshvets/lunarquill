@@ -23,8 +23,8 @@ import useChatConnection from "../hooks/useChatConnection";
 import useHandleError from "../hooks/useHandleError";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppSelector from "../hooks/useAppSelector";
-import useRTMClient from "../hooks/useRTMClient";
 import useIsUserOnline from "../hooks/useIsUserOnline";
+import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { CALL_TIMEOUT_MS } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
@@ -47,7 +47,6 @@ const ContactChatPage = () => {
         : skipToken,
     );
 
-  const RTMClient = useRTMClient();
   const isChatInitialized = useAppSelector(
     (state) => state.chat.isChatInitialized,
   );
@@ -57,6 +56,7 @@ const ContactChatPage = () => {
   const alert = useAlert();
   const handleError = useHandleError();
   const isUserOnline = useIsUserOnline();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   const [removeContact] = useRemoveContactMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
@@ -82,10 +82,7 @@ const ContactChatPage = () => {
 
     if (isContactOnline) {
       try {
-        await RTMClient.sendMessageToPeer(
-          { text: PeerMessage.Call },
-          contact._id,
-        );
+        await sendMessageToPeer(contact._id, PeerMessage.Call);
         dispatch(
           setCallModalState({
             callDirection: CallDirection.Outgoing,
@@ -95,10 +92,7 @@ const ContactChatPage = () => {
         dispatch(
           setCallTimeout(
             window.setTimeout(() => {
-              RTMClient.sendMessageToPeer(
-                { text: PeerMessage.CallTimedOut },
-                contact._id,
-              );
+              sendMessageToPeer(contact._id, PeerMessage.CallTimedOut);
               dispatch(setCallModalState(null));
               dispatch(setCallTimeout(null));
               alert.info("The recipient did not respond");
@@ -139,10 +133,7 @@ const ContactChatPage = () => {
           deleteRoam: true,
         }),
       ]);
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.ContactRemoved },
-        contactId,
-      );
+      await sendMessageToPeer(contactId, PeerMessage.ContactRemoved);
       navigate("/profile");
       alert.success("The contact was deleted successfully");
     } catch (err) {

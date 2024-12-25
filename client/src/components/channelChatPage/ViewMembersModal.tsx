@@ -8,10 +8,10 @@ import Contact from "../Contact";
 import SimpleButton from "../SimpleButton";
 import Modal from "../Modal";
 import { useKickUserOutOfChannelMutation } from "../../services/channelApi";
-import useRTMClient from "../../hooks/useRTMClient";
 import useChatConnection from "../../hooks/useChatConnection";
 import useIsUserOnline from "../../hooks/useIsUserOnline";
 import useAddContact from "../../hooks/useAddContact";
+import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
 import type { UserWithoutPassword } from "../../types/User";
 import type { Channel } from "../../types/Channel";
 import PeerMessage from "../../types/PeerMessage";
@@ -43,12 +43,12 @@ const ViewMembersModal = ({
   const [kickUserModalState, setKickUserModalState] = useState(
     initialKickUserModalState,
   );
-  const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
   const [kickUserOutOfChannel] = useKickUserOutOfChannelMutation();
   const addContact = useAddContact();
   const isUserOnline = useIsUserOnline();
   const alert = useAlert();
+  const sendMessageToPeer = useSendMessageToPeer();
   const isLocalUserAdmin =
     !!localUserId && !!channel?.admin && localUserId === channel?.admin;
 
@@ -80,20 +80,16 @@ const ViewMembersModal = ({
         alert.success("User was kicked out of the channel successfully");
 
         await Promise.all([
-          RTMClient.sendMessageToPeer(
-            {
-              text: `${PeerMessage.ChannelKicked}__${channelId}`,
-            },
+          sendMessageToPeer(
             targetUserId,
+            `${PeerMessage.ChannelKicked}__${channelId}`,
           ),
           channelMembers
             .filter((member) => member._id !== localUserId)
             .map((member) =>
-              RTMClient.sendMessageToPeer(
-                {
-                  text: `${PeerMessage.ChannelMemberKicked}__${channelId}`,
-                },
+              sendMessageToPeer(
                 member._id,
+                `${PeerMessage.ChannelMemberKicked}__${channelId}`,
               ),
             ),
         ]);

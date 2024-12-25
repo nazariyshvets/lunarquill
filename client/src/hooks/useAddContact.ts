@@ -4,16 +4,16 @@ import { useAlert } from "react-alert";
 
 import { useCreateRequestMutation } from "../services/requestApi";
 import useAuth from "./useAuth";
-import useRTMClient from "./useRTMClient";
+import useSendMessageToPeer from "./useSendMessageToPeer";
 import getErrorMessage from "../utils/getErrorMessage";
 import { RequestType } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
 
 const useAddContact = () => {
   const { userId } = useAuth();
-  const RTMClient = useRTMClient();
   const alert = useAlert();
   const [createRequest] = useCreateRequestMutation();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   return useCallback(
     async (contactId: string) => {
@@ -25,10 +25,7 @@ const useAddContact = () => {
           to: contactId,
           type: RequestType.Contact,
         }).unwrap();
-        await RTMClient.sendMessageToPeer(
-          { text: PeerMessage.RequestCreated },
-          contactId,
-        );
+        await sendMessageToPeer(contactId, PeerMessage.RequestCreated);
         alert.success("Request created successfully!");
       } catch (err) {
         throw new Error(
@@ -40,7 +37,7 @@ const useAddContact = () => {
         );
       }
     },
-    [userId, createRequest, RTMClient, alert],
+    [userId, createRequest, sendMessageToPeer, alert],
   );
 };
 

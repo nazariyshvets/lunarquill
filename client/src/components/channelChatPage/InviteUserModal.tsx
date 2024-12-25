@@ -7,8 +7,8 @@ import Modal from "../Modal";
 import Input from "../Input";
 import { useCreateRequestMutation } from "../../services/requestApi";
 import useChatConnection from "../../hooks/useChatConnection";
-import useRTMClient from "../../hooks/useRTMClient";
 import useHandleError from "../../hooks/useHandleError";
+import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
 import { RequestType } from "../../types/Request";
 import PeerMessage from "../../types/PeerMessage";
 import type { Channel } from "../../types/Channel";
@@ -32,9 +32,9 @@ const InviteUserModal = ({
   const formRef = useRef<HTMLFormElement>(null);
   const [createRequest] = useCreateRequestMutation();
   const chatConnection = useChatConnection();
-  const RTMClient = useRTMClient();
   const handleError = useHandleError();
   const alert = useAlert();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   const handleSave = () => {
     formRef.current?.dispatchEvent(
@@ -66,10 +66,7 @@ const InviteUserModal = ({
           users: [contactId],
         }),
       ]);
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.RequestCreated },
-        contactId,
-      );
+      await sendMessageToPeer(contactId, PeerMessage.RequestCreated);
       alert.success("Request created successfully!");
       onClose();
     } catch (err) {

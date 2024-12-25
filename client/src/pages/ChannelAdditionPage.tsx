@@ -10,7 +10,6 @@ import Contact from "../components/Contact";
 import ContactAdditionForm from "../components/ContactAdditionForm";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAuth from "../hooks/useAuth";
-import useRTMClient from "../hooks/useRTMClient";
 import useChatConnection from "../hooks/useChatConnection";
 import { useGetUserChannelsQuery } from "../services/userApi";
 import { useCreateRequestMutation } from "../services/requestApi";
@@ -24,6 +23,7 @@ import {
 import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
 import useHandleError from "../hooks/useHandleError";
+import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import getErrorMessage from "../utils/getErrorMessage";
 import { RequestType } from "../types/Request";
 import type { Channel } from "../types/Channel";
@@ -43,10 +43,10 @@ const ChannelAdditionPage = () => {
   const [fetchChannelMembers] = useFetchChannelMembersMutation();
   const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
-  const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
   const handleError = useHandleError();
   const alert = useAlert();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   useDocumentTitle("Join/Create a channel");
 
@@ -88,9 +88,9 @@ const ChannelAdditionPage = () => {
         type: RequestType.Join,
         channel: channel._id,
       }).unwrap();
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.RequestCreated },
+      await sendMessageToPeer(
         channel.admin.toString(),
+        PeerMessage.RequestCreated,
       );
       alert.success("Request created successfully!");
     } catch (err) {
@@ -167,11 +167,9 @@ const ChannelAdditionPage = () => {
         channelMembers
           .filter((member) => member._id !== userId)
           .map((member) =>
-            RTMClient.sendMessageToPeer(
-              {
-                text: `${PeerMessage.ChannelMemberJoined}__${channel._id}`,
-              },
+            sendMessageToPeer(
               member._id,
+              `${PeerMessage.ChannelMemberJoined}__${channel._id}`,
             ),
           ),
       );

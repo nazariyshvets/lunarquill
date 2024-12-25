@@ -11,7 +11,7 @@ import NoDataBox from "../components/NoDataBox";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAuth from "../hooks/useAuth";
 import useChatConnection from "../hooks/useChatConnection";
-import useRTMClient from "../hooks/useRTMClient";
+import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import { useGetUserRequestsQuery } from "../services/userApi";
 import { useFetchChannelMembersMutation } from "../services/channelApi";
 import {
@@ -48,7 +48,7 @@ const RequestsPage = () => {
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
   const alert = useAlert();
   const chatConnection = useChatConnection();
-  const RTMClient = useRTMClient();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   useDocumentTitle("Inbox/Outbox requests");
 
@@ -97,10 +97,7 @@ const RequestsPage = () => {
         requestId: request._id,
         uid: userId,
       }).unwrap();
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.RequestRecalled },
-        request.to._id,
-      );
+      await sendMessageToPeer(request.to._id, PeerMessage.RequestRecalled);
       alert.success("Request is recalled successfully");
     } catch (err) {
       alert.error("Could not recall the request. Please try again");
@@ -135,10 +132,7 @@ const RequestsPage = () => {
             ]
           : []),
       ]);
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.RequestDeclined },
-        request.from._id,
-      );
+      await sendMessageToPeer(request.from._id, PeerMessage.RequestDeclined);
       alert.success("Request is declined successfully");
     } catch (err) {
       alert.error("Could not decline the request. Please try again");
@@ -195,12 +189,7 @@ const RequestsPage = () => {
         uid: localUserId,
         whiteboardRoomId,
       }).unwrap();
-      await RTMClient.sendMessageToPeer(
-        {
-          text: PeerMessage.ContactRequestAccepted,
-        },
-        peerId,
-      );
+      await sendMessageToPeer(peerId, PeerMessage.ContactRequestAccepted);
       alert.success("Contact request is accepted successfully");
     } catch (err) {
       alert.error("Could not accept the contact request. Please try again");
@@ -226,20 +215,13 @@ const RequestsPage = () => {
       }).unwrap();
       const channelMembers = await fetchChannelMembers(channelId).unwrap();
       await Promise.all([
-        RTMClient.sendMessageToPeer(
-          {
-            text: PeerMessage.InviteRequestAccepted,
-          },
-          peerId,
-        ),
+        sendMessageToPeer(peerId, PeerMessage.InviteRequestAccepted),
         channelMembers
           .filter((member) => member._id !== localUserId)
           .map((member) =>
-            RTMClient.sendMessageToPeer(
-              {
-                text: `${PeerMessage.ChannelMemberJoined}__${channelId}`,
-              },
+            sendMessageToPeer(
               member._id,
+              `${PeerMessage.ChannelMemberJoined}__${channelId}`,
             ),
           ),
       ]);
@@ -263,20 +245,13 @@ const RequestsPage = () => {
       }).unwrap();
       const channelMembers = await fetchChannelMembers(channelId).unwrap();
       await Promise.all([
-        RTMClient.sendMessageToPeer(
-          {
-            text: PeerMessage.JoinRequestAccepted,
-          },
-          peerId,
-        ),
+        sendMessageToPeer(peerId, PeerMessage.JoinRequestAccepted),
         channelMembers
           .filter((member) => ![localUserId, peerId].includes(member._id))
           .map((member) =>
-            RTMClient.sendMessageToPeer(
-              {
-                text: `${PeerMessage.ChannelMemberJoined}__${channelId}`,
-              },
+            sendMessageToPeer(
               member._id,
+              `${PeerMessage.ChannelMemberJoined}__${channelId}`,
             ),
           ),
       ]);

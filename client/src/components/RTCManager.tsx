@@ -31,6 +31,7 @@ import useAuth from "../hooks/useAuth";
 import useRTC from "../hooks/useRTC";
 import useWhiteboardRoom from "../hooks/useWhiteboardRoom";
 import useInitMediaDevices from "../hooks/useInitMediaDevices";
+import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
@@ -81,6 +82,7 @@ const RTCManager = ({
   const windowWidth = useWindowWidth();
   const alert = useAlert();
   const navigate = useNavigate();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   const { isConnected: isConnectedToRTCChannel } = useJoin(
     {
@@ -145,12 +147,7 @@ const RTCManager = ({
 
   const leaveChannel = () => {
     if (chatType === ChatType.SingleChat) {
-      RTMClient.sendMessageToPeer(
-        {
-          text: PeerMessage.CallEnded,
-        },
-        chatTargetId,
-      );
+      sendMessageToPeer(chatTargetId, PeerMessage.CallEnded);
     }
 
     navigate(

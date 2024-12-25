@@ -3,11 +3,11 @@ import { useEffect, useRef } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 
 import CallModal from "./CallModal";
-import useRTMClient from "../hooks/useRTMClient";
 import useAppDispatch from "../hooks/useAppDispatch";
 import useAppSelector from "../hooks/useAppSelector";
 import useAuth from "../hooks/useAuth";
 import useHandleError from "../hooks/useHandleError";
+import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { useFetchContactRelationMutation } from "../services/contactApi";
 import PeerMessage from "../types/PeerMessage";
@@ -16,20 +16,22 @@ import CallDirection from "../types/CallDirection";
 const CallManager = () => {
   const audioRef = useRef(new Audio("/call_sound.mp3"));
   const { userId } = useAuth();
-  const RTMClient = useRTMClient();
   const [fetchContactRelation] = useFetchContactRelationMutation();
   const { callModalState, callTimeout } = useAppSelector((state) => state.rtm);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const handleError = useHandleError();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   const handleDeclineBtnClick = async () => {
-    if (!callModalState) return;
+    if (!callModalState) {
+      return;
+    }
 
     try {
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.CallDeclined },
+      await sendMessageToPeer(
         callModalState.contact._id,
+        PeerMessage.CallDeclined,
       );
       dispatch(setCallModalState(null));
     } catch (err) {
@@ -51,10 +53,7 @@ const CallManager = () => {
         userId2: peerId,
       }).unwrap();
 
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.CallAccepted },
-        peerId,
-      );
+      await sendMessageToPeer(peerId, PeerMessage.CallAccepted);
       dispatch(setCallModalState(null));
       navigate(`/contacts/${contact._id}/call`);
     } catch (err) {
@@ -67,12 +66,14 @@ const CallManager = () => {
   };
 
   const handleRecallBtnClick = async () => {
-    if (!callModalState) return;
+    if (!callModalState) {
+      return;
+    }
 
     try {
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.CallRecalled },
+      await sendMessageToPeer(
         callModalState.contact._id,
+        PeerMessage.CallRecalled,
       );
       dispatch(setCallModalState(null));
       clearCallTimeout();
