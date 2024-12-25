@@ -11,6 +11,7 @@
     "host": "vite --host"
   },
   "dependencies": {
+    "@netless/appliance-plugin": "^1.1.7",
     "agora-chat": "^1.2.1",
     "agora-extension-ai-denoiser": "^1.1.0",
     "agora-extension-virtual-background": "^1.2.0",
