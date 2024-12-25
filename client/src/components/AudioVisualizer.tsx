@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 import {
   AudioVisualizer as ReactAudioVisualizer,
@@ -11,6 +11,7 @@ interface AudioVisualizerProps {
   currentTime?: number;
   mediaRecorder?: MediaRecorder;
   isLive?: boolean;
+  onContainerClick?: (posCoefficient: number) => void;
 }
 
 const AudioVisualizer = ({
@@ -18,6 +19,7 @@ const AudioVisualizer = ({
   currentTime,
   mediaRecorder,
   isLive = false,
+  onContainerClick,
 }: AudioVisualizerProps) => {
   const [visualizerSize, setVisualizerSize] = useState({ width: 0, height: 0 });
   const visualizerWrapperRef = useRef<HTMLDivElement>(null);
@@ -41,8 +43,24 @@ const AudioVisualizer = ({
 
   if ((isLive && !mediaRecorder) || (!isLive && !blob)) return <></>;
 
+  const handleContainerClick = onContainerClick
+    ? (e: React.MouseEvent<HTMLDivElement>) => {
+        if (visualizerWrapperRef.current) {
+          const rect = visualizerWrapperRef.current.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const coefficient = clickX / rect.width;
+
+          onContainerClick(coefficient);
+        }
+      }
+    : undefined;
+
   return (
-    <div ref={visualizerWrapperRef} className="h-full w-full">
+    <div
+      ref={visualizerWrapperRef}
+      className="h-full w-full"
+      onClick={handleContainerClick}
+    >
       {Boolean(visualizerSize.width) &&
         Boolean(visualizerSize.height) &&
         (isLive ? (

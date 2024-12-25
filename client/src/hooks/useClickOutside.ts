@@ -1,14 +1,16 @@
 import { useEffect } from "react";
 
 interface UseClickOutsideProps {
-  element?: HTMLElement;
-  onClickOutside: () => void;
+  element: HTMLElement | undefined;
+  onClickOutside: (() => void) | undefined;
 }
 
 const useClickOutside = ({ element, onClickOutside }: UseClickOutsideProps) => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (element && !element.contains(event.target as Node)) onClickOutside();
+      if (element && !element.contains(event.target as Node)) {
+        onClickOutside?.();
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);

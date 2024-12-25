@@ -84,7 +84,7 @@ const useInitMediaDevices = (isReady: boolean) => {
         pitchEnabledParam.value = 0.0;
       }
     }
-  }, [isPitchShiftEnabled, pitchFactor]);
+  }, [isPitchShiftEnabled, pitchFactor, localMicrophoneTrack]);
 
   useEffect(
     () => () => {

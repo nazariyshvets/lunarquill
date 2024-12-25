@@ -7,13 +7,16 @@ const getContactRelation = async (userId1: string, userId2: string) => {
   if (
     !mongoose.Types.ObjectId.isValid(userId1) ||
     !mongoose.Types.ObjectId.isValid(userId1)
-  )
+  ) {
     throw new Error("Invalid user id(s)");
+  }
 
   const user1 = await User.findById(userId1);
   const user2 = await User.findById(userId2);
 
-  if (!user1 || !user2) throw new Error("One or both users not found");
+  if (!user1 || !user2) {
+    throw new Error("One or both users not found");
+  }
 
   const contact = await Contact.findOne({
     user1: { $in: [userId1, userId2] },
@@ -22,42 +25,44 @@ const getContactRelation = async (userId1: string, userId2: string) => {
     .populate({
       path: "user1",
       select: "-password",
-      populate: "selectedAvatar",
     })
     .populate({
       path: "user2",
       select: "-password",
-      populate: "selectedAvatar",
     });
 
-  if (!contact)
+  if (!contact) {
     throw new Error("No contact relationship found between the two users");
+  }
 
   return contact;
 };
 
 const getContactById = async (contactId: string) => {
-  if (!mongoose.Types.ObjectId.isValid(contactId))
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw new Error("Invalid contact id");
+  }
 
   const contact = await Contact.findById(contactId)
     .populate({
       path: "user1",
       select: "-password",
-      populate: "selectedAvatar",
     })
     .populate({
       path: "user2",
       select: "-password",
-      populate: "selectedAvatar",
     });
 
-  if (!contact) throw new Error("Contact not found");
+  if (!contact) {
+    throw new Error("Contact not found");
+  }
 
   const user1 = await User.findById(contact.user1);
   const user2 = await User.findById(contact.user2);
 
-  if (!user1 || !user2) throw new Error("One or both users not found");
+  if (!user1 || !user2) {
+    throw new Error("One or both users not found");
+  }
 
   return contact;
 };
@@ -66,8 +71,9 @@ const removeContactRelation = async (user1Id: string, user2Id: string) => {
   if (
     !mongoose.Types.ObjectId.isValid(user1Id) ||
     !mongoose.Types.ObjectId.isValid(user2Id)
-  )
+  ) {
     throw new Error("Invalid user ids");
+  }
 
   const contact = await Contact.findOneAndDelete({
     $or: [
@@ -76,7 +82,9 @@ const removeContactRelation = async (user1Id: string, user2Id: string) => {
     ],
   });
 
-  if (!contact) throw new Error("Contact not found");
+  if (!contact) {
+    throw new Error("Contact not found");
+  }
 
   return { message: "Contact removed successfully" };
 };

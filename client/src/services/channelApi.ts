@@ -5,7 +5,7 @@ import { userApi } from "./userApi";
 import { prepareAvatarsCollectionMutationPayload } from "./mutationHelpers";
 import { QUERY_TAG_TYPES } from "../constants/constants";
 import { UserWithoutPassword } from "../types/User";
-import { Channel, PopulatedChannel } from "../types/Channel";
+import { ChannelDto, Channel } from "../types/Channel";
 import {
   AvatarsUpdateRequestPayload,
   AvatarsUpdateResponsePayload,
@@ -51,7 +51,38 @@ export const channelApi = createApi({
         }
       },
     }),
-    searchChannels: builder.mutation<PopulatedChannel[], string>({
+    updateChannel: builder.mutation<
+      Channel,
+      {
+        localUserId: string;
+        channelId: string;
+        updateData: Partial<ChannelDto>;
+      }
+    >({
+      query: ({ channelId, updateData }) => ({
+        url: `/channels/${channelId}`,
+        method: "PUT",
+        body: updateData,
+      }),
+      invalidatesTags: (response, _, { channelId }) =>
+        response ? [{ type: QUERY_TAG_TYPES.CHANNEL, id: channelId }] : [],
+      onQueryStarted: async ({ localUserId }, { dispatch, queryFulfilled }) => {
+        try {
+          await queryFulfilled;
+          dispatch(
+            userApi.util.invalidateTags([
+              {
+                type: QUERY_TAG_TYPES.USER_CHANNELS,
+                id: localUserId,
+              },
+            ]),
+          );
+        } catch (error) {
+          console.error("Error joining the channel:", error);
+        }
+      },
+    }),
+    searchChannels: builder.mutation<Channel[], string>({
       query: (name) => ({
         url: `/channels/search?name=${name}`,
         method: "GET",
@@ -107,11 +138,25 @@ export const channelApi = createApi({
         }
       },
     }),
-    getChannelById: builder.query<PopulatedChannel, string>({
+    kickUserOutOfChannel: builder.mutation<
+      { message: string },
+      { adminId: string; targetUserId: string; channelId: string }
+    >({
+      query: (data) => ({
+        url: "/channels/kick-user",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: (response, _, { channelId }) =>
+        response
+          ? [{ type: QUERY_TAG_TYPES.CHANNEL_MEMBERS, id: channelId }]
+          : [],
+    }),
+    getChannelById: builder.query<Channel, string>({
       query: (id) => `/channels/${id}`,
       providesTags: (_, __, id) => [{ type: QUERY_TAG_TYPES.CHANNEL, id }],
     }),
-    fetchChannelById: builder.mutation<PopulatedChannel, string>({
+    fetchChannelById: builder.mutation<Channel, string>({
       query: (id) => ({
         url: `/channels/${id}`,
         method: "GET",
@@ -149,24 +194,30 @@ export const channelApi = createApi({
       },
     }),
     getChannelMembers: builder.query<UserWithoutPassword[], string>({
+      query: (channelId) => `/channels/${channelId}/members`,
+      providesTags: (_, __, id) => [
+        { type: QUERY_TAG_TYPES.CHANNEL_MEMBERS, id },
+      ],
+    }),
+    fetchChannelMembers: builder.mutation<UserWithoutPassword[], string>({
       query: (channelId) => ({
         url: `/channels/${channelId}/members`,
         method: "GET",
       }),
-      providesTags: (_, __, id) => [
-        { type: QUERY_TAG_TYPES.CHANNEL_MEMBERS, id },
-      ],
     }),
   }),
 });
 
 export const {
   useCreateChannelMutation,
+  useUpdateChannelMutation,
   useSearchChannelsMutation,
   useJoinChannelMutation,
   useLeaveChannelMutation,
+  useKickUserOutOfChannelMutation,
   useGetChannelByIdQuery,
   useFetchChannelByIdMutation,
   useUpdateChannelAvatarsCollectionMutation,
   useGetChannelMembersQuery,
+  useFetchChannelMembersMutation,
 } = channelApi;

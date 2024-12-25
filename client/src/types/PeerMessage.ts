@@ -13,8 +13,14 @@ enum PeerMessage {
   ContactRequestAccepted = "contactRequestAccepted",
   JoinRequestAccepted = "joinRequestAccepted",
   InviteRequestAccepted = "inviteRequestAccepted",
-  // CONTACT REMOVAL
+  // CONTACTS
   ContactRemoved = "contactRemoved",
+  // CHANNELS
+  ChannelMemberJoined = "channelMemberJoined",
+  ChannelMemberLeft = "channelMemberLeft",
+  ChannelUpdated = "channelUpdated",
+  ChannelMemberKicked = "channelMemberKicked", // Notify members of the channel about a kick
+  ChannelKicked = "channelKicked", // Notify the kicked user
 }
 
 export default PeerMessage;

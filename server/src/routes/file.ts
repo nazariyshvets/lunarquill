@@ -10,8 +10,8 @@ import {
 const router = Router();
 
 router.post("/", uploadFileController);
-router.get("/:fileId/download", downloadFileController);
 router.post("/download", downloadFilesController);
+router.get("/:fileId/download", downloadFileController);
 router.delete("/:fileId", removeFileController);
 
 export default router;

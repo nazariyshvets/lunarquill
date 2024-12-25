@@ -5,15 +5,18 @@ import _ from "lodash";
 import MessageGroup from "./MessageGroup";
 import useAuth from "../hooks/useAuth";
 import type { GroupedMessage } from "../utils/groupMessages";
+import { UserWithoutPassword } from "../types/User";
 
 interface ChatMessagesViewProps {
   messageGroups: GroupedMessage[];
+  members: UserWithoutPassword[];
   onReactionClick: (messageId: string, emojiUnified?: string) => Promise<void>;
   onScroll: () => Promise<void>;
 }
 
 const ChatMessagesView = ({
   messageGroups,
+  members,
   onReactionClick,
   onScroll,
 }: ChatMessagesViewProps) => {
@@ -24,7 +27,9 @@ const ChatMessagesView = ({
     const container = containerRef.current;
 
     const handleMessagesContainerScroll = _.debounce(async () => {
-      if (container && container.scrollTop <= 100) await onScroll();
+      if (container && container.scrollTop <= 100) {
+        await onScroll();
+      }
     }, 200);
 
     container?.addEventListener("scroll", handleMessagesContainerScroll);
@@ -37,7 +42,9 @@ const ChatMessagesView = ({
   useEffect(() => {
     const container = containerRef.current;
 
-    if (container) container.scrollTop = container.scrollHeight;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messageGroups]);
 
   return (
@@ -50,6 +57,7 @@ const ChatMessagesView = ({
           key={group.id}
           {...group}
           isLocalUser={group.messages.at(0)?.senderId === userId}
+          chatMembers={members}
           onReactionClick={onReactionClick}
         />
       ))}

@@ -9,11 +9,14 @@ import Contact from "../models/Contact";
 import Request from "../models/Request";
 
 const getUserContacts = async (userId: string) => {
-  if (!mongoose.Types.ObjectId.isValid(userId))
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error("Invalid user id");
+  }
 
   const user = await User.findById(userId);
-  if (!user) throw new Error("User not found");
+  if (!user) {
+    throw new Error("User not found");
+  }
 
   const contacts = await Contact.find({
     $or: [{ user1: userId }, { user2: userId }],
@@ -21,12 +24,10 @@ const getUserContacts = async (userId: string) => {
     .populate({
       path: "user1",
       select: "-password",
-      populate: "selectedAvatar",
     })
     .populate({
       path: "user2",
       select: "-password",
-      populate: "selectedAvatar",
     });
 
   return contacts.map((contact) =>
@@ -35,13 +36,14 @@ const getUserContacts = async (userId: string) => {
 };
 
 const getUserChannels = async (userId: string) => {
-  if (!mongoose.Types.ObjectId.isValid(userId))
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error("Invalid user id");
+  }
 
   const memberships = await Membership.find({ user: userId });
   const channelIds = memberships.map((membership) => membership.channel);
 
-  return Channel.find({ _id: { $in: channelIds } }).populate("selectedAvatar");
+  return Channel.find({ _id: { $in: channelIds } });
 };
 
 const getUserRequests = (userId: string) => {
@@ -58,21 +60,23 @@ const getUserRequests = (userId: string) => {
 };
 
 const getUserById = async (userId: string) => {
-  if (!mongoose.Types.ObjectId.isValid(userId))
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error("Invalid user id");
+  }
 
-  const user = await User.findById(userId)
-    .select("-password")
-    .populate("selectedAvatar");
+  const user = await User.findById(userId).select("-password");
 
-  if (!user) throw new Error("User not found");
+  if (!user) {
+    throw new Error("User not found");
+  }
 
   return user;
 };
 
 const updateUserById = async (userId: string, updateData: Partial<IUser>) => {
-  if (!mongoose.Types.ObjectId.isValid(userId))
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error("Invalid user id");
+  }
 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
@@ -80,7 +84,9 @@ const updateUserById = async (userId: string, updateData: Partial<IUser>) => {
     { new: true },
   ).select("-password");
 
-  if (!updatedUser) throw new Error("User not found");
+  if (!updatedUser) {
+    throw new Error("User not found");
+  }
 
   return updatedUser;
 };

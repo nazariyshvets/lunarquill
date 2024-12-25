@@ -13,32 +13,45 @@ const createRequest = async (
   type: string,
   channelId?: string,
 ) => {
-  if (!mongoose.Types.ObjectId.isValid(from))
+  if (!mongoose.Types.ObjectId.isValid(from)) {
     throw new Error("Invalid user ID for 'from'");
+  }
 
   // Check if the 'from' user exists
   const fromUser = await User.findById(from);
-  if (!fromUser) throw new Error("User 'from' not found");
+  if (!fromUser) {
+    throw new Error("User 'from' not found");
+  }
 
   // Validate the request type
-  if (!Object.values(RequestType).includes(type as RequestType))
+  if (!Object.values(RequestType).includes(type as RequestType)) {
     throw new Error("Invalid request type");
+  }
 
-  if (type === RequestType.Join) return handleJoinRequest(from, channelId);
-  else if (type === RequestType.Invite)
+  if (type === RequestType.Join) {
+    return handleJoinRequest(from, channelId);
+  } else if (type === RequestType.Invite) {
     return handleInviteRequest(from, to, channelId);
-  else if (type === RequestType.Contact) return handleContactRequest(from, to);
-  else throw new Error("Invalid request type");
+  } else if (type === RequestType.Contact) {
+    return handleContactRequest(from, to);
+  } else {
+    throw new Error("Invalid request type");
+  }
 };
 
 const handleJoinRequest = async (from: string, channelId?: string) => {
-  if (!channelId) throw new Error("Channel id is required for join requests");
+  if (!channelId) {
+    throw new Error("Channel id is required for join requests");
+  }
 
-  if (!mongoose.Types.ObjectId.isValid(channelId))
+  if (!mongoose.Types.ObjectId.isValid(channelId)) {
     throw new Error("Invalid channel id");
+  }
 
   const channel = await Channel.findById(channelId);
-  if (!channel) throw new Error("Channel not found");
+  if (!channel) {
+    throw new Error("Channel not found");
+  }
 
   // Check if a join request already exists
   const existingRequest = await Request.findOne({
@@ -47,8 +60,9 @@ const handleJoinRequest = async (from: string, channelId?: string) => {
     channel: channel._id,
   });
 
-  if (existingRequest)
+  if (existingRequest) {
     throw new Error("A request to join this channel already exists");
+  }
 
   // Check if user is already a member of the channel
   const membership = await Membership.findOne({
@@ -56,7 +70,9 @@ const handleJoinRequest = async (from: string, channelId?: string) => {
     channel: channel._id,
   });
 
-  if (membership) throw new Error("User is already a member of this channel");
+  if (membership) {
+    throw new Error("User is already a member of this channel");
+  }
 
   if (!channel.isPrivate) {
     // Channel is public, auto-join the user
@@ -73,8 +89,9 @@ const handleJoinRequest = async (from: string, channelId?: string) => {
   } else {
     const toUser = await User.findById(channel.admin);
 
-    if (!toUser)
+    if (!toUser) {
       throw new Error("Admin user not found for the specified channel");
+    }
 
     // Create the request
     const request = new Request({
@@ -100,17 +117,26 @@ const handleInviteRequest = async (
   to: string | null,
   channelId?: string,
 ) => {
-  if (!channelId) throw new Error("Channel id is required for invite requests");
-  if (!to) throw new Error("Recipient is required");
+  if (!channelId) {
+    throw new Error("Channel id is required for invite requests");
+  }
+  if (!to) {
+    throw new Error("Recipient is required");
+  }
 
-  if (!mongoose.Types.ObjectId.isValid(to))
+  if (!mongoose.Types.ObjectId.isValid(to)) {
     throw new Error("Invalid recipient id");
+  }
 
   const toUser = await User.findById(to);
-  if (!toUser) throw new Error("Recipient not found");
+  if (!toUser) {
+    throw new Error("Recipient not found");
+  }
 
   const channel = await Channel.findById(channelId);
-  if (!channel) throw new Error("Channel not found");
+  if (!channel) {
+    throw new Error("Channel not found");
+  }
 
   // Check if an invitation request already exists
   const existingRequest = await Request.findOne({
@@ -120,7 +146,9 @@ const handleInviteRequest = async (
     channel: channel._id,
   });
 
-  if (existingRequest) throw new Error("Invite request already exists");
+  if (existingRequest) {
+    throw new Error("Invite request already exists");
+  }
 
   // Check if the user is already a member of the channel
   const membership = await Membership.findOne({
@@ -128,7 +156,9 @@ const handleInviteRequest = async (
     channel: channel._id,
   });
 
-  if (membership) throw new Error("User is already a member of this channel");
+  if (membership) {
+    throw new Error("User is already a member of this channel");
+  }
 
   // Create the request
   const request = new Request({
@@ -149,15 +179,22 @@ const handleInviteRequest = async (
 };
 
 const handleContactRequest = async (from: string, to: string | null) => {
-  if (!to) throw new Error("Recipient is required");
+  if (!to) {
+    throw new Error("Recipient is required");
+  }
 
-  if (from === to) throw new Error("Cannot send a request to yourself");
+  if (from === to) {
+    throw new Error("Cannot send a request to yourself");
+  }
 
-  if (!mongoose.Types.ObjectId.isValid(to))
+  if (!mongoose.Types.ObjectId.isValid(to)) {
     throw new Error("Invalid recipient id");
+  }
 
   const toUser = await User.findById(to);
-  if (!toUser) throw new Error("Recipient not found");
+  if (!toUser) {
+    throw new Error("Recipient not found");
+  }
 
   // Check if a request between the users already exists
   const existingRequest = await Request.findOne({
@@ -168,8 +205,9 @@ const handleContactRequest = async (from: string, to: string | null) => {
     ],
   });
 
-  if (existingRequest)
+  if (existingRequest) {
     throw new Error("A request between these users already exists");
+  }
 
   // Check if the contact already exists
   const existingContact = await Contact.findOne({
@@ -179,7 +217,9 @@ const handleContactRequest = async (from: string, to: string | null) => {
     ],
   });
 
-  if (existingContact) throw new Error("Contact already exists");
+  if (existingContact) {
+    throw new Error("Contact already exists");
+  }
 
   // Create the request
   const request = new Request({
@@ -200,9 +240,12 @@ const handleContactRequest = async (from: string, to: string | null) => {
 const declineRequest = async (requestId: string, userId: string) => {
   const request = await Request.findById(requestId);
 
-  if (!request) throw new Error("Request not found");
-  if (request.from.toString() !== userId && request.to.toString() !== userId)
+  if (!request) {
+    throw new Error("Request not found");
+  }
+  if (request.from.toString() !== userId && request.to.toString() !== userId) {
     throw new Error("Unauthorized to decline this request");
+  }
 
   await request.deleteOne();
 
@@ -216,12 +259,16 @@ const acceptRequest = async (
 ) => {
   const request = await Request.findById(requestId);
 
-  if (!request) throw new Error("Request not found");
-  if (request.from.toString() !== userId && request.to.toString() !== userId)
+  if (!request) {
+    throw new Error("Request not found");
+  }
+  if (request.from.toString() !== userId && request.to.toString() !== userId) {
     throw new Error("Unauthorized to accept this request");
+  }
 
-  if (request.type === RequestType.Contact && !whiteboardRoomId)
+  if (request.type === RequestType.Contact && !whiteboardRoomId) {
     throw new Error("Whiteboard id is required for creating a contact");
+  }
 
   // Start a session for atomic updates
   const session = await mongoose.startSession();

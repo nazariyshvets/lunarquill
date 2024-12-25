@@ -11,6 +11,7 @@ import type Message from "../types/Message";
 
 interface MessageRowProps {
   message: Message;
+  senderUsername?: string;
   displayUsername?: boolean;
   isLocalUser?: boolean;
   onReactionClick: (emojiUnified?: string) => Promise<void>;
@@ -18,6 +19,7 @@ interface MessageRowProps {
 
 const MessageRow = ({
   message,
+  senderUsername,
   displayUsername = false,
   isLocalUser = false,
   onReactionClick,
@@ -75,7 +77,7 @@ const MessageRow = ({
       >
         {displayUsername && (
           <span className="truncate text-sm font-medium tracking-wider text-primary-light sm:text-base">
-            {isLocalUser ? "You" : message.senderUsername ?? "Unknown"}
+            {isLocalUser ? "You" : senderUsername ?? "Unknown"}
           </span>
         )}
 
@@ -100,27 +102,29 @@ const MessageRow = ({
         </SimpleButton>
       </div>
 
-      <div className="flex items-center gap-1">
-        {message.reactions?.map(
-          (reaction) =>
-            reaction.count > 0 && (
-              <div
-                key={reaction.reaction}
-                className={`flex cursor-pointer items-center gap-1 rounded-full px-1 text-sm outline outline-1 sm:text-base ${
-                  reaction.userList.find((uid) => uid === userId)
-                    ? "bg-charcoal outline-primary-light"
-                    : "outline-lightgrey"
-                }`}
-                onClick={() => onReactionClick(reaction.reaction)}
-              >
-                <span role="img">
-                  {String.fromCodePoint(parseInt(reaction.reaction, 16))}
-                </span>
-                <span className="text-primary-light">{reaction.count}</span>
-              </div>
-            ),
-        )}
-      </div>
+      {!!message.reactions?.length && (
+        <div className="flex items-center gap-1">
+          {message.reactions.map(
+            (reaction) =>
+              reaction.count > 0 && (
+                <div
+                  key={reaction.reaction}
+                  className={`flex cursor-pointer items-center gap-1 rounded-full px-1 text-sm outline outline-1 sm:text-base ${
+                    reaction.userList.find((uid) => uid === userId)
+                      ? "bg-charcoal outline-primary-light"
+                      : "outline-lightgrey"
+                  }`}
+                  onClick={() => onReactionClick(reaction.reaction)}
+                >
+                  <span role="img">
+                    {String.fromCodePoint(parseInt(reaction.reaction, 16))}
+                  </span>
+                  <span className="text-primary-light">{reaction.count}</span>
+                </div>
+              ),
+          )}
+        </div>
+      )}
     </div>
   );
 };

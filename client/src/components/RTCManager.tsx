@@ -25,25 +25,26 @@ import FeaturedUser from "./FeaturedUser";
 import RTCControlPanel from "./RTCControlPanel";
 import Chat from "./Chat";
 import useRTMClient from "../hooks/useRTMClient";
-import useRemoteUsersTracksState from "../hooks/useRemoteUsersTracksState";
 import useRemoteUsersAttributes from "../hooks/useUsersAttributes";
 import useScreenCasterId from "../hooks/useScreenCasterId";
 import useAuth from "../hooks/useAuth";
 import useRTC from "../hooks/useRTC";
 import useWhiteboardRoom from "../hooks/useWhiteboardRoom";
 import useInitMediaDevices from "../hooks/useInitMediaDevices";
+import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import RTCConfig from "../config/RTCConfig";
 import { MOBILE_SCREEN_THRESHOLD } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
-import type { PopulatedUserWithoutPassword, UserVolume } from "../types/User";
-import { type ChatType, ChatTypeEnum } from "../types/ChatType";
+import type { UserWithoutPassword, UserVolume } from "../types/User";
+import { ChatType } from "../types/ChatType";
 
 interface RTCManagerProps {
-  localUser: PopulatedUserWithoutPassword | undefined;
+  localUser: UserWithoutPassword | undefined;
   channelId: string;
   RTMChannel: RtmChannel;
   chatType: ChatType;
   chatTargetId: string;
+  chatMembers: UserWithoutPassword[];
   whiteboardRoomId: string;
 }
 
@@ -54,6 +55,7 @@ const RTCManager = ({
   RTMChannel,
   chatType,
   chatTargetId,
+  chatMembers,
   whiteboardRoomId,
 }: RTCManagerProps) => {
   const RTCClient = useRTCClient();
@@ -72,10 +74,6 @@ const RTCManager = ({
   );
   const [isLocalScreenShared, setIsLocalScreenShared] = useState(false);
   const remoteUsers = useRemoteUsers();
-  const remoteUsersTracksState = useRemoteUsersTracksState(
-    RTMClient,
-    RTMChannel,
-  );
   const remoteUsersAttrs = useRemoteUsersAttributes(RTMClient, RTMChannel);
   const [activeUsers, setActiveUsers] = useState<UserVolume[]>([]);
   const whiteboardRoomCredentials = useWhiteboardRoom(whiteboardRoomId);
@@ -84,6 +82,7 @@ const RTCManager = ({
   const windowWidth = useWindowWidth();
   const alert = useAlert();
   const navigate = useNavigate();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   const { isConnected: isConnectedToRTCChannel } = useJoin(
     {
@@ -147,18 +146,13 @@ const RTCManager = ({
     isLocalScreenShared ? handleScreenShareEnd() : handleScreenShareStart();
 
   const leaveChannel = () => {
-    if (chatType === ChatTypeEnum.SingleChat) {
-      RTMClient.sendMessageToPeer(
-        {
-          text: PeerMessage.CallEnded,
-        },
-        chatTargetId,
-      );
+    if (chatType === ChatType.SingleChat) {
+      sendMessageToPeer(chatTargetId, PeerMessage.CallEnded);
     }
 
     navigate(
       `/${
-        chatType === ChatTypeEnum.SingleChat
+        chatType === ChatType.SingleChat
           ? `contacts/${chatTargetId}`
           : `channels/${channelId}`
       }/chat`,
@@ -190,7 +184,11 @@ const RTCManager = ({
           .uid;
 
   const isMediaEnabled = (userId: UID, media: "camera" | "microphone") =>
-    !(remoteUsersTracksState[userId]?.[media]?.muted ?? true);
+    !(
+      remoteUsersAttrs[userId]?.[
+        media === "camera" ? "isCameraMuted" : "isMicrophoneMuted"
+      ] ?? true
+    );
 
   const renderMobileView = () => (
     <div className="h-full w-full overflow-auto">
@@ -203,7 +201,7 @@ const RTCManager = ({
           {(screenCasterId || localUserId !== mostActiveUserId) && (
             <VideoTrack isActive={!!localUserId && isUserActive(localUserId)}>
               <LocalVideoTrack
-                avatarId={localUser?.selectedAvatar?._id}
+                avatarId={localUser?.selectedAvatar}
                 avatarSize="lg"
                 track={localCameraTrack}
                 play={!isCameraMuted}
@@ -249,7 +247,7 @@ const RTCManager = ({
             />
           ) : mostActiveUserId && !isUserRemote(mostActiveUserId) ? (
             <LocalVideoTrack
-              avatarId={localUser?.selectedAvatar?._id}
+              avatarId={localUser?.selectedAvatar}
               avatarSize="xl"
               track={localCameraTrack}
               play={!isCameraMuted}
@@ -268,7 +266,7 @@ const RTCManager = ({
         <Chat
           chatType={chatType}
           targetId={chatTargetId}
-          localUser={localUser}
+          members={chatMembers}
         />
       </div>
 
@@ -295,7 +293,7 @@ const RTCManager = ({
             isActive={!!localUserId && isUserActive(localUserId)}
           >
             <LocalVideoTrack
-              avatarId={localUser?.selectedAvatar?._id}
+              avatarId={localUser?.selectedAvatar}
               avatarSize={screenCasterId ? "lg" : "xl"}
               track={localCameraTrack}
               play={!isCameraMuted}
@@ -343,7 +341,7 @@ const RTCManager = ({
         <Chat
           chatType={chatType}
           targetId={chatTargetId}
-          localUser={localUser}
+          members={chatMembers}
         />
       </div>
 

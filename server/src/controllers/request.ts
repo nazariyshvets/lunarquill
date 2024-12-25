@@ -9,7 +9,9 @@ import {
 const createRequestController = async (req: Request, res: Response) => {
   const { from, to, type, channel } = req.body;
 
-  if (!from || !type) throw new Error("Missing required fields");
+  if (!from || !type) {
+    throw new Error("Missing required fields");
+  }
 
   const request = await createRequest(from, to ?? null, type, channel);
 
@@ -19,7 +21,9 @@ const createRequestController = async (req: Request, res: Response) => {
 const declineRequestController = async (req: Request, res: Response) => {
   const { requestId, uid } = req.body;
 
-  if (!requestId || !uid) throw new Error("Fields are required");
+  if (!requestId || !uid) {
+    throw new Error("Fields are required");
+  }
 
   const response = await declineRequest(requestId, uid);
 
@@ -29,7 +33,9 @@ const declineRequestController = async (req: Request, res: Response) => {
 const acceptRequestController = async (req: Request, res: Response) => {
   const { requestId, uid, whiteboardRoomId } = req.body;
 
-  if (!requestId || !uid) throw new Error("Fields are required");
+  if (!requestId || !uid) {
+    throw new Error("Fields are required");
+  }
 
   const response = await acceptRequest(requestId, uid, whiteboardRoomId);
 

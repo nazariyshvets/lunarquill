@@ -4,14 +4,14 @@ import { RtmChannel, RtmClient } from "agora-rtm-react";
 import { useAlert } from "react-alert";
 
 import useAppSelector from "./useAppSelector";
+import type { UserWithoutPassword } from "../types/User";
 
 const useJoinRTMChannel = (
   RTMClient: RtmClient,
-  RTMChannel?: RtmChannel,
-  avatarId?: string,
+  RTMChannel: RtmChannel | undefined,
+  localUser: UserWithoutPassword | undefined,
 ) => {
-  const [isJoined, setIsJoined] = useState(false);
-  const username = useAppSelector((state) => state.auth.username);
+  const [hasJoined, setHasJoined] = useState(false);
   const isRTMClientInitialized = useAppSelector(
     (state) => state.rtm.isRTMClientInitialized,
   );
@@ -21,8 +21,9 @@ const useJoinRTMChannel = (
   useEffect(() => {
     if (
       !RTMChannel ||
+      !localUser ||
       !isRTMClientInitialized ||
-      isJoined ||
+      hasJoined ||
       isLoadingRef.current
     ) {
       return;
@@ -32,44 +33,38 @@ const useJoinRTMChannel = (
       isLoadingRef.current = true;
 
       try {
+        const avatarId = localUser.selectedAvatar;
         await RTMClient.addOrUpdateLocalUserAttributes({
-          username: username ?? "unknown",
+          username: localUser.username ?? "unknown",
           isCameraMuted: "true",
           isMicrophoneMuted: "true",
           ...(avatarId ? { avatarId } : {}),
         });
         await RTMChannel.join();
-        setIsJoined(true);
+        setHasJoined(true);
       } catch (err) {
         alert.error("Could not join RTM channel");
         console.error("RTM channel joining failed:", err);
-        setIsJoined(false);
+        setHasJoined(false);
       } finally {
         isLoadingRef.current = false;
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    RTMClient,
-    RTMChannel,
-    isRTMClientInitialized,
-    username,
-    avatarId,
-    isJoined,
-  ]);
+  }, [RTMClient, RTMChannel, localUser, isRTMClientInitialized, hasJoined]);
 
   useEffect(
     () => () => {
-      if (isJoined) {
+      if (hasJoined) {
         RTMChannel?.leave().catch((err) =>
           console.error("Failed to leave RTM channel:", err),
         );
       }
     },
-    [RTMChannel, isJoined],
+    [RTMChannel, hasJoined],
   );
 
-  return isJoined;
+  return hasJoined;
 };
 
 export default useJoinRTMChannel;

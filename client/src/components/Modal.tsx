@@ -9,6 +9,7 @@ interface ModalProps {
   displayButtons?: boolean;
   cancelBtnText?: string;
   saveBtnText?: string;
+  ignoreClickOutside?: boolean;
   onCancel: () => void;
   onSave: () => void;
 }
@@ -18,6 +19,7 @@ const Modal = ({
   displayButtons = true,
   cancelBtnText = "Cancel",
   saveBtnText = "Save",
+  ignoreClickOutside = false,
   children,
   onCancel,
   onSave,
@@ -26,7 +28,7 @@ const Modal = ({
 
   useClickOutside({
     element: container || undefined,
-    onClickOutside: onCancel,
+    onClickOutside: ignoreClickOutside ? undefined : onCancel,
   });
 
   return (
@@ -35,7 +37,10 @@ const Modal = ({
         ref={setContainer}
         className="flex max-h-screen w-full flex-col gap-8 rounded bg-black p-4 shadow-lg shadow-primary-600 sm:w-1/2 xl:w-1/3 xl:p-6"
       >
-        <h1 className="flex-shrink-0 truncate text-xl font-bold text-lightgrey sm:text-2xl">
+        <h1
+          className="flex-shrink-0 truncate text-xl font-bold text-lightgrey sm:text-2xl"
+          title={title}
+        >
           {title}
         </h1>
 

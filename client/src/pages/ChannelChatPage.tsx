@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 import { Tooltip } from "react-tooltip";
 import {
@@ -8,51 +8,46 @@ import {
   BiPhone,
   BiUserPlus,
   BiGroup,
+  BiPencil,
+  BiShield,
+  BiImage,
 } from "react-icons/bi";
-import { useParams, useNavigate } from "react-router-dom";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { Navigate, useParams, useNavigate } from "react-router-dom";
 import { useAlert } from "react-alert";
 import { skipToken } from "@reduxjs/toolkit/query";
 
+import InviteUserModal from "../components/channelChatPage/InviteUserModal";
+import ViewMembersModal from "../components/channelChatPage/ViewMembersModal";
+import LeaveChannelModal from "../components/channelChatPage/LeaveChannelModal";
+import EditChannelNameModal from "../components/channelChatPage/EditChannelNameModal";
+import EditChannelPrivacyModal from "../components/channelChatPage/EditChannelPrivacyModal";
+import Dropdown from "../components/Dropdown";
 import Loading from "../components/Loading";
 import Contact from "../components/Contact";
 import SimpleButton from "../components/SimpleButton";
 import Chat from "../components/Chat";
-import Input from "../components/Input";
-import Modal from "../components/Modal";
 import AvatarUploadModal from "../components/AvatarUploadModal";
-import {
-  useGetUserByIdQuery,
-  useGetUserContactsQuery,
-} from "../services/userApi";
+import { useGetUserContactsQuery } from "../services/userApi";
 import {
   useGetChannelByIdQuery,
-  useLeaveChannelMutation,
   useUpdateChannelAvatarsCollectionMutation,
   useGetChannelMembersQuery,
 } from "../services/channelApi";
-import { useCreateRequestMutation } from "../services/requestApi";
-import { useDisableWhiteboardRoomMutation } from "../services/whiteboardApi";
-import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
 import useAvatarUpload from "../hooks/useAvatarUpload";
 import useAuth from "../hooks/useAuth";
-import useHandleError from "../hooks/useHandleError";
-import useChatConnection from "../hooks/useChatConnection";
 import useCopyToClipboard from "../hooks/useCopyToClipboard";
 import useDocumentTitle from "../hooks/useDocumentTitle";
-import useRTMClient from "../hooks/useRTMClient";
 import useAppSelector from "../hooks/useAppSelector";
-import useAddContact from "../hooks/useAddContact";
-import useIsUserOnline from "../hooks/useIsUserOnline";
-import { RequestType } from "../types/Request";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
+import Placement from "../types/Placement";
 import PeerMessage from "../types/PeerMessage";
-import { UserWithoutPassword } from "../types/User";
 
 enum ModalAction {
   InviteUser = "inviteUser",
   ViewMembers = "viewMembers",
   LeaveChannel = "leaveChannel",
+  EditChannelName = "editChannelName",
+  EditChannelPrivacy = "editChannelPrivacy",
 }
 
 interface ModalState {
@@ -62,44 +57,30 @@ interface ModalState {
 
 const ChannelChatPage = () => {
   const [modalState, setModalState] = useState<ModalState>({ isOpen: false });
-  const {
-    register,
-    formState: { errors },
-    handleSubmit,
-  } = useForm<{ contactId: string }>();
-  const inviteFormRef = useRef<HTMLFormElement>(null);
+  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
 
   const { id } = useParams();
   const { userId } = useAuth();
-  const { data: localUser } = useGetUserByIdQuery(userId ?? skipToken);
-  const { data: channel } = useGetChannelByIdQuery(id ?? skipToken);
+  const { data: channel, isError: isFetchingChannelError } =
+    useGetChannelByIdQuery(id ?? skipToken);
   const { data: channelMembers = [] } = useGetChannelMembersQuery(
     id ?? skipToken,
   );
   const { data: contacts = [] } = useGetUserContactsQuery(userId ?? skipToken);
 
-  const RTMClient = useRTMClient();
   const isChatInitialized = useAppSelector(
     (state) => state.chat.isChatInitialized,
   );
-  const chatConnection = useChatConnection();
   const navigate = useNavigate();
   const alert = useAlert();
   const copyToClipboard = useCopyToClipboard();
-  const handleError = useHandleError();
-  const addContact = useAddContact();
-  const isUserOnline = useIsUserOnline();
-
-  const [createRequest] = useCreateRequestMutation();
-  const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
-  const [disableWhiteboardRoom] = useDisableWhiteboardRoomMutation();
-  const [leaveChannel] = useLeaveChannelMutation();
   const [updateAvatarsCollection] = useUpdateChannelAvatarsCollectionMutation();
 
   const channelId = channel?._id;
   const channelName = channel?.name ?? "Unknown channel";
   const chatTargetId = channel?.chatTargetId ?? null;
-  const selectedChannelAvatarId = channel?.selectedAvatar?._id;
+  const selectedChannelAvatarId = channel?.selectedAvatar;
+  const modalAction = modalState.action;
 
   const {
     modalState: editAvatarModalState,
@@ -116,6 +97,18 @@ const ChannelChatPage = () => {
 
   useDocumentTitle(channelName);
 
+  if (!isChatInitialized) {
+    return <Loading />;
+  }
+  if (isFetchingChannelError) {
+    return <Navigate to="/profile" replace />;
+  }
+
+  const handleCallBtnClick = () => navigate(`/channels/${id}/call`);
+
+  const toggleSettingsDropdown = () =>
+    setIsSettingsDropdownOpen((prevState) => !prevState);
+
   const handleCopyChannelIdBtnClick = () => {
     const errorMessage = "Could not copy the channel id. Please try again";
 
@@ -128,140 +121,18 @@ const ChannelChatPage = () => {
     }
   };
 
-  const handleInviteFormSubmit: SubmitHandler<{
-    contactId: string;
-  }> = async ({ contactId }) => {
-    if (!userId || !channelId || !chatTargetId) {
-      alert.error("Could not send an invite request. Please try again");
-      return;
-    }
-
-    try {
-      await Promise.all([
-        createRequest({
-          from: userId,
-          to: contactId,
-          type: RequestType.Invite,
-          channel: channelId,
-        }).unwrap(),
-        chatConnection.inviteUsersToGroup({
-          groupId: chatTargetId,
-          users: [contactId],
-        }),
-      ]);
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.RequestCreated },
-        contactId,
-      );
-      alert.success("Request created successfully!");
-      handleModalClose();
-    } catch (err) {
-      handleError(
-        err,
-        "Could not send an invite request. Please try again",
-        "Error sending an invite request:",
+  const handleChannelAvatarsUpdate = async () => {
+    if (!!userId && !!channelId) {
+      await handleEditAvatarModalSaveBtnClick(
+        { userId, channelId },
+        updateAvatarsCollection,
+        channelMembers.filter((member) => member._id !== userId),
+        `${PeerMessage.ChannelUpdated}__${channelId}`,
       );
     }
   };
-
-  const handleChannelAvatarsUpdate = () =>
-    !!userId &&
-    !!channelId &&
-    handleEditAvatarModalSaveBtnClick(
-      { userId, channelId },
-      updateAvatarsCollection,
-    );
-
-  const handleChannelLeave = async () => {
-    if (!userId || !channelId || !chatTargetId) {
-      alert.error("Could not leave the channel. Please try again");
-      return;
-    }
-
-    try {
-      const chatInfo = await chatConnection.getGroupInfo({
-        groupId: chatTargetId,
-      });
-      const prevChatOwner = chatInfo?.data?.[0]?.owner;
-      const { isChannelRemoved, adminId } = await leaveChannel({
-        userId,
-        channelId,
-      }).unwrap();
-
-      if (isChannelRemoved) {
-        const { token: whiteboardSdkToken } =
-          await fetchWhiteboardSdkToken().unwrap();
-
-        await Promise.all([
-          disableWhiteboardRoom({
-            roomUuid: channel.whiteboardRoomId,
-            sdkToken: whiteboardSdkToken,
-          }).unwrap(),
-          chatConnection.destroyGroup({ groupId: chatTargetId }),
-        ]);
-      } else {
-        if (userId === prevChatOwner && adminId) {
-          await chatConnection.changeGroupOwner({
-            groupId: chatTargetId,
-            newOwner: adminId,
-          });
-        }
-
-        await chatConnection.leaveGroup({ groupId: chatTargetId });
-      }
-
-      navigate("/profile");
-      alert.success("You left the channel successfully");
-    } catch (err) {
-      handleError(
-        err,
-        "Could not leave the channel. Please try again",
-        "Error leaving the channel:",
-      );
-    }
-  };
-
-  const handleContactAdd = async (contactId: string) => {
-    try {
-      await addContact(contactId);
-    } catch (error) {
-      error instanceof Error
-        ? alert.error(error.message)
-        : typeof error === "string" && alert.error(error);
-      console.error("Error sending a contact request:", error);
-    }
-  };
-
-  const channelMembersSorter = (
-    a: UserWithoutPassword,
-    b: UserWithoutPassword,
-  ) =>
-    a._id === userId
-      ? -1
-      : b._id === userId
-        ? 1
-        : isUserOnline(a._id) && !isUserOnline(b._id)
-          ? -1
-          : !isUserOnline(a._id) && isUserOnline(b._id)
-            ? 1
-            : 0;
 
   const handleModalClose = () => setModalState({ isOpen: false });
-
-  const handleModalSave = async (action: ModalAction) => {
-    switch (action) {
-      case ModalAction.InviteUser:
-        inviteFormRef.current?.dispatchEvent(
-          new Event("submit", { cancelable: true, bubbles: true }),
-        );
-        break;
-      case ModalAction.LeaveChannel:
-        await handleChannelLeave();
-        break;
-      case ModalAction.ViewMembers:
-        handleModalClose();
-    }
-  };
 
   const handleInviteUserBtnClick = () =>
     setModalState({
@@ -281,9 +152,48 @@ const ChannelChatPage = () => {
       action: ModalAction.LeaveChannel,
     });
 
-  if (!isChatInitialized) return <Loading />;
+  const handleEditChannelBtnClick = (modalAction: ModalAction) => {
+    if (channel) {
+      setIsSettingsDropdownOpen(false);
+      setModalState({
+        isOpen: true,
+        action: modalAction,
+      });
+    } else {
+      alert.error("No channel information. Please try again");
+      console.error("No channel information");
+    }
+  };
 
-  const modalAction = modalState.action;
+  const handleEditChannelNameBtnClick = () =>
+    handleEditChannelBtnClick(ModalAction.EditChannelName);
+
+  const handleEditChannelPrivacyBtnClick = () =>
+    handleEditChannelBtnClick(ModalAction.EditChannelPrivacy);
+
+  const handleEditChannelAvatarBtnClick = async () => {
+    setIsSettingsDropdownOpen(false);
+    await handleEditAvatarModalOpen();
+  };
+
+  const settingsOptions = [
+    {
+      attribute: "name",
+      Icon: BiPencil,
+      onClick: handleEditChannelNameBtnClick,
+    },
+    {
+      attribute: "privacy",
+      Icon: BiShield,
+      onClick: handleEditChannelPrivacyBtnClick,
+    },
+
+    {
+      attribute: "avatar",
+      Icon: BiImage,
+      onClick: handleEditChannelAvatarBtnClick,
+    },
+  ];
 
   return (
     chatTargetId && (
@@ -300,7 +210,7 @@ const ChannelChatPage = () => {
             <SimpleButton
               data-tooltip-id="call"
               data-tooltip-content="Call"
-              onClick={() => navigate(`/channels/${id}/call`)}
+              onClick={handleCallBtnClick}
             >
               <BiPhone />
             </SimpleButton>
@@ -326,13 +236,34 @@ const ChannelChatPage = () => {
               <BiGroup />
             </SimpleButton>
             {userId && channel?.admin && userId === channel.admin && (
-              <SimpleButton
-                data-tooltip-id="editAvatar"
-                data-tooltip-content="Edit avatar"
-                onClick={handleEditAvatarModalOpen}
+              <Dropdown
+                isOpen={isSettingsDropdownOpen}
+                placement={Placement.BOTTOM_RIGHT}
+                content={
+                  <div className="flex flex-col gap-2 text-lg">
+                    {settingsOptions.map((item) => (
+                      <SimpleButton
+                        key={item.attribute}
+                        className="flex items-center gap-2"
+                        onClick={item.onClick}
+                      >
+                        <item.Icon className="flex-shrink-0" />
+                        <span className="text-sm">
+                          Edit channel {item.attribute}
+                        </span>
+                      </SimpleButton>
+                    ))}
+                  </div>
+                }
               >
-                <BiEdit />
-              </SimpleButton>
+                <SimpleButton
+                  data-tooltip-id="editChannel"
+                  data-tooltip-content="Edit channel"
+                  onClick={toggleSettingsDropdown}
+                >
+                  <BiEdit />
+                </SimpleButton>
+              </Dropdown>
             )}
             <SimpleButton
               isDanger
@@ -347,74 +278,50 @@ const ChannelChatPage = () => {
 
         <Chat
           key={chatTargetId}
-          chatType={ChatTypeEnum.GroupChat}
+          chatType={ChatType.GroupChat}
           targetId={chatTargetId}
-          localUser={localUser}
+          members={channelMembers}
         />
 
-        {modalState.isOpen && modalAction && (
-          <Modal
-            title={
-              modalAction === ModalAction.InviteUser
-                ? "Enter user's id"
-                : modalAction === ModalAction.ViewMembers
-                  ? "Members list"
-                  : "Are you sure you want to leave this channel"
-            }
-            displayButtons={modalAction !== ModalAction.ViewMembers}
-            onCancel={handleModalClose}
-            onSave={() => handleModalSave(modalAction)}
-          >
-            {modalAction === ModalAction.InviteUser ? (
-              <form
-                ref={inviteFormRef}
-                method="POST"
-                autoComplete="off"
-                onSubmit={handleSubmit(handleInviteFormSubmit)}
-              >
-                <Input
-                  name="contactId"
-                  register={register}
-                  errors={errors["contactId"]}
-                  required
-                />
-              </form>
-            ) : (
-              modalAction === ModalAction.ViewMembers && (
-                <div className="flex flex-col gap-2">
-                  {[...channelMembers]
-                    .sort(channelMembersSorter)
-                    .map((member) => (
-                      <div
-                        key={member._id}
-                        className="flex items-center justify-between gap-2"
-                      >
-                        <Contact
-                          name={member._id === userId ? "You" : member.username}
-                          isOnline={isUserOnline(member._id)}
-                          avatarId={member.selectedAvatar}
-                        />
-
-                        {member._id !== userId &&
-                          !contacts.some(
-                            (contact) => contact._id === member._id,
-                          ) && (
-                            <SimpleButton
-                              data-tooltip-id="addUserToContacts"
-                              data-tooltip-content="Add to contacts"
-                              className="text-xl"
-                              onClick={() => handleContactAdd(member._id)}
-                            >
-                              <BiUserPlus />
-                            </SimpleButton>
-                          )}
-                      </div>
-                    ))}
-                </div>
-              )
-            )}
-          </Modal>
-        )}
+        {modalState.isOpen &&
+          modalAction &&
+          (modalAction === ModalAction.InviteUser ? (
+            <InviteUserModal
+              localUserId={userId}
+              channel={channel}
+              onClose={handleModalClose}
+            />
+          ) : modalAction === ModalAction.ViewMembers ? (
+            <ViewMembersModal
+              localUserId={userId}
+              contacts={contacts}
+              channel={channel}
+              channelMembers={channelMembers}
+              onClose={handleModalClose}
+            />
+          ) : modalAction === ModalAction.LeaveChannel ? (
+            <LeaveChannelModal
+              localUserId={userId}
+              channel={channel}
+              channelMembers={channelMembers}
+              onClose={handleModalClose}
+            />
+          ) : modalAction === ModalAction.EditChannelName ? (
+            <EditChannelNameModal
+              localUserId={userId}
+              channelId={channelId}
+              channelName={channelName}
+              channelMembers={channelMembers}
+              onClose={handleModalClose}
+            />
+          ) : (
+            <EditChannelPrivacyModal
+              localUserId={userId}
+              channel={channel}
+              channelMembers={channelMembers}
+              onClose={handleModalClose}
+            />
+          ))}
 
         {editAvatarModalState.isOpen && (
           <AvatarUploadModal
@@ -432,9 +339,8 @@ const ChannelChatPage = () => {
         <Tooltip id="copyChannelId" />
         <Tooltip id="inviteUser" />
         <Tooltip id="viewMembers" />
-        <Tooltip id="editAvatar" />
+        <Tooltip id="editChannel" />
         <Tooltip id="leaveChannel" />
-        <Tooltip id="addUserToContacts" />
       </div>
     )
   );

@@ -36,7 +36,9 @@ const registerUser = async (
   });
 
   // Check validation
-  if (!isValid) throw new Error(JSON.stringify(errors));
+  if (!isValid) {
+    throw new Error(JSON.stringify(errors));
+  }
 
   // Check if email or username already exists
   const existingUser = await User.findOne({
@@ -45,8 +47,11 @@ const registerUser = async (
 
   if (existingUser) {
     // Determine if it's the email or username that already exists
-    if (existingUser.email === email) throw new Error("Email already exists");
-    else throw new Error("Username already exists");
+    if (existingUser.email === email) {
+      throw new Error("Email already exists");
+    } else {
+      throw new Error("Username already exists");
+    }
   }
 
   // Hash password before saving in the database
@@ -102,12 +107,15 @@ const registerUser = async (
 const verifyAccount = async (userId: string, token: string) => {
   const verificationToken = await Token.findOne({ userId });
 
-  if (!verificationToken)
+  if (!verificationToken) {
     throw new Error("Invalid or expired verification token");
+  }
 
   const isTokenValid = await bcrypt.compare(token, verificationToken.token);
 
-  if (!isTokenValid) throw new Error("Invalid or expired verification token");
+  if (!isTokenValid) {
+    throw new Error("Invalid or expired verification token");
+  }
 
   const user = await User.findById(userId);
 
@@ -137,21 +145,30 @@ const loginUser = async (email: string, password: string) => {
   // Form validation
   const { errors, isValid } = validateLoginInput({ email, password });
   // Check validation
-  if (!isValid) throw new Error(JSON.stringify(errors));
+  if (!isValid) {
+    throw new Error(JSON.stringify(errors));
+  }
 
   // Find user by email
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error("Email not found");
+  if (!user) {
+    throw new Error("Email not found");
+  }
 
   // Check if the email is verified
-  if (!user.active) throw new Error("You need to verify your email");
+  if (!user.active) {
+    throw new Error("You need to verify your email");
+  }
 
   // Check password
   const isMatch = await bcrypt.compare(password, user.password);
 
-  if (isMatch) return generateJwtToken(user.id, email, user.username);
-  else throw new Error("Password incorrect");
+  if (isMatch) {
+    return generateJwtToken(user.id, email, user.username);
+  } else {
+    throw new Error("Password incorrect");
+  }
 };
 
 const loginUserWithGoogle = async (code: string) => {
@@ -201,11 +218,15 @@ const requestPasswordReset = async (email: string) => {
   });
 
   // Check validation
-  if (!isValid) throw new Error(error);
+  if (!isValid) {
+    throw new Error(error);
+  }
 
   const user = await User.findOne({ email });
 
-  if (!user) throw new Error("Email does not exist");
+  if (!user) {
+    throw new Error("Email does not exist");
+  }
 
   // Check if there's an existing token within the last minute
   const lastToken = await Token.findOne({
@@ -225,7 +246,9 @@ const requestPasswordReset = async (email: string) => {
 
   const token = await Token.findOne({ userId: user._id });
 
-  if (token) await token.deleteOne();
+  if (token) {
+    await token.deleteOne();
+  }
 
   const resetToken = createToken();
   const hash = await hashString(resetToken);
@@ -264,16 +287,21 @@ const resetPassword = async (
   });
 
   // Check validation
-  if (!isValid) throw new Error(error);
+  if (!isValid) {
+    throw new Error(error);
+  }
 
   const passwordResetToken = await Token.findOne({ userId });
 
-  if (!passwordResetToken)
+  if (!passwordResetToken) {
     throw new Error("Invalid or expired password reset token");
+  }
 
   const isTokenValid = await bcrypt.compare(token, passwordResetToken.token);
 
-  if (!isTokenValid) throw new Error("Invalid or expired password reset token");
+  if (!isTokenValid) {
+    throw new Error("Invalid or expired password reset token");
+  }
 
   const user = await User.findById(userId);
 

@@ -1,3 +1,12 @@
 type RTCMediaType = "audio" | "video" | "datachannel";
 
-export default RTCMediaType;
+interface UsersAttributes {
+  [uid: string]: {
+    username?: string;
+    avatarId?: string;
+    isCameraMuted?: boolean;
+    isMicrophoneMuted?: boolean;
+  };
+}
+
+export type { RTCMediaType, UsersAttributes };

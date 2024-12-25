@@ -27,7 +27,7 @@ const PitchShiftConfigurator = ({ onClose }: Configurator) => {
           min="0.25"
           max="2"
           step="0.05"
-          className="w-1/2"
+          className="w-1/2 accent-primary"
           onChange={handleInputChange}
         />
         <span className="w-10 text-white">{factor}</span>

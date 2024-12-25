@@ -4,11 +4,11 @@ import Contact from "./Contact";
 import BaseModal from "./BaseModal";
 import RTCControlButton from "./RTCControlButton";
 import CallDirection from "../types/CallDirection";
-import { PopulatedUserWithoutPassword } from "../types/User";
+import { UserWithoutPassword } from "../types/User";
 
 interface CallModalProps {
   callDirection: CallDirection;
-  contact: PopulatedUserWithoutPassword;
+  contact: UserWithoutPassword;
   onDeclineBtnClick?: () => void;
   onAcceptBtnClick?: () => void;
   onRecallBtnClick?: () => void;
@@ -26,7 +26,7 @@ const CallModal = ({
       <Contact
         name={contact.username}
         isOnline={false}
-        avatarId={contact.selectedAvatar?._id}
+        avatarId={contact.selectedAvatar}
         size="xl"
         layout="vertical"
       />

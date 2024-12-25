@@ -10,13 +10,15 @@ const validatePasswordResetInput = (data: PasswordResetData) => {
   let error = "";
 
   // Password checks
-  if (isEmpty(data.password)) error = "Password field is required";
-  else if (isEmpty(data.password2))
+  if (isEmpty(data.password)) {
+    error = "Password field is required";
+  } else if (isEmpty(data.password2)) {
     error = "Confirm password field is required";
-  else if (!Validator.isLength(data.password, { min: 6, max: 30 }))
+  } else if (!Validator.isLength(data.password, { min: 6, max: 30 })) {
     error = "Password must be from 6 to 30 characters";
-  else if (!Validator.equals(data.password, data.password2))
+  } else if (!Validator.equals(data.password, data.password2)) {
     error = "Passwords must match";
+  }
 
   return {
     error,

@@ -3,11 +3,8 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { apiBaseQuery, apiTagTypes } from "./apiConfig";
 import { prepareAvatarsCollectionMutationPayload } from "./mutationHelpers";
 import { QUERY_TAG_TYPES } from "../constants/constants";
-import {
-  PopulatedUserWithoutPassword,
-  UserWithoutPassword,
-} from "../types/User";
-import { PopulatedChannel } from "../types/Channel";
+import { UserWithoutPassword } from "../types/User";
+import { Channel } from "../types/Channel";
 import { PopulatedRequest } from "../types/Request";
 import {
   AvatarsUpdateRequestPayload,
@@ -19,21 +16,19 @@ export const userApi = createApi({
   baseQuery: apiBaseQuery,
   tagTypes: apiTagTypes,
   endpoints: (builder) => ({
-    getUserContacts: builder.query<PopulatedUserWithoutPassword[], string>({
+    getUserContacts: builder.query<UserWithoutPassword[], string>({
       query: (userId) => `/users/${userId}/contacts`,
       providesTags: (_, __, id) => [
         { type: QUERY_TAG_TYPES.USER_CONTACTS, id },
       ],
     }),
-    fetchUserContacts: builder.mutation<PopulatedUserWithoutPassword[], string>(
-      {
-        query: (userId) => ({
-          url: `/users/${userId}/contacts`,
-          method: "GET",
-        }),
-      },
-    ),
-    getUserChannels: builder.query<PopulatedChannel[], string>({
+    fetchUserContacts: builder.mutation<UserWithoutPassword[], string>({
+      query: (userId) => ({
+        url: `/users/${userId}/contacts`,
+        method: "GET",
+      }),
+    }),
+    getUserChannels: builder.query<Channel[], string>({
       query: (userId) => `/users/${userId}/channels`,
       providesTags: (_, __, id) => [
         { type: QUERY_TAG_TYPES.USER_CHANNELS, id },
@@ -45,12 +40,12 @@ export const userApi = createApi({
         { type: QUERY_TAG_TYPES.USER_REQUESTS, id },
       ],
     }),
-    getUserById: builder.query<PopulatedUserWithoutPassword, string>({
+    getUserById: builder.query<UserWithoutPassword, string>({
       query: (userId) => `/users/${userId}`,
       keepUnusedDataFor: 0,
       providesTags: (_, __, id) => [{ type: QUERY_TAG_TYPES.USER_DETAILS, id }],
     }),
-    fetchUserById: builder.mutation<PopulatedUserWithoutPassword, string>({
+    fetchUserById: builder.mutation<UserWithoutPassword, string>({
       query: (userId) => ({
         url: `/users/${userId}`,
         method: "GET",

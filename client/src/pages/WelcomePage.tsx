@@ -8,13 +8,11 @@ import useAuth from "../hooks/useAuth";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 
 const typeAnimationSequence = [
-  "LunarQuill is the app where you can elevate your conversations with seamless 1-to-1 and room-based text, audio, and video chat",
+  "LunarQuill is the app where you can elevate your conversations with seamless 1-to-1 and channel-based text, audio, and video chat",
   1000,
   "Enjoy rich media sharing, screen sharing, and personalized avatars",
   1000,
-  "Engage in voice-changing calls, schedule virtual events, and collaborate on a persistent drawing board",
-  1000,
-  "Set your custom status and presence for a personalized touch",
+  "Engage in voice-changing calls and collaborate on a persistent drawing board",
   1000,
 ];
 

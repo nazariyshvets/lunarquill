@@ -13,15 +13,20 @@ const generateRTCToken = (
   // get role
   let userRole;
 
-  if (role === "publisher") userRole = RtcRole.PUBLISHER;
-  else if (role === "audience") userRole = RtcRole.SUBSCRIBER;
-  else throw new Error("Role is incorrect");
+  if (role === "publisher") {
+    userRole = RtcRole.PUBLISHER;
+  } else if (role === "audience") {
+    userRole = RtcRole.SUBSCRIBER;
+  } else {
+    throw new Error("Role is incorrect");
+  }
 
   // get the expire time
   let expireTime;
 
-  if (!expiry || expiry === "") expireTime = 3600;
-  else {
+  if (!expiry || expiry === "") {
+    expireTime = 3600;
+  } else {
     try {
       expireTime = parseInt(expiry, 10);
     } catch (err) {
@@ -35,7 +40,7 @@ const generateRTCToken = (
   // build the token
   let token;
 
-  if (tokentype === "userAccount")
+  if (tokentype === "userAccount") {
     token = RtcTokenBuilder.buildTokenWithAccount(
       APP_ID,
       APP_CERTIFICATE,
@@ -44,7 +49,7 @@ const generateRTCToken = (
       userRole,
       privilegeExpireTime,
     );
-  else if (tokentype === "uid")
+  } else if (tokentype === "uid") {
     token = RtcTokenBuilder.buildTokenWithUid(
       APP_ID,
       APP_CERTIFICATE,
@@ -53,7 +58,9 @@ const generateRTCToken = (
       userRole,
       privilegeExpireTime,
     );
-  else throw new Error("Token type is invalid");
+  } else {
+    throw new Error("Token type is invalid");
+  }
 
   return token;
 };

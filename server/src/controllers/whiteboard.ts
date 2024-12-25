@@ -18,10 +18,14 @@ const TOKEN_EXPIRATION_TIME = 1000 * 60 * 10;
 const createRoomController = (req: Request, res: Response) => {
   const { sdkToken } = req.body;
 
-  if (!sdkToken) throw new Error("Whiteboard SDK token is required");
+  if (!sdkToken) {
+    throw new Error("Whiteboard SDK token is required");
+  }
 
   const callback = (error: unknown, response: request.Response) => {
-    if (error) throw new Error("Could not create a whiteboard room");
+    if (error) {
+      throw new Error("Could not create a whiteboard room");
+    }
 
     return res.json(response.body);
   };
@@ -32,12 +36,12 @@ const createRoomController = (req: Request, res: Response) => {
 const disableRoomController = (req: Request, res: Response) => {
   const { roomUuid, sdkToken } = req.body;
 
-  if (!roomUuid || !sdkToken)
+  if (!roomUuid || !sdkToken) {
     throw new Error("Whiteboard room uuid and SDK token are required");
+  }
 
   const callback = (error: unknown, response: request.Response) => {
     if (error) {
-      console.log(error);
       throw new Error("Could not disable a whiteboard room");
     }
 
@@ -50,10 +54,14 @@ const disableRoomController = (req: Request, res: Response) => {
 const listRoomsController = (req: Request, res: Response) => {
   const { sdkToken } = req.params;
 
-  if (!sdkToken) throw new Error("Whiteboard SDK token is required");
+  if (!sdkToken) {
+    throw new Error("Whiteboard SDK token is required");
+  }
 
   const callback = (error: unknown, response: request.Response) => {
-    if (error) throw new Error("Could not get a list of whiteboard rooms");
+    if (error) {
+      throw new Error("Could not get a list of whiteboard rooms");
+    }
 
     return res.json(response.body);
   };
@@ -71,7 +79,9 @@ const generateSDKTokenController = (_: Request, res: Response) =>
 const generateRoomTokenController = (req: Request, res: Response) => {
   const { roomUUID } = req.params;
 
-  if (!roomUUID) throw new Error("Whiteboard room UUID is required");
+  if (!roomUUID) {
+    throw new Error("Whiteboard room UUID is required");
+  }
 
   return res.json({
     token: roomToken(ACCESS_KEY, SECRET_KEY, TOKEN_EXPIRATION_TIME, {
@@ -84,7 +94,9 @@ const generateRoomTokenController = (req: Request, res: Response) => {
 const generateTaskTokenController = (req: Request, res: Response) => {
   const { userUUID } = req.params;
 
-  if (!userUUID) throw new Error("User UUID is required");
+  if (!userUUID) {
+    throw new Error("User UUID is required");
+  }
 
   return res.json({
     token: taskToken(ACCESS_KEY, SECRET_KEY, TOKEN_EXPIRATION_TIME, {

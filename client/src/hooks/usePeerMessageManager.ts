@@ -16,7 +16,7 @@ import { useInvalidateTags } from "../services/mutationHelpers";
 import { QUERY_TAG_TYPES } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
-import { ChatTypeEnum } from "../types/ChatType";
+import { ChatType } from "../types/ChatType";
 
 const usePeerMessageManager = () => {
   const { userId } = useAuth();
@@ -43,98 +43,126 @@ const usePeerMessageManager = () => {
 
   useEffect(() => {
     const messageHandler = async (message: RtmMessage, peerId: string) => {
-      if (message.messageType === "TEXT") {
-        switch (message.text) {
-          case PeerMessage.Call: {
-            try {
-              const peerUser = await fetchUser(peerId).unwrap();
+      if (message.messageType !== "TEXT") {
+        return;
+      }
 
-              dispatch(
-                setCallModalState({
-                  callDirection: CallDirection.Incoming,
-                  contact: peerUser,
-                }),
-              );
-            } catch (err) {
-              console.error("Error fetching peer user data:", err);
-            }
-            break;
-          }
-          case PeerMessage.CallDeclined:
+      if (message.text === PeerMessage.Call) {
+        try {
+          const peerUser = await fetchUser(peerId).unwrap();
+          dispatch(
+            setCallModalState({
+              callDirection: CallDirection.Incoming,
+              contact: peerUser,
+            }),
+          );
+        } catch (err) {
+          console.error("Error fetching peer user data:", err);
+        }
+      } else if (message.text === PeerMessage.CallDeclined) {
+        dispatch(setCallModalState(null));
+        clearCallTimeout();
+        alert.info("The call was declined");
+      } else if (message.text === PeerMessage.CallAccepted) {
+        if (localUserId) {
+          try {
+            const contact = await fetchContactRelation({
+              userId1: localUserId,
+              userId2: peerId,
+            }).unwrap();
             dispatch(setCallModalState(null));
             clearCallTimeout();
-            alert.info("The call was declined");
-            break;
-          case PeerMessage.CallAccepted:
-            if (localUserId) {
-              try {
-                const contact = await fetchContactRelation({
-                  userId1: localUserId,
-                  userId2: peerId,
-                }).unwrap();
-
-                dispatch(setCallModalState(null));
-                clearCallTimeout();
-                navigate(`/contacts/${contact._id}/call`);
-              } catch (err) {
-                console.error("Error fetching contact relation data:", err);
-              }
-            }
-            break;
-          case PeerMessage.CallRecalled:
-          case PeerMessage.CallTimedOut:
-            dispatch(setCallModalState(null));
-            break;
-          case PeerMessage.CallEnded:
-            navigate(`/contacts/${peerId}/chat`);
-            break;
-          case PeerMessage.RequestCreated:
-          case PeerMessage.RequestDeclined:
-          case PeerMessage.RequestRecalled:
-          case PeerMessage.InviteRequestAccepted:
-            invalidateTags([
-              {
-                type: QUERY_TAG_TYPES.USER_REQUESTS,
-                id: localUserId,
-              },
-            ]);
-            break;
-          case PeerMessage.ContactRequestAccepted:
-            invalidateTags(
-              [
-                QUERY_TAG_TYPES.USER_CONTACTS,
-                QUERY_TAG_TYPES.USER_REQUESTS,
-              ].map((type) => ({
-                type,
-                id: localUserId,
-              })),
-            );
-            break;
-          case PeerMessage.JoinRequestAccepted:
-            invalidateTags(
-              [
-                QUERY_TAG_TYPES.USER_CHANNELS,
-                QUERY_TAG_TYPES.USER_REQUESTS,
-              ].map((type) => ({
-                type,
-                id: localUserId,
-              })),
-            );
-            break;
-          case PeerMessage.ContactRemoved:
-            chatConnection.deleteConversation({
-              channel: peerId,
-              chatType: ChatTypeEnum.SingleChat,
-              deleteRoam: true,
-            });
-            navigate("/profile");
-            invalidateTags([
-              {
-                type: QUERY_TAG_TYPES.USER_CONTACTS,
-                id: localUserId,
-              },
-            ]);
+            navigate(`/contacts/${contact._id}/call`);
+          } catch (err) {
+            console.error("Error fetching contact relation data:", err);
+          }
         }
+      } else if (
+        message.text === PeerMessage.CallRecalled ||
+        message.text === PeerMessage.CallTimedOut
+      ) {
+        dispatch(setCallModalState(null));
+      } else if (message.text === PeerMessage.CallEnded) {
+        navigate(`/contacts/${peerId}/chat`);
+      } else if (
+        message.text === PeerMessage.RequestCreated ||
+        message.text === PeerMessage.RequestDeclined ||
+        message.text === PeerMessage.RequestRecalled ||
+        message.text === PeerMessage.InviteRequestAccepted
+      ) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.USER_REQUESTS,
+            id: localUserId,
+          },
+        ]);
+      } else if (message.text === PeerMessage.ContactRequestAccepted) {
+        invalidateTags(
+          [QUERY_TAG_TYPES.USER_CONTACTS, QUERY_TAG_TYPES.USER_REQUESTS].map(
+            (type) => ({
+              type,
+              id: localUserId,
+            }),
+          ),
+        );
+      } else if (message.text === PeerMessage.JoinRequestAccepted) {
+        invalidateTags(
+          [QUERY_TAG_TYPES.USER_CHANNELS, QUERY_TAG_TYPES.USER_REQUESTS].map(
+            (type) => ({
+              type,
+              id: localUserId,
+            }),
+          ),
+        );
+      } else if (message.text === PeerMessage.ContactRemoved) {
+        chatConnection.deleteConversation({
+          channel: peerId,
+          chatType: ChatType.SingleChat,
+          deleteRoam: true,
+        });
+        navigate("/profile");
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.USER_CONTACTS,
+            id: localUserId,
+          },
+        ]);
+      } else if (
+        message.text.startsWith(PeerMessage.ChannelMemberJoined) ||
+        message.text.startsWith(PeerMessage.ChannelMemberLeft)
+      ) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.CHANNEL_MEMBERS,
+            id: message.text.split("__")[1],
+          },
+        ]);
+      } else if (message.text.startsWith(PeerMessage.ChannelUpdated)) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.CHANNEL,
+            id: message.text.split("__")[1],
+          },
+          {
+            type: QUERY_TAG_TYPES.USER_CHANNELS,
+            id: localUserId,
+          },
+        ]);
+      } else if (message.text.startsWith(PeerMessage.ChannelKicked)) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.USER_CHANNELS,
+            id: localUserId,
+          },
+        ]);
+        navigate("/profile");
+      } else if (message.text.startsWith(PeerMessage.ChannelMemberKicked)) {
+        invalidateTags([
+          {
+            type: QUERY_TAG_TYPES.CHANNEL_MEMBERS,
+            id: message.text.split("__")[1],
+          },
+        ]);
       }
     };
 

@@ -53,8 +53,8 @@ const NoiseSuppression = () => {
       (async () => {
         try {
           processor.current?.unpipe();
-          localMicrophoneTrack?.unpipe();
           await processor.current?.disable();
+          localMicrophoneTrack?.pipe(localMicrophoneTrack.processorDestination);
         } catch (err) {
           console.error("Error uninitializing noise suppression:", err);
         }

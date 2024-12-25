@@ -10,7 +10,6 @@ import Contact from "../components/Contact";
 import ContactAdditionForm from "../components/ContactAdditionForm";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAuth from "../hooks/useAuth";
-import useRTMClient from "../hooks/useRTMClient";
 import useChatConnection from "../hooks/useChatConnection";
 import { useGetUserChannelsQuery } from "../services/userApi";
 import { useCreateRequestMutation } from "../services/requestApi";
@@ -19,21 +18,21 @@ import {
   useSearchChannelsMutation,
   useJoinChannelMutation,
   useFetchChannelByIdMutation,
+  useFetchChannelMembersMutation,
 } from "../services/channelApi";
 import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
 import useHandleError from "../hooks/useHandleError";
+import useSendMessageToPeer from "../hooks/useSendMessageToPeer";
 import getErrorMessage from "../utils/getErrorMessage";
 import { RequestType } from "../types/Request";
-import type { PopulatedChannel } from "../types/Channel";
+import type { Channel } from "../types/Channel";
 import PeerMessage from "../types/PeerMessage";
 
 const ChannelAdditionPage = () => {
   const { userId } = useAuth();
 
-  const [searchedChannels, setSearchedChannels] = useState<PopulatedChannel[]>(
-    [],
-  );
+  const [searchedChannels, setSearchedChannels] = useState<Channel[]>([]);
 
   const { data: userChannels } = useGetUserChannelsQuery(userId ?? skipToken);
   const [createChannel] = useCreateChannelMutation();
@@ -41,12 +40,13 @@ const ChannelAdditionPage = () => {
   const [joinChannel] = useJoinChannelMutation();
   const [createRequest] = useCreateRequestMutation();
   const [fetchChannel] = useFetchChannelByIdMutation();
+  const [fetchChannelMembers] = useFetchChannelMembersMutation();
   const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
-  const RTMClient = useRTMClient();
   const chatConnection = useChatConnection();
   const handleError = useHandleError();
   const alert = useAlert();
+  const sendMessageToPeer = useSendMessageToPeer();
 
   useDocumentTitle("Join/Create a channel");
 
@@ -56,7 +56,9 @@ const ChannelAdditionPage = () => {
     try {
       const response = await searchChannels(publicSearchValue).unwrap();
 
-      if (response.length === 0) alert.info("No channels found");
+      if (response.length === 0) {
+        alert.info("No channels found");
+      }
 
       setSearchedChannels(response);
     } catch (err) {
@@ -73,26 +75,22 @@ const ChannelAdditionPage = () => {
   const handlePrivateJoiningFormSubmit: SubmitHandler<{
     privateSearchValue: string;
   }> = async ({ privateSearchValue }) => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     try {
       const channel = await fetchChannel(privateSearchValue).unwrap();
 
-      await Promise.all([
-        createRequest({
-          from: userId,
-          to: null,
-          type: RequestType.Join,
-          channel: channel._id,
-        }).unwrap(),
-        chatConnection.joinGroup({
-          groupId: channel.chatTargetId,
-          message: "",
-        }),
-      ]);
-      await RTMClient.sendMessageToPeer(
-        { text: PeerMessage.RequestCreated },
+      await createRequest({
+        from: userId,
+        to: null,
+        type: RequestType.Join,
+        channel: channel._id,
+      }).unwrap();
+      await sendMessageToPeer(
         channel.admin.toString(),
+        PeerMessage.RequestCreated,
       );
       alert.success("Request created successfully!");
     } catch (err) {
@@ -110,7 +108,9 @@ const ChannelAdditionPage = () => {
     channelName: string;
     isPrivate: boolean;
   }> = async (data) => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     try {
       const { token: whiteboardSdkToken } =
@@ -124,8 +124,8 @@ const ChannelAdditionPage = () => {
           groupname: data.channelName,
           desc: "",
           members: [userId],
-          public: !data.isPrivate,
-          approval: data.isPrivate,
+          public: true,
+          approval: false,
           allowinvites: true,
           inviteNeedConfirm: true,
           maxusers: 100,
@@ -153,20 +153,26 @@ const ChannelAdditionPage = () => {
     }
   };
 
-  const handleJoinChannel = async (channelId: string) => {
-    if (!userId) return;
+  const handleJoinChannel = async (channel: Channel) => {
+    if (!userId) {
+      return;
+    }
 
     try {
-      const channel = await fetchChannel(channelId).unwrap();
-
-      await Promise.all([
-        joinChannel({ userId, channelId }).unwrap(),
-        chatConnection.joinGroup({
-          groupId: channel.chatTargetId,
-          message: "",
-        }),
-      ]);
+      await joinChannel({ userId, channelId: channel._id }).unwrap();
       alert.success("You joined the channel successfully");
+
+      const channelMembers = await fetchChannelMembers(channel._id).unwrap();
+      await Promise.all(
+        channelMembers
+          .filter((member) => member._id !== userId)
+          .map((member) =>
+            sendMessageToPeer(
+              member._id,
+              `${PeerMessage.ChannelMemberJoined}__${channel._id}`,
+            ),
+          ),
+      );
     } catch (err) {
       handleError(
         err,
@@ -217,7 +223,7 @@ const ChannelAdditionPage = () => {
                         <Contact
                           name={channel.name}
                           isOnline={false}
-                          avatarId={channel.selectedAvatar?._id}
+                          avatarId={channel.selectedAvatar}
                         />
 
                         {userChannels?.find(
@@ -226,7 +232,7 @@ const ChannelAdditionPage = () => {
                           <span className="p-2 text-lightgrey">Joined</span>
                         ) : (
                           <SimpleButton
-                            onClick={() => handleJoinChannel(channel._id)}
+                            onClick={() => handleJoinChannel(channel)}
                           >
                             Join
                           </SimpleButton>
