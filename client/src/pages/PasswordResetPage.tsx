@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useAlert } from "react-alert";
 import { FaLock } from "react-icons/fa6";
 
 import GuestPage from "./GuestPage";
@@ -10,6 +9,7 @@ import Button from "../components/Button";
 import { useResetPasswordMutation } from "../services/authApi";
 import isFetchBaseQueryError from "../utils/isFetchBaseQueryError";
 import isErrorWithMessage from "../utils/isErrorWithMessage";
+import showToast from "../utils/showToast";
 
 interface FormValues {
   password: string;
@@ -24,7 +24,6 @@ const PasswordResetPage = () => {
     handleSubmit,
   } = useForm<FormValues>();
   const navigate = useNavigate();
-  const alert = useAlert();
 
   const onSubmit: SubmitHandler<FormValues> = async ({
     password,
@@ -34,7 +33,7 @@ const PasswordResetPage = () => {
 
     // Passwords must match
     if (password !== password2) {
-      alert.error("Passwords must match");
+      showToast("error", "Passwords must match");
       return;
     }
 
@@ -43,21 +42,21 @@ const PasswordResetPage = () => {
     const token = urlSearchParams.get("token");
 
     if (!userId || !token) {
-      alert.error("User id or token is not present in the url");
+      showToast("error", "User id or token is not present in the url");
       return;
     }
 
     try {
       await resetPassword({ userId, token, password, password2 }).unwrap();
-      alert.success("Password is changed successfully");
+      showToast("success", "Password is changed successfully");
       navigate("/login");
     } catch (err) {
       console.error("Error resetting password:", err);
 
       if (isFetchBaseQueryError(err)) {
-        alert.error(err.data as string);
+        showToast("error", err.data as string);
       } else if (isErrorWithMessage(err)) {
-        alert.error(err.message);
+        showToast("error", err.message);
       }
     }
   };

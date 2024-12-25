@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useAlert } from "react-alert";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa6";
 
 import InputWithIcon from "./InputWithIcon";
@@ -11,6 +10,7 @@ import { registerUser } from "../redux/authActions";
 import useAuth from "../hooks/useAuth";
 import useAuthError from "../hooks/useAuthError";
 import useAppDispatch from "../hooks/useAppDispatch";
+import showToast from "../utils/showToast";
 import {
   USERNAME_PATTERN,
   ALPHANUMERIC_START_END_PATTERN,
@@ -27,7 +27,6 @@ const SignupForm = () => {
     formState: { errors },
     handleSubmit,
   } = useForm<SignupFormValues>();
-  const alert = useAlert();
   useAuthError();
 
   const onSubmit: SubmitHandler<SignupFormValues> = async (data) => {
@@ -35,7 +34,7 @@ const SignupForm = () => {
 
     // check if passwords match
     if (data.password !== data.password2) {
-      alert.error("Passwords must match");
+      showToast("error", "Passwords must match");
     } else {
       // transform email string to lowercase to avoid case sensitivity issues in login
       data.email = data.email.toLowerCase();
@@ -44,8 +43,9 @@ const SignupForm = () => {
   };
 
   useEffect(() => {
-    if (success) alert.info("Verification email is sent");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (success) {
+      showToast("info", "Verification email is sent");
+    }
   }, [success]);
 
   const usernameValidation = {

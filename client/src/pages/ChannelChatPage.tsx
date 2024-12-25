@@ -13,7 +13,6 @@ import {
   BiImage,
 } from "react-icons/bi";
 import { Navigate, useParams, useNavigate } from "react-router-dom";
-import { useAlert } from "react-alert";
 import { skipToken } from "@reduxjs/toolkit/query";
 
 import InviteUserModal from "../components/channelChatPage/InviteUserModal";
@@ -35,9 +34,10 @@ import {
 } from "../services/channelApi";
 import useAvatarUpload from "../hooks/useAvatarUpload";
 import useAuth from "../hooks/useAuth";
-import useCopyToClipboard from "../hooks/useCopyToClipboard";
 import useDocumentTitle from "../hooks/useDocumentTitle";
 import useAppSelector from "../hooks/useAppSelector";
+import copyToClipboard from "../utils/copyToClipboard";
+import showToast from "../utils/showToast";
 import { ChatType } from "../types/ChatType";
 import Placement from "../types/Placement";
 import PeerMessage from "../types/PeerMessage";
@@ -72,8 +72,6 @@ const ChannelChatPage = () => {
     (state) => state.chat.isChatInitialized,
   );
   const navigate = useNavigate();
-  const alert = useAlert();
-  const copyToClipboard = useCopyToClipboard();
   const [updateAvatarsCollection] = useUpdateChannelAvatarsCollectionMutation();
 
   const channelId = channel?._id;
@@ -114,10 +112,10 @@ const ChannelChatPage = () => {
 
     if (channelId) {
       copyToClipboard(channelId, "channel id").catch(() =>
-        alert.error(errorMessage),
+        showToast("error", errorMessage),
       );
     } else {
-      alert.error(errorMessage);
+      showToast("error", errorMessage);
     }
   };
 
@@ -160,7 +158,7 @@ const ChannelChatPage = () => {
         action: modalAction,
       });
     } else {
-      alert.error("No channel information. Please try again");
+      showToast("error", "No channel information. Please try again");
       console.error("No channel information");
     }
   };

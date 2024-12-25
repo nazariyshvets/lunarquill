@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import { capitalize } from "lodash";
-import { useAlert } from "react-alert";
 import { skipToken } from "@reduxjs/toolkit/query";
 
 import RequestItem from "../components/RequestItem";
@@ -20,6 +19,7 @@ import {
 } from "../services/requestApi";
 import { useCreateWhiteboardRoomMutation } from "../services/whiteboardApi";
 import { useFetchWhiteboardSdkTokenMutation } from "../services/tokenApi";
+import showToast from "../utils/showToast";
 import { type PopulatedRequest, RequestType } from "../types/Request";
 import PeerMessage from "../types/PeerMessage";
 
@@ -46,7 +46,6 @@ const RequestsPage = () => {
   const [acceptRequest] = useAcceptRequestMutation();
   const [createWhiteboardRoom] = useCreateWhiteboardRoomMutation();
   const [fetchWhiteboardSdkToken] = useFetchWhiteboardSdkTokenMutation();
-  const alert = useAlert();
   const chatConnection = useChatConnection();
   const sendMessageToPeer = useSendMessageToPeer();
 
@@ -81,7 +80,7 @@ const RequestsPage = () => {
           await handleRequestAccept(request);
       }
     } else {
-      alert.error(`Could not ${action} the request. Please try again`);
+      showToast("error", `Could not ${action} the request. Please try again`);
     }
 
     handleModalClose();
@@ -98,9 +97,9 @@ const RequestsPage = () => {
         uid: userId,
       }).unwrap();
       await sendMessageToPeer(request.to._id, PeerMessage.RequestRecalled);
-      alert.success("Request is recalled successfully");
+      showToast("success", "Request is recalled successfully");
     } catch (err) {
-      alert.error("Could not recall the request. Please try again");
+      showToast("error", "Could not recall the request. Please try again");
       console.error("Error recalling the request:", err);
     }
   };
@@ -133,9 +132,9 @@ const RequestsPage = () => {
           : []),
       ]);
       await sendMessageToPeer(request.from._id, PeerMessage.RequestDeclined);
-      alert.success("Request is declined successfully");
+      showToast("success", "Request is declined successfully");
     } catch (err) {
-      alert.error("Could not decline the request. Please try again");
+      showToast("error", "Could not decline the request. Please try again");
       console.error("Error declining the request:", err);
     }
   };
@@ -190,9 +189,12 @@ const RequestsPage = () => {
         whiteboardRoomId,
       }).unwrap();
       await sendMessageToPeer(peerId, PeerMessage.ContactRequestAccepted);
-      alert.success("Contact request is accepted successfully");
+      showToast("success", "Contact request is accepted successfully");
     } catch (err) {
-      alert.error("Could not accept the contact request. Please try again");
+      showToast(
+        "error",
+        "Could not accept the contact request. Please try again",
+      );
       console.error("Error accepting the contact request:", err);
     }
   };
@@ -225,9 +227,12 @@ const RequestsPage = () => {
             ),
           ),
       ]);
-      alert.success("Invite request is accepted successfully");
+      showToast("success", "Invite request is accepted successfully");
     } catch (err) {
-      alert.error("Could not accept the invite request. Please try again");
+      showToast(
+        "error",
+        "Could not accept the invite request. Please try again",
+      );
       console.error("Error accepting the invite request:", err);
     }
   };
@@ -255,9 +260,9 @@ const RequestsPage = () => {
             ),
           ),
       ]);
-      alert.success("Join request is accepted successfully");
+      showToast("success", "Join request is accepted successfully");
     } catch (err) {
-      alert.error("Could not accept the join request. Please try again");
+      showToast("error", "Could not accept the join request. Please try again");
       console.error("Error accepting the join request:", err);
     }
   };
@@ -314,7 +319,7 @@ const RequestsPage = () => {
                   context="outbox"
                   username={
                     request.type === RequestType.Join
-                      ? request.channel?.name ?? "Unknown"
+                      ? (request.channel?.name ?? "Unknown")
                       : request.to.username
                   }
                   userAvatarId={

@@ -1,12 +1,12 @@
 import { useRef } from "react";
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useAlert } from "react-alert";
 
 import Modal from "../Modal";
 import Input from "../Input";
 import { useUpdateChannelMutation } from "../../services/channelApi";
 import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
+import showToast from "../../utils/showToast";
 import PeerMessage from "../../types/PeerMessage";
 import type { UserWithoutPassword } from "../../types/User";
 
@@ -34,7 +34,6 @@ const EditChannelNameModal = ({
   });
   const formRef = useRef<HTMLFormElement>(null);
   const [updateChannel] = useUpdateChannelMutation();
-  const alert = useAlert();
   const sendMessageToPeer = useSendMessageToPeer();
 
   const handleSave = () => {
@@ -66,10 +65,10 @@ const EditChannelNameModal = ({
           );
         }
 
-        alert.success("Channel information was updated successfully");
+        showToast("success", "Channel information was updated successfully");
         onClose();
       } catch (err) {
-        alert.error("Could not update channel name. Please try again");
+        showToast("error", "Could not update channel name. Please try again");
         console.error("Error updating channel name:", err);
       }
     }

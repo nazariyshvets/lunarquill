@@ -7,9 +7,9 @@ import {
   AIDenoiserProcessorLevel,
   IAIDenoiserProcessor,
 } from "agora-extension-ai-denoiser";
-import { useAlert } from "react-alert";
 
 import useRTC from "../hooks/useRTC";
+import showToast from "../utils/showToast";
 
 const NoiseSuppression = () => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -21,12 +21,14 @@ const NoiseSuppression = () => {
     }),
   );
   const processor = useRef<IAIDenoiserProcessor>();
-  const alert = useAlert();
 
   useEffect(() => {
     (async () => {
       if (!extension.current.checkCompatibility()) {
-        alert.error("Noise suppression is not supported on this platform");
+        showToast(
+          "error",
+          "Noise suppression is not supported on this platform",
+        );
         console.error("Noise suppression is not supported on this platform");
         return;
       }
@@ -43,7 +45,7 @@ const NoiseSuppression = () => {
           setIsInitialized(true);
         } catch (err) {
           setIsInitialized(false);
-          alert.error(`Error applying noise reduction: ${err}`);
+          showToast("error", `Error applying noise reduction: ${err}`);
           console.error("Error applying noise reduction:", err);
         }
       }
@@ -72,7 +74,10 @@ const NoiseSuppression = () => {
           AIDenoiserProcessorMode[noiseSuppressionMode],
         );
       } catch (err) {
-        alert.error("Could not set noise suppression mode. Please try again");
+        showToast(
+          "error",
+          "Could not set noise suppression mode. Please try again",
+        );
         console.error("Error setting noise suppression mode:", err);
       }
     })();
@@ -88,7 +93,10 @@ const NoiseSuppression = () => {
           AIDenoiserProcessorLevel[noiseSuppressionLevel],
         );
       } catch (err) {
-        alert.error("Could not set noise suppression level. Please try again");
+        showToast(
+          "error",
+          "Could not set noise suppression level. Please try again",
+        );
         console.error("Error setting noise suppression level:", err);
       }
     })();

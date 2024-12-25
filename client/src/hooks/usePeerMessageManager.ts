@@ -2,7 +2,6 @@ import { useEffect, useCallback } from "react";
 
 import { useNavigate } from "react-router-dom";
 import { RtmMessage } from "agora-rtm-react";
-import { useAlert } from "react-alert";
 
 import useRTMClient from "./useRTMClient";
 import useAppDispatch from "./useAppDispatch";
@@ -13,6 +12,7 @@ import { setCallModalState, setCallTimeout } from "../redux/rtmSlice";
 import { useFetchUserByIdMutation } from "../services/userApi";
 import { useFetchContactRelationMutation } from "../services/contactApi";
 import { useInvalidateTags } from "../services/mutationHelpers";
+import showToast from "../utils/showToast";
 import { QUERY_TAG_TYPES } from "../constants/constants";
 import PeerMessage from "../types/PeerMessage";
 import CallDirection from "../types/CallDirection";
@@ -30,7 +30,6 @@ const usePeerMessageManager = () => {
   const dispatch = useAppDispatch();
   const callTimeout = useAppSelector((state) => state.rtm.callTimeout);
   const navigate = useNavigate();
-  const alert = useAlert();
   const invalidateTags = useInvalidateTags();
 
   const clearCallTimeout = useCallback(() => {
@@ -62,7 +61,7 @@ const usePeerMessageManager = () => {
       } else if (message.text === PeerMessage.CallDeclined) {
         dispatch(setCallModalState(null));
         clearCallTimeout();
-        alert.info("The call was declined");
+        showToast("info", "The call was declined");
       } else if (message.text === PeerMessage.CallAccepted) {
         if (localUserId) {
           try {

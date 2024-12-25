@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 
 import { HexColorPicker } from "react-colorful";
-import { useAlert } from "react-alert";
 import { useIndexedDB } from "react-indexed-db-hook";
 import { nanoid } from "@reduxjs/toolkit";
 
@@ -19,6 +18,7 @@ import {
   setVirtualBgImgId,
   setVirtualBgVideoId,
 } from "../redux/rtcSlice";
+import showToast from "../utils/showToast";
 import {
   IMAGES_IN_STORAGE_LIMIT,
   VIDEOS_IN_STORAGE_LIMIT,
@@ -74,7 +74,6 @@ const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
   const [imgId, setImgId] = useState(virtualBgImgId);
   const [videoId, setVideoId] = useState(virtualBgVideoId);
   const dispatch = useAppDispatch();
-  const alert = useAlert();
 
   const getInputs = () => {
     switch (type) {
@@ -132,7 +131,7 @@ const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
           dispatch(setVirtualBgImgId(imgId));
           break;
         } else {
-          alert.info("Please select an image");
+          showToast("info", "Please select an image");
           return;
         }
       case "video":
@@ -140,7 +139,7 @@ const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
           dispatch(setVirtualBgType("video"));
           dispatch(setVirtualBgVideoId(videoId));
         } else {
-          alert.info("Please select a video");
+          showToast("info", "Please select a video");
           return;
         }
     }
@@ -178,7 +177,6 @@ const MediaSourcePicker = ({
   const { add, getAll, deleteRecord } = useIndexedDB(
     type === "image" ? "virtualBgImages" : "virtualBgVideos",
   );
-  const alert = useAlert();
   const fileSrcUrlsRef = useRef<Record<string, string>>({});
   const dispatch = useAppDispatch();
 
@@ -211,7 +209,7 @@ const MediaSourcePicker = ({
         );
       }
     } catch (err) {
-      alert.error("Cannot remove the file. Please try again");
+      showToast("error", "Cannot remove the file. Please try again");
       console.error("Error removing file:", err);
     }
   };

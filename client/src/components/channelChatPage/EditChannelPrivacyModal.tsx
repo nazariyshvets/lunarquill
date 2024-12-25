@@ -1,12 +1,12 @@
 import { useRef } from "react";
 
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useAlert } from "react-alert";
 
 import Modal from "../Modal";
 import Input from "../Input";
 import { useUpdateChannelMutation } from "../../services/channelApi";
 import useSendMessageToPeer from "../../hooks/useSendMessageToPeer";
+import showToast from "../../utils/showToast";
 import PeerMessage from "../../types/PeerMessage";
 import type { UserWithoutPassword } from "../../types/User";
 import type { Channel } from "../../types/Channel";
@@ -33,7 +33,6 @@ const EditChannelPrivacyModal = ({
   });
   const formRef = useRef<HTMLFormElement>(null);
   const [updateChannel] = useUpdateChannelMutation();
-  const alert = useAlert();
   const sendMessageToPeer = useSendMessageToPeer();
 
   const handleSave = () => {
@@ -65,10 +64,13 @@ const EditChannelPrivacyModal = ({
           );
         }
 
-        alert.success("Channel privacy was updated successfully");
+        showToast("success", "Channel privacy was updated successfully");
         onClose();
       } catch (err) {
-        alert.error("Could not update channel privacy. Please try again");
+        showToast(
+          "error",
+          "Could not update channel privacy. Please try again",
+        );
         console.error("Error updating channel privacy:", err);
       }
     }

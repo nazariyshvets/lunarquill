@@ -6,10 +6,10 @@ import {
   FieldError,
   DefaultValues,
 } from "react-hook-form";
-import { useAlert } from "react-alert";
 
 import Input from "../components/Input";
 import Button from "../components/Button";
+import showToast from "../utils/showToast";
 
 interface ContactAdditionFormProps<T extends FieldValues> {
   submitBtnText: string;
@@ -34,7 +34,6 @@ const ContactAdditionForm = <T extends FieldValues>({
       ? ({ [checkboxField.name]: false } as DefaultValues<T>)
       : undefined,
   });
-  const alert = useAlert();
 
   const handleFormSubmit = async (data: T) => {
     try {
@@ -42,8 +41,8 @@ const ContactAdditionForm = <T extends FieldValues>({
       reset();
     } catch (error) {
       error instanceof Error
-        ? alert.error(error.message)
-        : typeof error === "string" && alert.error(error);
+        ? showToast("error", error.message)
+        : typeof error === "string" && showToast("error", error);
       console.error("Error submitting form:", error);
     }
   };

@@ -1,21 +1,22 @@
 import { useEffect } from "react";
 
 import { AgoraChat } from "agora-chat";
-import { useAlert } from "react-alert";
 
 import useAuth from "./useAuth";
 import useAppDispatch from "./useAppDispatch";
 import { useFetchChatTokenMutation } from "../services/tokenApi";
 import { setIsChatInitialized } from "../redux/chatSlice";
+import showToast from "../utils/showToast";
 
 const useInitChat = (connection: AgoraChat.Connection) => {
   const { userId } = useAuth();
   const [fetchChatToken] = useFetchChatTokenMutation();
   const dispatch = useAppDispatch();
-  const alert = useAlert();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      return;
+    }
 
     (async () => {
       try {
@@ -28,7 +29,7 @@ const useInitChat = (connection: AgoraChat.Connection) => {
         dispatch(setIsChatInitialized(true));
       } catch (err) {
         dispatch(setIsChatInitialized(false));
-        alert.error("Could not establish chat connection");
+        showToast("error", "Could not establish chat connection");
         console.error("Chat initialization failed:", err);
       }
     })();

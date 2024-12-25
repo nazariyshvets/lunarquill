@@ -3,12 +3,11 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { Provider as AlertProvider } from "react-alert";
+import { ToastContainer } from "react-toastify";
 
-import AlertTemplate from "./components/AlertTemplate";
 import App from "./components/App";
 import store, { persistor } from "./redux/store";
-import { ALERT_OPTIONS } from "./constants/constants";
+import { TOAST_OPTIONS } from "./constants/constants";
 
 import "./index.css";
 
@@ -16,9 +15,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-        <AlertProvider template={AlertTemplate} {...ALERT_OPTIONS}>
-          <App />
-        </AlertProvider>
+        <App />
+        <ToastContainer {...TOAST_OPTIONS} />
       </GoogleOAuthProvider>
     </PersistGate>
   </Provider>,

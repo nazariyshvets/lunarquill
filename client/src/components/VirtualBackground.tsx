@@ -4,10 +4,10 @@ import AgoraRTC from "agora-rtc-react";
 import VirtualBackgroundExtension, {
   IVirtualBackgroundProcessor,
 } from "agora-extension-virtual-background";
-import { useAlert } from "react-alert";
 import { useIndexedDB } from "react-indexed-db-hook";
 
 import useRTC from "../hooks/useRTC";
+import showToast from "../utils/showToast";
 import type { VirtualBgMediaSource } from "../types/VirtualBg";
 
 const VirtualBackground = (): React.ReactNode => {
@@ -22,7 +22,6 @@ const VirtualBackground = (): React.ReactNode => {
   } = useRTC();
   const extension = useRef(new VirtualBackgroundExtension());
   const processor = useRef<IVirtualBackgroundProcessor>();
-  const alert = useAlert();
   const { getByID: getImgById } = useIndexedDB("virtualBgImages");
   const { getByID: getVideoById } = useIndexedDB("virtualBgVideos");
   const imgSrcUrlsRef = useRef<Record<string, string>>({});
@@ -50,7 +49,7 @@ const VirtualBackground = (): React.ReactNode => {
           console.error(`URL for imgId ${imgId} is undefined`);
         }
       } catch (err) {
-        alert.error(`Error retrieving an image by id: ${err}`);
+        showToast("error", `Error retrieving an image by id: ${err}`);
         console.error("Error retrieving an image by id:", err);
       }
     },
@@ -82,7 +81,7 @@ const VirtualBackground = (): React.ReactNode => {
           console.error(`URL for videoId ${videoId} is undefined`);
         }
       } catch (err) {
-        alert.error(`Error retrieving a video by id: ${err}`);
+        showToast("error", `Error retrieving a video by id: ${err}`);
         console.error("Error retrieving a video by id:", err);
       }
     },
@@ -93,7 +92,7 @@ const VirtualBackground = (): React.ReactNode => {
   useEffect(() => {
     (async () => {
       if (!extension.current.checkCompatibility()) {
-        alert.error("Virtual background not supported on this platform");
+        showToast("error", "Virtual background not supported on this platform");
         console.error("Virtual background not supported on this platform");
         return;
       }
@@ -111,7 +110,7 @@ const VirtualBackground = (): React.ReactNode => {
           setIsInitialized(true);
         } catch (err) {
           setIsInitialized(false);
-          alert.error(`Error initializing virtual background: ${err}`);
+          showToast("error", `Error initializing virtual background: ${err}`);
           console.error(`Error initializing virtual background: ${err}`);
         }
       }
