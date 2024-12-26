@@ -15,10 +15,11 @@ import User from "../models/User";
 import Token from "../models/Token";
 
 const clientURL = process.env.CLIENT_URL;
+const clientLoginURL = `${clientURL}/login`;
 const oAuth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  `${clientURL}/login`,
+  clientLoginURL,
 );
 
 const registerUser = async (
@@ -46,37 +47,30 @@ const registerUser = async (
   });
 
   if (existingUser) {
-    // Determine if it's the email or username that already exists
-    if (existingUser.email === email) {
-      throw new Error("Email already exists");
-    } else {
-      throw new Error("Username already exists");
-    }
+    throw new Error(
+      `${existingUser.email === email ? "Email" : "Username"} already exists`,
+    );
   }
 
-  // Hash password before saving in the database
+  // Create a user
   const hashedPassword = await hashString(password);
-
-  // Create a new user
   const newUser = new User({
     username,
     email,
     password: hashedPassword,
   });
-
-  // Save the new user to DB
   await newUser.save();
+
+  // Send a greeting email
+  await sendEmail(
+    email,
+    "Welcome to LunarQuill",
+    { username, loginPageUrl: clientLoginURL },
+    "./templates/welcome.handlebars",
+  );
 
   // Register user in Agora Chat
   await registerChatUser(newUser._id as string, newUser.password);
-
-  // Send a greeting email
-  sendEmail(
-    email,
-    "Welcome to LunarQuill",
-    { username },
-    "./templates/welcome.handlebars",
-  );
 
   // Account verification
   const verificationToken = createToken();
@@ -88,7 +82,7 @@ const registerUser = async (
     createdAt: Date.now(),
   }).save();
 
-  sendEmail(
+  await sendEmail(
     email,
     "Account verification",
     {
@@ -123,13 +117,13 @@ const verifyAccount = async (userId: string, token: string) => {
     user.active = true;
     await user.save();
 
-    sendEmail(
+    await sendEmail(
       user.email,
       "Account Is Verified Successfully",
       {
         username: user.username,
         message: "Your account is verified successfully.",
-        link: `${clientURL}/login`,
+        link: clientLoginURL,
         linkText: "Log In",
       },
       "./templates/template.handlebars",
@@ -200,10 +194,10 @@ const loginUserWithGoogle = async (code: string) => {
     // Register user in Agora Chat
     await registerChatUser(user._id as string, user.password);
 
-    sendEmail(
+    await sendEmail(
       email,
       "Welcome to LunarQuill",
-      { username: username || "user" },
+      { username: username || "user", loginPageUrl: clientLoginURL },
       "./templates/welcome.handlebars",
     );
   }
@@ -261,7 +255,7 @@ const requestPasswordReset = async (email: string) => {
 
   const link = `${clientURL}/password-reset?token=${resetToken}&id=${user._id}`;
 
-  sendEmail(
+  await sendEmail(
     user.email,
     "Password Reset Request",
     {
@@ -310,13 +304,13 @@ const resetPassword = async (
     user.active = true;
     await user.save();
 
-    sendEmail(
+    await sendEmail(
       user.email,
       "Password Reset Successfully",
       {
         username: user.username,
         message: "Your password has been changed successfully on LunarQuill.",
-        link: `${clientURL}/login`,
+        link: clientLoginURL,
         linkText: "Log In",
       },
       "./templates/template.handlebars",

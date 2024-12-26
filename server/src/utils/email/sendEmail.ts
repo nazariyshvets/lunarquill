@@ -1,44 +1,63 @@
 import nodemailer from "nodemailer";
 import handlebars from "handlebars";
-import fs from "fs";
+import fs from "fs/promises";
 import path from "path";
 
 const sendEmail = async (
   email: string,
   subject: string,
   payload: Record<string, string>,
-  template: string,
+  templatePath: string,
 ) => {
-  try {
-    // create reusable transporter object using the default SMTP transport
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: Number(process.env.EMAIL_PORT),
-      auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD,
-      },
-    });
-    const source = fs.readFileSync(path.join(__dirname, template), "utf8");
-    const compiledTemplate = handlebars.compile(source);
-    const options = () => ({
-      from: process.env.FROM_EMAIL,
-      to: email,
-      subject: subject,
-      html: compiledTemplate(payload),
-    });
+  // Validate environment variables
+  const { EMAIL_HOST, EMAIL_PORT, EMAIL_USERNAME, EMAIL_PASSWORD, FROM_EMAIL } =
+    process.env;
 
-    // Send email
-    return transporter.sendMail(
-      options(),
-      (error) =>
-        error ?? {
-          success: true,
-        },
+  if (
+    !EMAIL_HOST ||
+    !EMAIL_PORT ||
+    !EMAIL_USERNAME ||
+    !EMAIL_PASSWORD ||
+    !FROM_EMAIL
+  ) {
+    throw new Error(
+      "Missing required environment variables for email configuration.",
     );
-  } catch (error) {
-    return error;
   }
+
+  // Validate email and templatePath
+  if (!email || !templatePath) {
+    throw new Error("Email and template path are required.");
+  }
+
+  // Read and compile template
+  const absoluteTemplatePath = path.resolve(__dirname, templatePath);
+  const templateSource = await fs
+    .readFile(absoluteTemplatePath, "utf8")
+    .catch((err) => {
+      throw new Error(`Failed to read email template: ${err.message}`);
+    });
+  const compiledTemplate = handlebars.compile(templateSource);
+
+  // Create reusable transporter
+  const transporter = nodemailer.createTransport({
+    host: EMAIL_HOST,
+    port: Number(EMAIL_PORT),
+    auth: {
+      user: EMAIL_USERNAME,
+      pass: EMAIL_PASSWORD,
+    },
+  });
+
+  // Send email
+  const result = await transporter.sendMail({
+    from: FROM_EMAIL,
+    to: email,
+    subject,
+    html: compiledTemplate(payload),
+  });
+
+  return { success: true, messageId: result.messageId };
 };
 
 export default sendEmail;
