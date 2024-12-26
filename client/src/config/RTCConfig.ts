@@ -6,7 +6,7 @@ const RTCConfig: RTCConfigType = {
   appId: import.meta.env.VITE_AGORA_APP_ID,
   rtcToken: "",
   rtcTokenScreen: "",
-  serverUrl: "http://localhost:8000",
+  serverUrl: import.meta.env.VITE_BASE_SERVER_URL,
   proxyUrl: "",
   tokenExpiryTime: 3600,
   token: "",

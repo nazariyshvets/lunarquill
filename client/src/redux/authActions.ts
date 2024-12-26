@@ -1,7 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 
-import { BASE_SERVER_URL } from "../constants/constants";
 import type { LoginFormValues, SignupFormValues } from "../types/Auth";
 import type CustomError from "../types/CustomError";
 
@@ -11,11 +10,15 @@ const apiRequest = async <T>(
   rejectWithValue: (data: CustomError) => unknown,
 ) => {
   try {
-    const { data } = await axios.post(`${BASE_SERVER_URL}${endpoint}`, body, {
-      headers: {
-        "Content-Type": "application/json",
+    const { data } = await axios.post(
+      `${import.meta.env.VITE_BASE_SERVER_URL}${endpoint}`,
+      body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     return data;
   } catch (err) {
