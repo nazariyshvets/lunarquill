@@ -68,7 +68,7 @@ const registerUser = async (
   await newUser.save();
 
   // Register user in Agora Chat
-  await registerChatUser(newUser._id, newUser.password);
+  await registerChatUser(newUser._id as string, newUser.password);
 
   // Send a greeting email
   sendEmail(
@@ -198,7 +198,7 @@ const loginUserWithGoogle = async (code: string) => {
     });
 
     // Register user in Agora Chat
-    await registerChatUser(user._id, user.password);
+    await registerChatUser(user._id as string, user.password);
 
     sendEmail(
       email,
