@@ -1,4 +1,4 @@
-import FFT from "fft.js";
+import FFT from "https://cdn.jsdelivr.net/npm/fft.js@4.0.4/+esm";
 
 import { OLAProcessor } from "./olaProcessor";
 
