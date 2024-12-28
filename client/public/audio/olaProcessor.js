@@ -2,18 +2,7 @@ const WEBAUDIO_BLOCK_SIZE = 128;
 
 /** Overlap-Add Node */
 class OLAProcessor extends AudioWorkletProcessor {
-  nbInputs: number;
-  nbOutputs: number;
-  blockSize: number;
-  hopSize: number;
-  nbOverlaps: number;
-  inputBuffers: Float32Array[][];
-  inputBuffersHead: Float32Array[][];
-  inputBuffersToSend: Float32Array[][];
-  outputBuffers: Float32Array[][];
-  outputBuffersToRetrieve: Float32Array[][];
-
-  constructor(options: AudioWorkletNodeOptions) {
+  constructor(options) {
     super();
 
     // Initialize properties
@@ -44,10 +33,7 @@ class OLAProcessor extends AudioWorkletProcessor {
   }
 
   /** Handles dynamic reallocation of input/output channels buffer (channel numbers may vary during lifecycle) */
-  reallocateChannelsIfNeeded(
-    inputs: Float32Array[][],
-    outputs: Float32Array[][],
-  ) {
+  reallocateChannelsIfNeeded(inputs, outputs) {
     for (let i = 0; i < this.nbInputs; i++) {
       const nbChannels = inputs[i].length;
 
@@ -65,7 +51,7 @@ class OLAProcessor extends AudioWorkletProcessor {
     }
   }
 
-  allocateInputChannels(inputIndex: number, nbChannels: number) {
+  allocateInputChannels(inputIndex, nbChannels) {
     // allocate input buffers
     this.inputBuffers[inputIndex] = new Array(nbChannels);
 
@@ -89,7 +75,7 @@ class OLAProcessor extends AudioWorkletProcessor {
     }
   }
 
-  allocateOutputChannels(outputIndex: number, nbChannels: number) {
+  allocateOutputChannels(outputIndex, nbChannels) {
     // allocate output buffers
     this.outputBuffers[outputIndex] = new Array(nbChannels);
 
@@ -111,7 +97,7 @@ class OLAProcessor extends AudioWorkletProcessor {
   }
 
   /** Read next web audio block to input buffers */
-  readInputs(inputs: Float32Array[][]) {
+  readInputs(inputs) {
     // when playback is paused, we may stop receiving new samples
     if (!!inputs[0].length && inputs[0][0].length === 0) {
       for (let i = 0; i < this.nbInputs; i++) {
@@ -130,7 +116,7 @@ class OLAProcessor extends AudioWorkletProcessor {
   }
 
   /** Write next web audio block from output buffers */
-  writeOutputs(outputs: Float32Array[][]) {
+  writeOutputs(outputs) {
     for (let i = 0; i < this.nbInputs; i++) {
       for (let j = 0; j < this.inputBuffers[i].length; j++) {
         const webAudioBlock = this.outputBuffers[i][j].subarray(
@@ -184,11 +170,7 @@ class OLAProcessor extends AudioWorkletProcessor {
     }
   }
 
-  process(
-    inputs: Float32Array[][],
-    outputs: Float32Array[][],
-    params: Record<string, Float32Array>,
-  ): boolean {
+  process(inputs, outputs, params) {
     this.reallocateChannelsIfNeeded(inputs, outputs);
 
     this.readInputs(inputs);
@@ -208,12 +190,12 @@ class OLAProcessor extends AudioWorkletProcessor {
 
   processOLA(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    inputs: Float32Array[][],
+    inputs,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    outputs: Float32Array[][],
+    outputs,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    params: Record<string, Float32Array>,
-  ): void {
+    params,
+  ) {
     console.assert(false, "Not overridden");
   }
 }

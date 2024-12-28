@@ -12,6 +12,11 @@
   },
   "dependencies": {
     "@netless/appliance-plugin": "^1.1.7",
+    "@netless/fastboard-react": "^1.0.2",
+    "@netless/window-manager": "^1.0.0",
+    "@react-hook/window-size": "^3.1.1",
+    "@react-oauth/google": "^0.12.1",
+    "@reduxjs/toolkit": "^2.5.0",
     "agora-chat": "^1.2.1",
     "agora-extension-ai-denoiser": "^1.1.0",
     "agora-extension-virtual-background": "^1.2.0",
@@ -46,14 +51,10 @@
     "react-type-animation": "^3.2.0",
     "redux-persist": "^6.0.0",
     "redux-persist-transform-filter": "^0.0.22",
-    "tailwind-scrollbar-hide": "^1.1.7"
+    "tailwind-scrollbar-hide": "^1.1.7",
+    "white-web-sdk": "^2.16.52"
   },
   "devDependencies": {
-    "@netless/fastboard-react": "^1.0.2",
-    "@netless/window-manager": "^1.0.0",
-    "@react-hook/window-size": "^3.1.1",
-    "@react-oauth/google": "^0.12.1",
-    "@reduxjs/toolkit": "^2.0.1",
     "@types/axios": "^0.14.0",
     "@types/lodash": "^4.14.202",
     "@types/node": "^20.10.5",
@@ -74,7 +75,6 @@
     "tailwindcss": "^3.3.6",
     "typescript": "^5.2.2",
     "vite": "^5.0.8",
-    "vite-plugin-static-copy": "^1.0.1",
-    "white-web-sdk": "^2.16.50"
+    "vite-plugin-static-copy": "^1.0.1"
   }
 }

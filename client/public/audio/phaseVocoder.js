@@ -4,7 +4,7 @@ import { OLAProcessor } from "./olaProcessor";
 
 const BUFFERED_BLOCK_SIZE = 2048;
 
-function genHannWindow(length: number) {
+function genHannWindow(length) {
   const win = new Float32Array(length);
 
   for (let i = 0; i < length; i++) {
@@ -30,20 +30,7 @@ class PhaseVocoderProcessor extends OLAProcessor {
     ];
   }
 
-  private readonly fftSize: number;
-  private timeCursor: number;
-  private readonly hannWindow: Float32Array;
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  private fft: FFT;
-  private readonly freqComplexBuffer: Float32Array;
-  private readonly freqComplexBufferShifted: Float32Array;
-  private readonly timeComplexBuffer: Float32Array;
-  private readonly magnitudes: Float32Array;
-  private readonly peakIndexes: Int32Array;
-  private nbPeaks: number;
-
-  constructor(options?: AudioWorkletNodeOptions) {
+  constructor(options) {
     if (options) {
       options.processorOptions = {
         blockSize: BUFFERED_BLOCK_SIZE,
@@ -68,11 +55,7 @@ class PhaseVocoderProcessor extends OLAProcessor {
     this.nbPeaks = 0;
   }
 
-  processOLA(
-    inputs: Float32Array[][],
-    outputs: Float32Array[][],
-    parameters: Record<string, Float32Array>,
-  ) {
+  processOLA(inputs, outputs, parameters) {
     const enabled = parameters["enabled"]?.[0] || 1.0;
 
     if (!enabled) {
@@ -117,14 +100,14 @@ class PhaseVocoderProcessor extends OLAProcessor {
   }
 
   /** Apply Hann window in-place */
-  private applyHannWindow(input: Float32Array) {
+  applyHannWindow(input) {
     for (let i = 0; i < this.blockSize; i++) {
       input[i] = input[i] * this.hannWindow[i];
     }
   }
 
   /** Compute squared magnitudes for peak finding */
-  private computeMagnitudes(): void {
+  computeMagnitudes() {
     let i = 0,
       j = 0;
 
@@ -139,7 +122,7 @@ class PhaseVocoderProcessor extends OLAProcessor {
   }
 
   /** Find peaks in spectrum magnitudes */
-  private findPeaks() {
+  findPeaks() {
     this.nbPeaks = 0;
     let i = 2;
     const end = this.magnitudes.length - 2;
@@ -163,7 +146,7 @@ class PhaseVocoderProcessor extends OLAProcessor {
   }
 
   /** Shift peaks and regions of influence by pitchFactor into new spectrum */
-  private shiftPeaks(pitchFactor: number) {
+  shiftPeaks(pitchFactor) {
     // zero-fill new spectrum
     this.freqComplexBufferShifted.fill(0);
 

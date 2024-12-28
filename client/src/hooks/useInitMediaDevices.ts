@@ -34,7 +34,7 @@ const useInitMediaDevices = (isReady: boolean) => {
           const microphone = audioContext.createMediaStreamSource(audioStream);
 
           await audioContext.audioWorklet.addModule(
-            "/src/audio/phaseVocoder.ts",
+            "/public/audio/phaseVocoder.js",
           );
 
           pitchShiftNodeRef.current = new AudioWorkletNode(
