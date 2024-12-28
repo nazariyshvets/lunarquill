@@ -6,7 +6,7 @@ const createChatConnection = () => {
   return () => {
     if (!connection) {
       connection = new AC.connection({
-        appKey: import.meta.env.VITE_AGORA_CHAT_APP_KEY,
+        appKey: import.meta.env.VITE_AGORA_CHAT_APP_KEY.replace(/^"|"$/g, ""),
       });
     }
 
