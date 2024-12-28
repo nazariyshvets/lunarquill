@@ -32,6 +32,10 @@ export default defineConfig({
           src: standardFontsDir,
           dest: "",
         },
+        {
+          src: "src/audio/*",
+          dest: "assets/audio",
+        },
       ],
     }),
   ],
