@@ -17,7 +17,7 @@ const NoiseSuppression = () => {
     useRTC();
   const extension = useRef(
     new AIDenoiserExtension({
-      assetsPath: "../../node_modules/agora-extension-ai-denoiser/external",
+      assetsPath: import.meta.env.VITE_AI_DENOISER_ASSETS_PATH,
     }),
   );
   const processor = useRef<IAIDenoiserProcessor>();

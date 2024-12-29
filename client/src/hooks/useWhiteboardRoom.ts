@@ -9,17 +9,17 @@ const useWhiteboardRoom = (roomId: string) => {
   const [roomCredentials, setRoomCredentials] =
     useState<WhiteboardRoomCredentials>();
   const [fetchWhiteboardRoomToken] = useFetchWhiteboardRoomTokenMutation();
-  const { userId } = useAuth();
+  const { username } = useAuth();
 
   useEffect(() => {
-    if (userId && roomId)
+    if (username && roomId)
       (async () => {
         try {
           const { token: roomToken } =
             await fetchWhiteboardRoomToken(roomId).unwrap();
 
           setRoomCredentials({
-            uid: userId,
+            uid: username,
             uuid: roomId,
             roomToken,
           });
@@ -29,7 +29,7 @@ const useWhiteboardRoom = (roomId: string) => {
         }
       })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, roomId]);
+  }, [username, roomId]);
 
   return roomCredentials;
 };

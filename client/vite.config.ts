@@ -36,11 +36,19 @@ export default defineConfig({
           src: "src/audio/*",
           dest: "assets/audio",
         },
+        {
+          src: "node_modules/agora-extension-ai-denoiser/external/*",
+          dest: "assets/aiDenoiserAssets",
+        },
       ],
     }),
   ],
   server: {
     host: "127.0.0.1",
     port: 3000,
+  },
+  preview: {
+    host: "127.0.0.1",
+    port: 3001,
   },
 });

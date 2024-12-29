@@ -39,9 +39,9 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const [emojiPickerState, setEmojiPickerState] = useState<{
-    isOpened: boolean;
+    isOpen: boolean;
     messageId?: string;
-  }>({ isOpened: false });
+  }>({ isOpen: false });
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -247,7 +247,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
     async (messageId: string, emojiUnified: string) => {
       try {
         await connection.addReaction({
-          messageId: messageId,
+          messageId,
           reaction: emojiUnified,
         });
       } catch (err) {
@@ -269,10 +269,10 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
   const handleReactionRemove = useCallback(
     async (messageId: string) => {
       const localUserReactions = getLocalUserReactions(messageId);
-      const removeReactionPromises = localUserReactions?.map((prevReaction) =>
+      const removeReactionPromises = localUserReactions?.map((prevState) =>
         connection.deleteReaction({
-          messageId: messageId,
-          reaction: prevReaction.reaction,
+          messageId,
+          reaction: prevState.reaction,
         }),
       );
 
@@ -303,7 +303,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
           await handleReactionAdd(messageId, emojiUnified);
         }
       } else {
-        setEmojiPickerState({ isOpened: true, messageId });
+        setEmojiPickerState({ isOpen: true, messageId });
       }
     },
     [getLocalUserReactions, handleReactionAdd, handleReactionRemove],
@@ -314,8 +314,8 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
       const messageId = emojiPickerState?.messageId;
 
       if (messageId) {
+        setEmojiPickerState({ isOpen: false });
         await handleReactionClick(messageId, data.unified);
-        setEmojiPickerState({ isOpened: false });
       } else {
         await handleEmojiAdd(data.unified);
       }
@@ -357,7 +357,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
   const handleSmileBtnClick = useCallback(
     () =>
       setEmojiPickerState((prevState) => ({
-        isOpened: !prevState.isOpened,
+        isOpen: !prevState.isOpen,
       })),
     [],
   );
@@ -374,8 +374,8 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
 
   const handleRecordedAudioSubmit = useCallback(
     async (blob: Blob) => {
-      await handleAudioMessageSend(blob);
       setIsRecordingAudio(false);
+      await handleAudioMessageSend(blob);
     },
     [handleAudioMessageSend],
   );
@@ -400,7 +400,9 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
     ) => {
       const parsedMessage = parseMessage(message);
 
-      if (parsedMessage) setMessages((prev) => [...prev, parsedMessage]);
+      if (parsedMessage) {
+        setMessages((prevState) => [...prevState, parsedMessage]);
+      }
     };
 
     connection.addEventHandler("message", {
@@ -448,7 +450,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
 
             <ChatToolbar
               ref={fileInputRef}
-              isEmojiPickerOpen={emojiPickerState.isOpened}
+              isEmojiPickerOpen={emojiPickerState.isOpen}
               onSmileBtnClick={handleSmileBtnClick}
               onMicrophoneBtnClick={handleMicrophoneBtnClick}
               onPaperclipBtnClick={handlePaperclipBtnClick}
@@ -462,7 +464,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
               />
             )}
 
-            {emojiPickerState.isOpened && (
+            {emojiPickerState.isOpen && (
               <div className="absolute bottom-full left-0 z-20">
                 <EmojiPicker
                   theme={Theme.DARK}
@@ -471,6 +473,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
                   height={300}
                   searchDisabled
                   previewConfig={{ showPreview: false }}
+                  lazyLoadEmojis
                   onEmojiClick={handleEmojiClick}
                 />
               </div>
