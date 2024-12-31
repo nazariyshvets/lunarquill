@@ -36,6 +36,7 @@ const useInitChat = (connection: AgoraChat.Connection) => {
 
     return () => {
       connection.close();
+      dispatch(setIsChatInitialized(false));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);

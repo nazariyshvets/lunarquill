@@ -2,10 +2,9 @@ import { useEffect } from "react";
 
 import { RtmClient } from "agora-rtm-react";
 
-import showToast from "../utils/showToast";
-
 import useAuth from "./useAuth";
 import { useFetchRTMTokenMutation } from "../services/tokenApi";
+import showToast from "../utils/showToast";
 
 const useRTMTokenExpired = (client: RtmClient) => {
   const { userId } = useAuth();

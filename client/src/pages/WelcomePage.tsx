@@ -44,7 +44,7 @@ const WelcomePage = () => {
             wrapper="p"
             speed={50}
             repeat={Infinity}
-            className="text-center text-shadow sm:text-lg xl:text-xl"
+            className="h-24 text-center text-shadow sm:text-lg xl:text-xl"
           />
           <div className="mt-4 flex w-full gap-4">
             <WelcomePageActionButton isLogin />

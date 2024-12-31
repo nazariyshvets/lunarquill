@@ -5,6 +5,8 @@ import { BiFile, BiCloudDownload } from "react-icons/bi";
 import MediaModal from "./MediaModal";
 import formatBytes from "../utils/formatBytes";
 import isSupportedFileType from "../utils/isSupportedFileType";
+import truncateFileName from "../utils/truncateFileName";
+import downloadFile from "../utils/downloadFile";
 
 interface FileMessageProps {
   url: string;
@@ -21,6 +23,9 @@ const FileMessage = ({
 }: FileMessageProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleFileDownload = () =>
+    downloadFile(url, fileType, fileName || `file__${Date.now()}`);
+
   const isSupportedType = isSupportedFileType(fileType);
 
   return (
@@ -34,20 +39,16 @@ const FileMessage = ({
         <BiFile className="flex-shrink-0 text-xl sm:text-2xl" />
         <div className="flex flex-col gap-0.5 overflow-hidden">
           <span className="max-w-full truncate text-xs sm:text-sm">
-            {fileName || "unknown"}
+            {fileName ? truncateFileName(fileName, 12) : "unknown"}
           </span>
           <span className="text-lightgrey text-2xs sm:text-xs">
             {fileSize ? formatBytes(fileSize) : "unknown"}
           </span>
         </div>
-        <a
-          href={url}
-          download
-          target="_blank"
-          onClick={(event) => event.stopPropagation()}
-        >
-          <BiCloudDownload className="flex-shrink-0 text-xl hover:text-primary-light sm:text-2xl" />
-        </a>
+        <BiCloudDownload
+          className="flex-shrink-0 text-xl hover:text-primary-light sm:text-2xl"
+          onClick={handleFileDownload}
+        />
       </div>
       {isOpen && isSupportedType && (
         <MediaModal

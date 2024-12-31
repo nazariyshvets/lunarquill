@@ -3,7 +3,6 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { apiBaseQuery, apiTagTypes } from "./apiConfig";
 import { userApi } from "./userApi";
 import { channelApi } from "./channelApi";
-import addOptionalArrayItem from "../utils/addOptionalArrayItem";
 import { QUERY_TAG_TYPES } from "../constants/constants";
 import {
   PopulatedRequest,
@@ -32,13 +31,14 @@ export const requestApi = createApi({
           dispatch(
             userApi.util.invalidateTags([
               { type: QUERY_TAG_TYPES.USER_REQUESTS, id: localUserId },
-              ...addOptionalArrayItem(
-                {
-                  type: QUERY_TAG_TYPES.USER_CHANNELS,
-                  id: localUserId,
-                },
-                request.type === RequestType.Join && isChannelPublic,
-              ),
+              ...(request.type === RequestType.Join && isChannelPublic
+                ? [
+                    {
+                      type: QUERY_TAG_TYPES.USER_CHANNELS,
+                      id: localUserId,
+                    },
+                  ]
+                : []),
             ]),
           );
         } catch (error) {
@@ -96,20 +96,22 @@ export const requestApi = createApi({
                 type: QUERY_TAG_TYPES.USER_REQUESTS,
                 id: localUserId,
               },
-              ...addOptionalArrayItem(
-                {
-                  type: QUERY_TAG_TYPES.USER_CONTACTS,
-                  id: localUserId,
-                },
-                requestType === RequestType.Contact,
-              ),
-              ...addOptionalArrayItem(
-                {
-                  type: QUERY_TAG_TYPES.USER_CHANNELS,
-                  id: localUserId,
-                },
-                requestType === RequestType.Invite,
-              ),
+              ...(requestType === RequestType.Contact
+                ? [
+                    {
+                      type: QUERY_TAG_TYPES.USER_CONTACTS,
+                      id: localUserId,
+                    },
+                  ]
+                : []),
+              ...(requestType === RequestType.Invite
+                ? [
+                    {
+                      type: QUERY_TAG_TYPES.USER_CHANNELS,
+                      id: localUserId,
+                    },
+                  ]
+                : []),
             ]),
           );
 

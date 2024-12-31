@@ -122,6 +122,10 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
+      if (!userId) {
+        return;
+      }
+
       const options: AgoraChat.CreateMsgType = {
         type: "txt",
         msg: message,
@@ -137,12 +141,12 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
           id: serverMsgId,
           type: "txt",
           msg: message,
-          senderId: userId ?? "",
+          senderId: userId,
           recipientId: msg.to,
           time: Date.now(),
         };
 
-        setMessages((prev) => [...prev, newMessage]);
+        setMessages((prevState) => [...prevState, newMessage]);
         setMessage("");
         adjustMessageInputHeight();
       } catch (err) {
@@ -162,6 +166,10 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
       type: "img" | "audio" | "video" | "file",
       file: AgoraChat.FileObj,
     ) => {
+      if (!userId) {
+        return;
+      }
+
       const options: AgoraChat.CreateMsgType = {
         type,
         file,
@@ -182,8 +190,8 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
         const msg = AC.message.create(options);
         const { serverMsgId } = await connection.send(msg);
 
-        setMessages((prev) => [
-          ...prev,
+        setMessages((prevState) => [
+          ...prevState,
           {
             id: serverMsgId,
             type,
@@ -192,7 +200,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
             fileName: file.filename,
             fileSize: file.data.size,
             url: file.url,
-            senderId: userId ?? "",
+            senderId: userId,
             recipientId: msg.to,
             time: Date.now(),
           },

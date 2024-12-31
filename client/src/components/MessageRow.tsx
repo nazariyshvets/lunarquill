@@ -77,7 +77,7 @@ const MessageRow = ({
       >
         {displayUsername && (
           <span className="truncate text-sm font-medium tracking-wider text-primary-light sm:text-base">
-            {isLocalUser ? "You" : senderUsername ?? "Unknown"}
+            {isLocalUser ? "You" : (senderUsername ?? "Unknown")}
           </span>
         )}
 
@@ -104,25 +104,25 @@ const MessageRow = ({
 
       {!!message.reactions?.length && (
         <div className="flex items-center gap-1">
-          {message.reactions.map(
-            (reaction) =>
-              reaction.count > 0 && (
-                <div
-                  key={reaction.reaction}
-                  className={`flex cursor-pointer items-center gap-1 rounded-full px-1 text-sm outline outline-1 sm:text-base ${
-                    reaction.userList.find((uid) => uid === userId)
-                      ? "bg-charcoal outline-primary-light"
-                      : "outline-lightgrey"
-                  }`}
-                  onClick={() => onReactionClick(reaction.reaction)}
-                >
-                  <span role="img">
-                    {String.fromCodePoint(parseInt(reaction.reaction, 16))}
-                  </span>
-                  <span className="text-primary-light">{reaction.count}</span>
-                </div>
-              ),
-          )}
+          {message.reactions
+            .filter((reaction) => !!reaction.count)
+            .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+            .map((reaction) => (
+              <div
+                key={reaction.reaction}
+                className={`flex cursor-pointer items-center gap-1 rounded-full px-1 text-sm outline outline-1 sm:text-base ${
+                  reaction.userList.find((uid) => uid === userId)
+                    ? "bg-charcoal outline-primary-light"
+                    : "outline-lightgrey"
+                }`}
+                onClick={() => onReactionClick(reaction.reaction)}
+              >
+                <span role="img">
+                  {String.fromCodePoint(parseInt(reaction.reaction, 16))}
+                </span>
+                <span className="text-primary-light">{reaction.count}</span>
+              </div>
+            ))}
         </div>
       )}
     </div>

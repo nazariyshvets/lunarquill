@@ -2,10 +2,9 @@ import { useEffect } from "react";
 
 import { AgoraChat } from "agora-chat";
 
-import showToast from "../utils/showToast";
-
 import useAuth from "./useAuth";
 import { useFetchChatTokenMutation } from "../services/tokenApi";
+import showToast from "../utils/showToast";
 
 const useChatTokenWillExpire = (connection: AgoraChat.Connection) => {
   const { userId } = useAuth();
@@ -14,10 +13,14 @@ const useChatTokenWillExpire = (connection: AgoraChat.Connection) => {
   useEffect(() => {
     connection.addEventHandler("connection", {
       onTokenWillExpire: async () => {
-        if (!userId) return;
+        if (!userId) {
+          return;
+        }
 
         try {
-          connection.token = await fetchChatToken(userId).unwrap();
+          const token = await fetchChatToken(userId).unwrap();
+
+          await connection.renewToken(token);
         } catch (err) {
           showToast("error", "Could not renew chat token");
           console.error("Error renewing chat token:", err);
@@ -29,7 +32,7 @@ const useChatTokenWillExpire = (connection: AgoraChat.Connection) => {
       connection.removeEventHandler("connection");
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [connection, userId]);
 };
 
 export default useChatTokenWillExpire;

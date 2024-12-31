@@ -48,7 +48,9 @@ const registerUser = async (
 
   if (existingUser) {
     throw new Error(
-      `${existingUser.email === email ? "Email" : "Username"} already exists`,
+      existingUser.email === email
+        ? "Email already exists. Consider resetting the password"
+        : "Username already exists",
     );
   }
 
@@ -119,10 +121,10 @@ const verifyAccount = async (userId: string, token: string) => {
 
     await sendEmail(
       user.email,
-      "Account Is Verified Successfully",
+      "Account is verified successfully",
       {
         username: user.username,
-        message: "Your account is verified successfully.",
+        message: "Your LunarQuill account is verified successfully.",
         link: clientLoginURL,
         linkText: "Log In",
       },
@@ -153,6 +155,10 @@ const loginUser = async (email: string, password: string) => {
   // Check if the email is verified
   if (!user.active) {
     throw new Error("You need to verify your email");
+  }
+
+  if (!user.password) {
+    throw new Error("No password is set. Consider resetting it");
   }
 
   // Check password
@@ -257,7 +263,7 @@ const requestPasswordReset = async (email: string) => {
 
   await sendEmail(
     user.email,
-    "Password Reset Request",
+    "Password reset request",
     {
       username: user.username,
       link,
@@ -306,7 +312,7 @@ const resetPassword = async (
 
     await sendEmail(
       user.email,
-      "Password Reset Successfully",
+      "Password reset successfully",
       {
         username: user.username,
         message: "Your password has been changed successfully on LunarQuill.",

@@ -3,6 +3,7 @@ import {
   createRoutesFromElements,
   Route,
   RouterProvider,
+  Navigate,
 } from "react-router-dom";
 
 import { initDB } from "react-indexed-db-hook";
@@ -57,6 +58,7 @@ const router = createBrowserRouter(
           <Route path="/channels/:id/call" element={<ChannelCallPage />} />
         </Route>
       </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
     </>,
   ),
 );
