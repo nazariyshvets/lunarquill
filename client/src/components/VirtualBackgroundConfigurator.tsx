@@ -82,6 +82,7 @@ const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
           <Select
             value={virtualBgBlurDegreeOptionsMap[blurDegree]}
             options={virtualBgBlurDegreeOptions}
+            isSearchable={false}
             className="w-full"
             onChange={(newValue) =>
               setBlurDegree(
@@ -152,10 +153,11 @@ const VirtualBackgroundConfigurator = ({ onClose }: Configurator) => {
       onCancel={onClose}
       onSave={handleSave}
     >
-      <div className="flex min-h-[250px] flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-2 pb-7">
         <Select
           value={virtualBgTypeOptionsMap[type]}
           options={virtualBgTypeOptions}
+          isSearchable={false}
           className="z-50 w-full"
           onChange={(newValue) =>
             setType((newValue as SelectOption).value as VirtualBgType)

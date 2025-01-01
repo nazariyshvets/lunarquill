@@ -54,6 +54,7 @@ const NoiseSuppressionConfigurator = ({ onClose }: Configurator) => {
         <Select
           value={modeOptionsMap[mode]}
           options={modeOptions}
+          isSearchable={false}
           className="w-full"
           onChange={(newValue) =>
             setMode((newValue as SelectOption).value as NoiseSuppressionMode)
@@ -62,6 +63,7 @@ const NoiseSuppressionConfigurator = ({ onClose }: Configurator) => {
         <Select
           value={levelOptionsMap[level]}
           options={levelOptions}
+          isSearchable={false}
           className="w-full"
           onChange={(newValue) =>
             setLevel((newValue as SelectOption).value as NoiseSuppressionLevel)

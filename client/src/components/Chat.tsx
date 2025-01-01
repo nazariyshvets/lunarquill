@@ -479,6 +479,7 @@ const Chat = ({ chatType, targetId, members }: ChatProps) => {
                   emojiStyle={EmojiStyle.NATIVE}
                   skinTonesDisabled
                   height={300}
+                  width={288}
                   searchDisabled
                   previewConfig={{ showPreview: false }}
                   lazyLoadEmojis

@@ -77,7 +77,7 @@ const Sidebar = ({
         </TabList>
 
         <TabPanel>
-          {contacts && contacts.length > 0 ? (
+          {contacts?.length ? (
             <div className="flex flex-col gap-2">
               {[...contacts]
                 .sort(
@@ -101,7 +101,7 @@ const Sidebar = ({
           )}
         </TabPanel>
         <TabPanel>
-          {channels && channels.length > 0 ? (
+          {channels?.length ? (
             <div className="flex flex-col gap-2">
               {channels.map((channel) => (
                 <Link key={channel._id} to={`/channels/${channel._id}/chat`}>

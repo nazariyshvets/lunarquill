@@ -67,7 +67,9 @@ const NoiseSuppression = () => {
 
   useEffect(() => {
     (async () => {
-      if (!isInitialized || !processor.current) return;
+      if (!isInitialized || !processor.current) {
+        return;
+      }
 
       try {
         await processor.current.setMode(
@@ -86,7 +88,9 @@ const NoiseSuppression = () => {
 
   useEffect(() => {
     (async () => {
-      if (!isInitialized || !processor.current) return;
+      if (!isInitialized || !processor.current) {
+        return;
+      }
 
       try {
         await processor.current.setLevel(

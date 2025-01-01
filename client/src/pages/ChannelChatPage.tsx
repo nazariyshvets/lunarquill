@@ -196,7 +196,7 @@ const ChannelChatPage = () => {
   return (
     chatTargetId && (
       <div className="flex h-full w-full flex-col">
-        <div className="flex items-center justify-between border-b border-white p-2">
+        <div className="flex flex-col justify-between gap-4 border-b border-white py-2 sm:flex-row sm:items-center sm:px-2">
           <Contact
             name={channelName}
             isOnline={false}
@@ -204,7 +204,7 @@ const ChannelChatPage = () => {
             size="sm"
           />
 
-          <div className="flex items-center gap-4 text-xl">
+          <div className="flex items-center gap-3 text-lg sm:gap-4 sm:text-xl">
             <SimpleButton
               data-tooltip-id="call"
               data-tooltip-content="Call"

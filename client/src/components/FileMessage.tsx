@@ -7,6 +7,7 @@ import formatBytes from "../utils/formatBytes";
 import isSupportedFileType from "../utils/isSupportedFileType";
 import truncateFileName from "../utils/truncateFileName";
 import downloadFile from "../utils/downloadFile";
+import stopEventPropagation from "../utils/stopEventPropagation";
 
 interface FileMessageProps {
   url: string;
@@ -47,7 +48,7 @@ const FileMessage = ({
         </div>
         <BiCloudDownload
           className="flex-shrink-0 text-xl hover:text-primary-light sm:text-2xl"
-          onClick={handleFileDownload}
+          onClick={stopEventPropagation(handleFileDownload)}
         />
       </div>
       {isOpen && isSupportedType && (

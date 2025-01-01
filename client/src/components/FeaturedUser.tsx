@@ -48,7 +48,7 @@ const FeaturedUser = ({
       {children}
 
       <RTCControlButton
-        className="absolute bottom-2 right-2 z-10"
+        className="absolute bottom-2 right-2 z-10 bg-charcoal bg-opacity-50"
         onClick={toggleFullScreen}
       >
         {isFullScreen ? (

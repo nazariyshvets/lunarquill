@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 import AgoraRTC from "agora-rtc-react";
 import VirtualBackgroundExtension, {
@@ -10,7 +10,7 @@ import useRTC from "../hooks/useRTC";
 import showToast from "../utils/showToast";
 import type { VirtualBgMediaSource } from "../types/VirtualBg";
 
-const VirtualBackground = (): React.ReactNode => {
+const VirtualBackground = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const {
     localCameraTrack,
@@ -121,6 +121,7 @@ const VirtualBackground = (): React.ReactNode => {
         try {
           processor.current?.unpipe();
           localCameraTrack?.unpipe();
+          await processor.current?.release();
           await processor.current?.disable();
           setIsInitialized(false);
         } catch (err) {
@@ -132,7 +133,9 @@ const VirtualBackground = (): React.ReactNode => {
   }, [localCameraTrack]);
 
   useEffect(() => {
-    if (!isInitialized) return;
+    if (!isInitialized) {
+      return;
+    }
 
     switch (virtualBgType) {
       case "blur":
@@ -177,7 +180,7 @@ const VirtualBackground = (): React.ReactNode => {
     };
   }, []);
 
-  return null;
+  return <></>;
 };
 
 export default VirtualBackground;
